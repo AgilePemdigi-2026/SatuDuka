@@ -56,6 +56,17 @@ class LaporanKematian extends Model
         self::STATUS_MENUNGGU_PERBAIKAN,
     ];
 
+    /**
+     * Status yang masih boleh diubah oleh pemohon.
+     *
+     * @var list<string>
+     */
+    public const DAFTAR_STATUS_BOLEH_DIUBAH = [
+        self::STATUS_DRAF,
+        self::STATUS_MENUNGGU_PERBAIKAN,
+        self::STATUS_DITOLAK_BUTUH_REVISI,
+    ];
+
     protected $table = 'laporan_kematian';
 
     protected $primaryKey = 'id_laporan';
@@ -152,6 +163,14 @@ class LaporanKematian extends Model
     public function adalahDraf(): bool
     {
         return $this->status_pengajuan === self::STATUS_DRAF;
+    }
+
+    /**
+     * Apakah pengajuan masih boleh diperbaiki dan dikirim ulang oleh pemohon.
+     */
+    public function bolehDiubah(): bool
+    {
+        return in_array($this->status_pengajuan, self::DAFTAR_STATUS_BOLEH_DIUBAH, true);
     }
 
     /**

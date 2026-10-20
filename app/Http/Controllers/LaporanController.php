@@ -97,7 +97,7 @@ class LaporanController extends Controller
     public function tampilkanUbah(Request $request, LaporanKematian $laporan)
     {
         $laporan = $this->laporanMilik($request, $laporan);
-        $this->pastikanDraf($laporan);
+        $this->pastikanBolehDiubah($laporan);
 
         return view('laporan.formulir', $this->dataFormulir(
             $request->user(),
@@ -113,7 +113,7 @@ class LaporanController extends Controller
     {
         if ($laporan !== null) {
             $laporan = $this->laporanMilik($request, $laporan);
-            $this->pastikanDraf($laporan);
+            $this->pastikanBolehDiubah($laporan);
         }
 
         $data = $this->rapikan($request->validate($this->aturan(false), $this->pesanValidasi()));
@@ -138,15 +138,18 @@ class LaporanController extends Controller
 
         return redirect()
             ->to($this->alamatLangkah($laporan, $this->langkahAman($request->integer('langkah', 1))))
-            ->with('sukses', 'Draf pengajuan berhasil disimpan.');
+            ->with('sukses', $laporan->adalahDraf()
+                ? 'Draf pengajuan berhasil disimpan.'
+                : 'Perubahan pengajuan berhasil disimpan.');
     }
 
     /**
-     * Mengirim draf menjadi pengajuan berstatus Menunggu Verifikasi.
+     * Mengirim draf atau mengirim ulang pengajuan berstatus revisi.
      */
     public function kirim(Request $request, LaporanKematian $laporan)
     {
         $laporan = $this->laporanMilik($request, $laporan);
+        $this->pastikanBolehDiubah($laporan);
 
         $validator = Validator::make(
             $request->all(),
@@ -166,37 +169,61 @@ class LaporanController extends Controller
 
         $this->pastikanBerkasLengkap($laporan);
 
-        $laporan = DB::transaction(function () use ($laporan, $data) {
+        $hasil = DB::transaction(function () use ($laporan, $data) {
             $terkunci = LaporanKematian::query()
                 ->whereKey($laporan->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            abort_unless($terkunci->adalahDraf(), 403, 'Pengajuan yang sudah dikirim tidak dapat diubah.');
+            abort_unless($terkunci->bolehDiubah(), 403, 'Pengajuan dengan status ini tidak dapat diubah.');
 
-            return LayananNomorPengajuan::buat(function (string $nomor) use ($terkunci, $data) {
+            $statusSebelumnya = $terkunci->status_pengajuan;
+            $kirimUlang = ! $terkunci->adalahDraf();
+
+            if ($kirimUlang) {
                 $terkunci->fill($data);
-                $terkunci->no_pengajuan = $nomor;
                 $terkunci->status_pengajuan = LaporanKematian::STATUS_MENUNGGU_VERIFIKASI;
-                $terkunci->tanggal_pengajuan = now();
                 $terkunci->save();
 
-                return $terkunci;
-            });
+                $laporanTerkirim = $terkunci;
+            } else {
+                $laporanTerkirim = LayananNomorPengajuan::buat(function (string $nomor) use ($terkunci, $data) {
+                    $terkunci->fill($data);
+                    $terkunci->no_pengajuan = $nomor;
+                    $terkunci->status_pengajuan = LaporanKematian::STATUS_MENUNGGU_VERIFIKASI;
+                    $terkunci->tanggal_pengajuan = now();
+                    $terkunci->save();
+
+                    return $terkunci;
+                });
+            }
+
+            return [
+                'laporan' => $laporanTerkirim,
+                'aksi' => $kirimUlang ? 'mengirim_ulang_laporan' : 'mengajukan_laporan',
+                'status_sebelumnya' => $statusSebelumnya,
+            ];
         });
 
+        $laporan = $hasil['laporan'];
+        $kirimUlang = $hasil['aksi'] === 'mengirim_ulang_laporan';
+
         LayananAudit::catat(
-            aksi: 'mengajukan_laporan',
+            aksi: $hasil['aksi'],
             objek: 'laporan_kematian',
             idObjek: $laporan->id_laporan,
-            detail: ['no_pengajuan' => $laporan->no_pengajuan],
+            detail: $kirimUlang
+                ? ['no_pengajuan' => $laporan->no_pengajuan, 'status_sebelumnya' => $hasil['status_sebelumnya']]
+                : ['no_pengajuan' => $laporan->no_pengajuan],
             pengguna: $request->user(),
             hasil: 'Sukses',
         );
 
         return redirect()
             ->route('laporan.lihat', $laporan)
-            ->with('sukses', 'Pengajuan berhasil dikirim! Nomor pengajuan: '.$laporan->no_pengajuan);
+            ->with('sukses', $kirimUlang
+                ? 'Pengajuan berhasil dikirim ulang! Nomor pengajuan: '.$laporan->no_pengajuan
+                : 'Pengajuan berhasil dikirim! Nomor pengajuan: '.$laporan->no_pengajuan);
     }
 
     /**
@@ -205,7 +232,7 @@ class LaporanController extends Controller
     public function unggahBerkas(Request $request, LaporanKematian $laporan)
     {
         $laporan = $this->laporanMilik($request, $laporan);
-        $this->pastikanDraf($laporan);
+        $this->pastikanBolehDiubah($laporan);
 
         $jenis = $request->validate([
             'jenis_dokumen' => ['required', Rule::in(BerkasPendukung::DAFTAR_JENIS)],
@@ -404,11 +431,11 @@ class LaporanController extends Controller
     }
 
     /**
-     * Hanya draf yang boleh diubah.
+     * Hanya pengajuan yang masih boleh diubah yang dapat diperbarui.
      */
-    private function pastikanDraf(LaporanKematian $laporan): void
+    private function pastikanBolehDiubah(LaporanKematian $laporan): void
     {
-        abort_unless($laporan->adalahDraf(), 403, 'Pengajuan yang sudah dikirim tidak dapat diubah.');
+        abort_unless($laporan->bolehDiubah(), 403, 'Pengajuan dengan status ini tidak dapat diubah.');
     }
 
     /**

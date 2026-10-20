@@ -1,6 +1,6 @@
 @extends('tata_letak.utama')
 
-@section('judul', $laporan === null ? 'Ajukan Laporan Baru' : 'Ubah Draf Pengajuan')
+@section('judul', $laporan === null ? 'Ajukan Laporan Baru' : ($laporan->adalahDraf() ? 'Ubah Draf Pengajuan' : 'Perbaiki Pengajuan'))
 
 @section('navigasi')
     <a href="{{ route('dashboard') }}" class="text-sm text-gray-600 hover:underline">Dashboard</a>
@@ -35,10 +35,10 @@
 
     <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
         <h1 class="text-xl font-bold text-slate-800 sm:text-2xl">
-            {{ $laporan === null ? 'Ajukan Laporan Kematian' : 'Lanjutkan Draf Pengajuan' }}
+            {{ $laporan === null ? 'Ajukan Laporan Kematian' : ($laporan->adalahDraf() ? 'Lanjutkan Draf Pengajuan' : 'Perbaiki Pengajuan') }}
         </h1>
         <p class="mt-1 text-sm text-gray-500">
-            Lengkapi data pelapor, data almarhum, dan berkas pendukung. Setiap langkah tersimpan sebagai draf.
+            Lengkapi data pelapor, data almarhum, dan berkas pendukung. Setiap langkah tersimpan otomatis.
         </p>
 
         <ol class="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -379,7 +379,9 @@
 
                 <div class="flex flex-wrap items-center gap-2">
                     @if ($langkah === 4)
-                        <button type="submit" class="{{ $kelasTombolUtama }}">Simpan Draf</button>
+                        <button type="submit" class="{{ $kelasTombolUtama }}">
+                            {{ ($laporan === null || $laporan->adalahDraf()) ? 'Simpan Draf' : 'Simpan Perubahan' }}
+                        </button>
 
                         @if ($laporan !== null)
                             <button type="submit" formaction="{{ route('laporan.kirim', $laporan) }}" id="tombol-kirim" disabled

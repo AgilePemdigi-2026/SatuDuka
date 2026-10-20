@@ -133,6 +133,11 @@
                    class="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-900">
                     Lanjutkan Pengisian
                 </a>
+            @elseif ($laporan->bolehDiubah())
+                <a href="{{ route('laporan.ubah', $laporan) }}"
+                   class="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700">
+                    Perbaiki dan Kirim Ulang
+                </a>
             @endif
             <a href="{{ route('dashboard') }}"
                class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">

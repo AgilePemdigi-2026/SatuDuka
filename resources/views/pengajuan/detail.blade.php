@@ -101,17 +101,26 @@
         <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <p class="text-sm text-gray-500">Dokumen akta dapat diunduh setelah pengajuan berstatus Selesai.</p>
 
-            @if ($laporan->selesai())
-                <a href="{{ route('pengajuan.unduh', $laporan) }}"
-                   class="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-900">
-                    Unduh Dokumen
-                </a>
-            @else
-                <button type="button" disabled
-                        class="cursor-not-allowed rounded-md bg-gray-300 px-4 py-2 text-sm font-medium text-gray-500">
-                    Unduh Dokumen
-                </button>
-            @endif
+            <div class="flex flex-wrap items-center gap-2">
+                @if ($laporan->bolehDiubah())
+                    <a href="{{ route('laporan.ubah', $laporan) }}"
+                       class="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700">
+                        Perbaiki dan Kirim Ulang
+                    </a>
+                @endif
+
+                @if ($laporan->selesai())
+                    <a href="{{ route('pengajuan.unduh', $laporan) }}"
+                       class="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-900">
+                        Unduh Dokumen
+                    </a>
+                @else
+                    <button type="button" disabled
+                            class="cursor-not-allowed rounded-md bg-gray-300 px-4 py-2 text-sm font-medium text-gray-500">
+                        Unduh Dokumen
+                    </button>
+                @endif
+            </div>
         </div>
     </div>
 @endsection
