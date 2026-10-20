@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Pengujian dashboard per peran dan middleware pembatas peran (Fase 2 butir 2).
+ * Pengujian dashboard per peran dan middleware pembatas peran.
  */
 
 use App\Models\Pengguna;

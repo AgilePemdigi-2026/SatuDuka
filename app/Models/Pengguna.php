@@ -139,7 +139,7 @@ class Pengguna extends Authenticatable
     |--------------------------------------------------------------------------
     |
     | Semua pencarian NIK/NIP dipusatkan di sini agar mudah dienkripsi pada
-    | Fase 9 (keputusan pemilik proyek, lihat PROGRESS.md).
+    | penguatan keamanan nanti.
     |
     */
 

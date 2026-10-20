@@ -29,7 +29,7 @@ class LaporanKematianFactory extends Factory
     public function definition(): array
     {
         // Data almarhum diambil dari data dummy SIAK agar verifikasi silang
-        // pada fase berikutnya selalu menemukan data acuan.
+        // selalu menemukan data acuan.
         $dataSIAK = DataSIAK::acak();
 
         return [

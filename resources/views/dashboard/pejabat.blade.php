@@ -20,11 +20,11 @@
         <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div class="rounded-lg border border-gray-200 p-4">
                 <h2 class="font-semibold text-slate-800">Tanda Tangan Elektronik (TTE)</h2>
-                <p class="mt-1 text-sm text-gray-500">Menyusul pada Fase 8.</p>
+                <p class="mt-1 text-sm text-gray-500">Segera hadir.</p>
             </div>
             <div class="rounded-lg border border-gray-200 p-4">
                 <h2 class="font-semibold text-slate-800">Profil Saya</h2>
-                <p class="mt-1 text-sm text-gray-500">Menyusul pada Fase 5.</p>
+                <p class="mt-1 text-sm text-gray-500">Segera hadir.</p>
             </div>
         </div>
     </div>

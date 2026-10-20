@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Schema;
  * Menambahkan kolom `dibuat_pada` dan `diperbarui_pada` pada tabel pengajuan
  * dan tabel yang terkait dengannya.
  *
- * Keputusan pemilik proyek (lihat PROGRESS.md, Fase 1): tabel `laporan_kematian`,
- * `hasil_verifikasi`, `anomali_dokumen`, dan `dokumen_resmi` sebelumnya tidak
+ * Tabel `laporan_kematian`, `hasil_verifikasi`, `anomali_dokumen`, dan
+ * `dokumen_resmi` sebelumnya tidak
  * memiliki kolom waktu buat/ubah sehingga riwayat perubahan status hanya
  * terekam pada `log_audit`. Mulai dari migration ini seluruh tabel aplikasi
  * memiliki jejak waktu ubah.

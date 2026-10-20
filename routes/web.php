@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AturUlangKataSandiController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegistrasiController;
 use Illuminate\Support\Facades\Route;
@@ -43,7 +44,20 @@ Route::post('/keluar', [LoginController::class, 'keluar'])
     ->middleware('auth')
     ->name('keluar');
 
-// Dashboard sesuai peran (kerangka fase ini).
+// Dashboard sesuai peran (kerangka).
 Route::get('/dashboard', [DashboardController::class, 'tampilkan'])
     ->middleware('auth')
     ->name('dashboard');
+
+// Pengajuan laporan kematian oleh Pemohon (use case 5.2.3).
+Route::middleware(['auth', 'peran:pemohon'])->group(function () {
+    Route::get('/laporan/baru', [LaporanController::class, 'tampilkanBaru'])->name('laporan.baru');
+    Route::post('/laporan/draf', [LaporanController::class, 'simpanDraf'])->name('laporan.draf');
+
+    Route::get('/laporan/{laporan}/ubah', [LaporanController::class, 'tampilkanUbah'])->name('laporan.ubah');
+    Route::post('/laporan/{laporan}/draf', [LaporanController::class, 'simpanDraf'])->name('laporan.draf.ubah');
+    Route::post('/laporan/{laporan}/kirim', [LaporanController::class, 'kirim'])->name('laporan.kirim');
+    Route::post('/laporan/{laporan}/berkas', [LaporanController::class, 'unggahBerkas'])->name('laporan.berkas.unggah');
+    Route::get('/laporan/{laporan}/berkas/{berkas}', [LaporanController::class, 'pratinjauBerkas'])->name('laporan.berkas');
+    Route::get('/laporan/{laporan}', [LaporanController::class, 'lihat'])->name('laporan.lihat');
+});

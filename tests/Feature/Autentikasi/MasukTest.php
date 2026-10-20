@@ -172,7 +172,7 @@ it('mengunci akun selama 15 menit setelah batas percobaan gagal tercapai', funct
 
     $this->assertGuest();
 
-    // Penguncian dicatat ke log audit (keputusan pemilik proyek butir 2).
+    // Penguncian dicatat ke log audit oleh LayananPenguncian.
     expect(LogAudit::where('aksi', 'mengunci_akses')->count())->toBe(1)
         ->and(LogAudit::where('aksi', 'masuk_gagal')->count())->toBe(5);
 });
@@ -192,7 +192,7 @@ it('menolak percobaan masuk saat akun sedang terkunci', function () {
     $this->assertGuest();
 });
 
-// Aturan Fase 2 butir 3: aksi masuk dicatat ke log_audit.
+// Aksi masuk yang berhasil wajib tercatat ke log_audit.
 it('mencatat aksi masuk yang berhasil ke log audit', function () {
     [$pemohon] = buatAkunDemo();
 

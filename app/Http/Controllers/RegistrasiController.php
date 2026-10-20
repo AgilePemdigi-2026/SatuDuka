@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
  * Hanya Pemohon yang mendaftar sendiri; akun Verifikator dan Pejabat dibuat
  * oleh administrasi (seed), karena keduanya login dengan NIP.
  *
- * Penyimpangan dari use case 5.2.1 (keputusan pemilik proyek): kolom alamat
+ * Penyimpangan dari use case 5.2.1: kolom alamat
  * surel WAJIB diisi karena `pengguna.email` NOT NULL UNIQUE dan dipakai untuk
  * pengaturan ulang kata sandi. Nama lengkap diambil dari data kependudukan
  * (SIAK) berdasarkan NIK sehingga tidak perlu diisi manual.
@@ -64,7 +64,7 @@ class RegistrasiController extends Controller
         ]);
 
         // Use case 5.2.1 langkah 5: memverifikasi NIK pada data kependudukan.
-        // Sementara memakai pembaca data dummy SIAK; Fase 6 mengalihkannya ke
+        // Sementara memakai pembaca data dummy SIAK; kelak dialihkan ke
         // SIAKService.
         $dataSiak = DataSIAK::cariNik($valid['nik']);
 

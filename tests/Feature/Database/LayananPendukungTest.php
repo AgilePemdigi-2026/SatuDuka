@@ -9,7 +9,7 @@ use App\Services\LayananPenguncian;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Pengujian layanan pendukung Fase 1: audit, penguncian, penomoran pengajuan,
+ * Pengujian layanan pendukung: audit, penguncian, penomoran pengajuan,
  * dan pencarian NIK/NIP.
  */
 it('mencatat jejak audit melalui layanan audit', function () {
