@@ -1,2 +1,3 @@
-*
+php --ini
+where.exe php*
 !.gitignore
