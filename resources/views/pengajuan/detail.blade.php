@@ -51,7 +51,7 @@
             </dl>
         </div>
 
-        @if ($laporan->catatan_revisi)
+        @if ($laporan->catatan_revisi && $laporan->bolehDiubah())
             <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
                 <p class="font-semibold">Catatan Revisi</p>
                 <p class="mt-1">{{ $laporan->catatan_revisi }}</p>

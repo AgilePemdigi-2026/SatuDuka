@@ -137,6 +137,29 @@ it('menolak akses ke pengajuan milik pemohon lain', function () {
     $this->post(route('laporan.kirim', $laporan), dataPerbaikanLengkap(['pernyataan' => '1']))->assertNotFound();
 });
 
+it('tidak menampilkan catatan revisi setelah pengajuan dikirim ulang', function () {
+    Storage::fake('local');
+    [$pemohon] = buatAkunDemo();
+    $laporan = buatLaporanRevisi($pemohon);
+
+    $this->actingAs($pemohon);
+
+    foreach (BerkasPendukung::DAFTAR_JENIS as $jenis) {
+        unggahBerkasPerbaikan($this, $laporan, $jenis);
+    }
+
+    $this->post(route('laporan.kirim', $laporan), dataPerbaikanLengkap(['pernyataan' => '1']))
+        ->assertRedirect(route('laporan.lihat', $laporan));
+
+    expect($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
+        ->and($laporan->fresh()->catatan_revisi)->toBe('Surat keterangan kematian kurang jelas.');
+
+    $this->get(route('pengajuan.detail', $laporan))
+        ->assertOk()
+        ->assertDontSee('Catatan Revisi')
+        ->assertDontSee('Surat keterangan kematian kurang jelas.');
+});
+
 it('menampilkan catatan revisi dan tombol perbaikan pada detail pengajuan', function () {
     [$pemohon] = buatAkunDemo();
     $laporan = buatLaporanRevisi($pemohon);

@@ -132,7 +132,6 @@ it('menampilkan lini masa lima tahap beserta tanggal dan catatan', function () {
         'no_pengajuan' => 'SD-20261020-0001',
         'tanggal_pengajuan' => Carbon::parse('2026-10-01 09:00'),
         'status_pengajuan' => LaporanKematian::STATUS_SELESAI,
-        'catatan_revisi' => 'Perbaiki surat keterangan kematian.',
     ]);
 
     $verifikasi = HasilVerifikasi::factory()->create([
@@ -159,7 +158,6 @@ it('menampilkan lini masa lima tahap beserta tanggal dan catatan', function () {
         ->assertSee('2 Oktober 2026, 10:00')
         ->assertSee('3 Oktober 2026, 11:00')
         ->assertSee('5 Oktober 2026, 12:00')
-        ->assertSee('Perbaiki surat keterangan kematian.')
         ->assertSee('Berkas sempat dikembalikan untuk perbaikan.')
         ->assertSee('Unduh Dokumen');
 });
