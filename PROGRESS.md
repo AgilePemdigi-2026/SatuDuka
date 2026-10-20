@@ -53,13 +53,9 @@ Sumber kebenaran: `docs/SRS_clean.md`, `docs/DATABASE.md`, `docs/gui/`, `docs/di
 
 ### Masalah Terbuka
 
-- `.env` lokal masih memakai `APP_FALLBACK_LOCALE=en` dan `APP_FAKER_LOCALE=en_US` (file
-  `.env` tidak diubah sesuai instruksi), sedangkan `.env.example` memakai `id` / `id_ID`.
-  Perlu diselaraskan manual saat `.env` boleh diubah.
+- ~~`.env` lokal masih memakai `APP_FALLBACK_LOCALE=en` dan `APP_FAKER_LOCALE=en_US`~~ — sudah diperbaiki.
 - Port `5432` (session pooler) terblokir jaringan lokal, sehingga jalur migrasi sesuai
   `AGENTS.md` belum dapat diverifikasi di lingkungan ini.
-- Skema basis data domain (`pengguna`, `laporan_kematian`, `log_audit`, dan seterusnya)
-  belum dibuat; itu adalah pekerjaan Fase 1.
 - Verifikasi `php artisan migrate:fresh --seed` terhadap Supabase dan pengecekan browser
   belum dilakukan pada fase ini.
 
@@ -69,4 +65,97 @@ Sumber kebenaran: `docs/SRS_clean.md`, `docs/DATABASE.md`, `docs/gui/`, `docs/di
   (`New-Item`, `@"`, `"@ | Set-Content`) sehingga kini berisi HTML Blade murni.
 - `progress.md` (isi masih terbungkus pembungkus PowerShell dan menyebut Laravel 11) diganti
   menjadi `PROGRESS.md` dengan isi yang sesuai kenyataan.
-- `AGENTS.md` sudah disesuaikan (masih berlaku sebagai aturan proyek utama).
+
+---
+
+## Fase 1 — Database
+
+- **Status:** Selesai (2026-10-20).
+- **Ringkasan:** Tujuh tabel aplikasi, model Eloquent, factory, seeder, migration RLS, dan
+  tes relasi telah dibuat. `php artisan migrate:fresh --seed` berhasil dijalankan terhadap
+  Supabase dan `php artisan test` hijau (13 test, 37 asersi).
+- **Rincian lengkap, ketidakkonsistenan SRS, dan pertanyaan:** `docs/REKOMENDASI.md`
+  (dibaca sebelum memulai Fase 2).
+
+### Skema yang dibuat
+
+| Tabel | Kunci utama | Relasi keluar |
+|---|---|---|
+| `pengguna` | `id_pengguna` | 1:N `laporan_kematian`, 1:N `hasil_verifikasi`, 1:N `dokumen_resmi`, 1:N `log_audit` |
+| `laporan_kematian` | `id_laporan` | N:1 `pengguna` (pemohon), 1:N `berkas_pendukung`, 1:N `hasil_verifikasi`, 1:1 `dokumen_resmi` |
+| `berkas_pendukung` | `id_berkas` | N:1 `laporan_kematian` |
+| `hasil_verifikasi` | `id_verifikasi` | N:1 `laporan_kematian`, N:1 `pengguna` (verifikator), 1:N `anomali_dokumen` |
+| `anomali_dokumen` | `id_anomali` | N:1 `hasil_verifikasi` |
+| `dokumen_resmi` | `id_dokumen` | N:1 `laporan_kematian` (unik, 1:1), N:1 `pengguna` (pejabat) |
+| `log_audit` | `id_log` | N:1 `pengguna` (nullable) |
+
+Tabel sesi/cache/job bawaan Laravel tetap dipertahankan (`sessions`,
+`password_reset_tokens`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`).
+
+### Keputusan Teknis Fase 1
+
+- **Tabel `users` bawaan Laravel dihapus**; autentikasi memakai tabel `pengguna`
+  (`config/auth.php` -> `App\Models\Pengguna`, `getAuthIdentifierName()` =
+  `id_pengguna`, `getAuthPasswordName()` = `kata_sandi`). Model `User` dan
+  `UserFactory` ikut dihapus. Alasan lengkap di `docs/REKOMENDASI.md` bagian (a).
+- **Migration RLS** (`2026_10_20_000008_enable_row_level_security_table.php`) menjalankan
+  `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` untuk 7 tabel aplikasi dan seluruh tabel
+  bawaan di skema `public`, tanpa policy. Migration dibungkus pemeriksaan driver
+  (`pgsql` saja) sehingga pengujian SQLite tidak gagal. Terverifikasi: seluruh tabel
+  `public` ber-RLS aktif dan `pg_policies` kosong.
+- **Kompatibilitas SQLite:** `peran` memakai `enum` Laravel (menjadi
+  `varchar + check` di kedua driver, bukan tipe ENUM PostgreSQL asli), `detail` memakai
+  `jsonb` (Laravel menurunkannya menjadi `text` pada SQLite). Tidak ada tipe khusus
+  PostgreSQL lain yang dipakai.
+- **Kolom waktu:** hanya `pengguna` yang memiliki `dibuat_pada`/`diperbarui_pada`;
+  `log_audit` hanya `dibuat_pada` dan bersifat append-only (model menolak update dan
+  delete). Tabel lain memakai kolom waktu domainnya masing-masing.
+- **Relasi 1:1** `laporan_kematian` -> `dokumen_resmi` dijamin indeks unik pada
+  `id_laporan`; `no_dokumen` dan `id_pengguna` pada `dokumen_resmi` nullable sampai
+  proses TTE selesai.
+- **Kredensial demo** (kata sandi semuanya `password123`):
+
+  | Peran | Email | NIK / NIP |
+  |---|---|---|
+  | Pemohon | `pemohon@demo.satuduka.id` | NIK `9999990101900001` |
+  | Verifikator | `verifikator@demo.satuduka.id` | NIP `999999991234567890` |
+  | Pejabat | `pejabat@demo.satuduka.id` | NIP `999999992345678901` |
+
+  Seluruh NIK/NIP memakai kode wilayah fiktif agar mustahil menabrak data warga asli.
+- **Data contoh:** 5 pengguna, 10 laporan kematian tersebar pada 6 status, 35 berkas
+  pendukung, 3 hasil verifikasi, 2 anomali (1 Terbuka, 1 Selesai), 2 dokumen resmi
+  (1 Menunggu, 1 Selesai), 3 baris log audit. Data SIAK dummy (15 catatan) disimpan di
+  `database/data/siak_dummy.json` (bukan tabel aplikasi) dan dibaca melalui
+  `App\Support\DataSIAK`.
+- **Pengujian:** SQLite in-memory (`phpunit.xml`) dengan `RefreshDatabase`; tidak pernah
+  diarahkan ke Supabase. Tes relasi Tabel 8.2 ada di
+  `tests/Feature/Database/RelasiBasisDataTest.php`.
+- **Lingkungan:** ekstensi `pdo_sqlite` dan `sqlite3` diaktifkan pada `php.ini` lokal
+  (bawaan Winget PHP 8.3 tidak mengaktifkannya) karena pengujian diwajibkan memakai
+  SQLite in-memory. Koneksi ke Supabase tetap memakai port `6543` + emulate prepares
+  seperti pada Fase 0 (tidak diubah).
+- **Catatan:** paket `laravel/pao` (alat bantu keluaran JSON untuk agen AI) terpasang
+  sendiri dari `composer.json` dan `composer.lock` selama sesi ini; paket ini sudah
+  tidak diperlukan dan `php artisan test` kini menampilkan keluaran Pest biasa.
+  `composer validate` dan `composer install --dry-run` memastikan berkas tetap sinkron
+  (tidak ada paket yang perlu dipasang/dilepas).
+
+### Target Database yang Diverifikasi
+
+Sebelum `migrate:fresh` dijalankan, target diperiksa (tanpa password):
+host `aws-0-ap-northeast-1.pooler.supabase.com`, port `6543`, basis data `postgres`,
+user `postgres.grurcuiuzmnozciyjhiy` (project ref `grurcuiuzmnozciyjhiy`).
+Isi database sebelum wiped hanya tabel skeleton Laravel dari Fase 0 dan seluruhnya
+kosong, sehingga dipastikan ini proyek Supabase SATUDUKA.
+
+### Masalah Terbuka (Fase 1)
+
+- `FORCE ROW LEVEL SECURITY` belum diaktifkan; saat ini RLS hanya bergantung pada
+  kenyataan bahwa role `postgres` adalah pemilik tabel sehingga RLS diabaikan untuk
+  role tersebut. Pengaman tambahan di level database dikerjakan di Fase 9.
+- Optimistic locking untuk rekonsiliasi anomali belum tersedia karena tabel
+  `anomali_dokumen` dan `laporan_kematian` tidak memiliki kolom versi/waktu ubah.
+- Penghitung kunci 15 menit (NFR-02 dan NFR-03) belum ada tempat penyimpanannya.
+- Jumlah data SIAK dummy masih 15 catatan dan belum mencakup NIK pelapor.
+- Banyak keputusan yang menunggu jawaban Anda pada bagian (e) `docs/REKOMENDASI.md`
+  (email registrasi, enkripsi NIK, status tambahan, tabel notifikasi, dan lainnya).
