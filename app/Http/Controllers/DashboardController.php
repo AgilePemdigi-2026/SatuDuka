@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LaporanKematian;
 use Illuminate\Http\Request;
 
 /**
@@ -23,6 +24,11 @@ class DashboardController extends Controller
             $pengguna->adalahPemohon() => view('dashboard.pemohon', [
                 'pengguna' => $pengguna,
                 'daftarLaporan' => $pengguna->laporanKematian()->orderByDesc('dibuat_pada')->get(),
+                'ringkasanStatus' => $pengguna->laporanKematian()
+                    ->where('status_pengajuan', '!=', LaporanKematian::STATUS_DRAF)
+                    ->selectRaw('status_pengajuan, count(*) as jumlah')
+                    ->groupBy('status_pengajuan')
+                    ->pluck('jumlah', 'status_pengajuan'),
             ]),
             $pengguna->adalahVerifikator() => view('dashboard.verifikator', ['pengguna' => $pengguna]),
             default => view('dashboard.pejabat', ['pengguna' => $pengguna]),

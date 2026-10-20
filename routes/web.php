@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegistrasiController;
+use App\Http\Controllers\StatusPengajuanController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -60,4 +61,9 @@ Route::middleware(['auth', 'peran:pemohon'])->group(function () {
     Route::post('/laporan/{laporan}/berkas', [LaporanController::class, 'unggahBerkas'])->name('laporan.berkas.unggah');
     Route::get('/laporan/{laporan}/berkas/{berkas}', [LaporanController::class, 'pratinjauBerkas'])->name('laporan.berkas');
     Route::get('/laporan/{laporan}', [LaporanController::class, 'lihat'])->name('laporan.lihat');
+
+    // Pemantauan status pengajuan (use case 5.2.5).
+    Route::get('/pengajuan/status', [StatusPengajuanController::class, 'daftar'])->name('pengajuan.status');
+    Route::get('/pengajuan/status/{laporan}', [StatusPengajuanController::class, 'detail'])->name('pengajuan.detail');
+    Route::get('/pengajuan/{laporan}/dokumen', [StatusPengajuanController::class, 'unduh'])->name('pengajuan.unduh');
 });

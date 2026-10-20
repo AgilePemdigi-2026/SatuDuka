@@ -87,8 +87,23 @@
 
         <div class="mt-8 grid gap-4 sm:grid-cols-2">
             <div class="rounded-lg border border-gray-200 p-4">
-                <h2 class="font-semibold text-slate-800">Status Pengajuan</h2>
-                <p class="mt-1 text-sm text-gray-500">Segera hadir.</p>
+                <div class="flex items-start justify-between gap-2">
+                    <h2 class="font-semibold text-slate-800">Status Pengajuan</h2>
+                    <a href="{{ route('pengajuan.status') }}" class="text-sm text-slate-700 underline">Lihat semua</a>
+                </div>
+
+                @if ($ringkasanStatus->isEmpty())
+                    <p class="mt-1 text-sm text-gray-500">Belum ada pengajuan yang diajukan.</p>
+                @else
+                    <ul class="mt-2 space-y-1 text-sm">
+                        @foreach ($ringkasanStatus as $status => $jumlah)
+                            <li class="flex items-center justify-between gap-2">
+                                <span class="text-gray-600">{{ $status }}</span>
+                                <span class="rounded-full px-2 py-0.5 text-xs font-medium {{ $warnaStatus($status) }}">{{ $jumlah }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
             </div>
             <div class="rounded-lg border border-gray-200 p-4">
                 <h2 class="font-semibold text-slate-800">Profil Saya</h2>
