@@ -23,12 +23,22 @@ class DashboardController extends Controller
         return match (true) {
             $pengguna->adalahPemohon() => view('dashboard.pemohon', [
                 'pengguna' => $pengguna,
-                'daftarLaporan' => $pengguna->laporanKematian()->orderByDesc('dibuat_pada')->get(),
+                'perluTindakan' => $pengguna->laporanKematian()
+                    ->whereIn('status_pengajuan', LaporanKematian::DAFTAR_STATUS_BOLEH_DIUBAH)
+                    ->orderByDesc('dibuat_pada')
+                    ->get(),
+                'pengajuanSaya' => $pengguna->laporanKematian()
+                    ->where('status_pengajuan', '!=', LaporanKematian::STATUS_DRAF)
+                    ->orderByDesc('dibuat_pada')
+                    ->limit(5)
+                    ->get(),
                 'ringkasanStatus' => $pengguna->laporanKematian()
                     ->where('status_pengajuan', '!=', LaporanKematian::STATUS_DRAF)
                     ->selectRaw('status_pengajuan, count(*) as jumlah')
                     ->groupBy('status_pengajuan')
-                    ->pluck('jumlah', 'status_pengajuan'),
+                    ->pluck('jumlah', 'status_pengajuan')
+                    ->filter(fn ($jumlah) => (int) $jumlah > 0)
+                    ->sortBy(fn ($jumlah, string $status) => array_search($status, LaporanKematian::DAFTAR_STATUS, true)),
             ]),
             $pengguna->adalahVerifikator() => view('dashboard.verifikator', ['pengguna' => $pengguna]),
             default => view('dashboard.pejabat', ['pengguna' => $pengguna]),

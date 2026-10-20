@@ -188,4 +188,32 @@ class LaporanKematian extends Model
     {
         return $this->status_pengajuan === self::STATUS_SELESAI;
     }
+
+    /**
+     * Nama almarhum untuk ditampilkan pada daftar pengajuan.
+     */
+    public function labelNamaAlmarhum(): string
+    {
+        if ($this->adalahDraf() && blank($this->nama_almarhum)) {
+            return 'Draf belum diisi';
+        }
+
+        return $this->nama_almarhum ?: '—';
+    }
+
+    /**
+     * Tanggal pengajuan untuk ditampilkan pada daftar pengajuan.
+     */
+    public function labelTanggalPengajuan(): string
+    {
+        if ($this->tanggal_pengajuan !== null) {
+            return $this->tanggal_pengajuan->translatedFormat('j F Y');
+        }
+
+        if ($this->adalahDraf() && $this->dibuat_pada !== null) {
+            return 'Dibuat '.$this->dibuat_pada->translatedFormat('j F Y');
+        }
+
+        return '—';
+    }
 }

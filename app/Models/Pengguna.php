@@ -135,6 +135,20 @@ class Pengguna extends Authenticatable
         $this->notify(new TautanAturUlangKataSandi($token));
     }
 
+    /**
+     * Inisial nama untuk avatar saat foto profil belum diunggah.
+     */
+    public function inisial(): string
+    {
+        $inisial = collect(preg_split('/\s+/u', trim((string) $this->nama_lengkap)) ?: [])
+            ->filter()
+            ->take(2)
+            ->map(fn (string $kata) => mb_strtoupper(mb_substr($kata, 0, 1)))
+            ->implode('');
+
+        return $inisial !== '' ? $inisial : '?';
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Pencarian pengguna

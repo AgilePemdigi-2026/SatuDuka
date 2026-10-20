@@ -3,12 +3,7 @@
 @section('judul', 'Dashboard Verifikator')
 
 @section('navigasi')
-    <a href="{{ route('profil.tampilkan') }}" class="text-sm text-gray-600 hover:underline">Kelola Profil</a>
-    <span class="text-sm text-gray-700">{{ $pengguna->nama_lengkap }}</span>
-    <form method="POST" action="{{ route('keluar') }}">
-        @csrf
-        <button type="submit" class="text-sm font-medium text-red-600 hover:underline">Keluar</button>
-    </form>
+    @include('komponen.menu_avatar', ['pengguna' => $pengguna])
 @endsection
 
 @section('konten')

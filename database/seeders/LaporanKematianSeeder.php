@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\BerkasPendukung;
 use App\Models\LaporanKematian;
 use App\Models\Pengguna;
+use App\Support\DataSIAK;
 use Illuminate\Database\Seeder;
 
 /**
@@ -41,6 +42,10 @@ class LaporanKematianSeeder extends Seeder
             ->get()
             ->values();
 
+        // Nama almarhum diambil berurutan dari data SIAK agar setiap laporan
+        // memiliki nama berbeda dan tidak ada nama yang kembar.
+        $dataSiak = DataSIAK::semua();
+
         foreach (self::SEBARAN_STATUS as $index => $status) {
             // Enam pengajuan pertama milik pemohon demo, sisanya dibagi ke
             // dua pemohon lainnya.
@@ -48,9 +53,19 @@ class LaporanKematianSeeder extends Seeder
                 ? $pemohonDemo
                 : $pemohonLain[($index - 6) % max($pemohonLain->count(), 1)];
 
-            $laporan = LaporanKematian::factory()->denganStatus($status)->create([
-                'id_pengguna' => $pemohon->id_pengguna,
-            ]);
+            $atribut = ['id_pengguna' => $pemohon->id_pengguna];
+
+            if (isset($dataSiak[$index])) {
+                $atribut['nama_almarhum'] = $dataSiak[$index]['nama_lengkap'];
+                $atribut['nik_almarhum'] = $dataSiak[$index]['nik'];
+            }
+
+            // Nomor pengajuan baru terbit saat pengajuan dikirim, bukan pada draf.
+            if ($status === LaporanKematian::STATUS_DRAF) {
+                $atribut['no_pengajuan'] = null;
+            }
+
+            $laporan = LaporanKematian::factory()->denganStatus($status)->create($atribut);
 
             // 3 sampai 4 berkas pendukung per laporan.
             $jumlahBerkas = 3 + ($index % 2);

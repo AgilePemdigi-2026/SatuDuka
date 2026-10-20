@@ -236,6 +236,78 @@ it('membatasi daftar pengajuan per halaman', function () {
     $respons->assertSee('page=2', false);
 });
 
+it('menampilkan draf kosong pada bagian perlu tindakan', function () {
+    [$pemohon] = buatAkunDemo();
+
+    LaporanKematian::factory()->create([
+        'id_pengguna' => $pemohon->id_pengguna,
+        'no_pengajuan' => null,
+        'status_pengajuan' => LaporanKematian::STATUS_DRAF,
+        'nama_almarhum' => null,
+        'dibuat_pada' => Carbon::parse('2026-10-21 08:00'),
+    ]);
+
+    $this->actingAs($pemohon)->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Perlu Tindakan Anda')
+        ->assertSee('Draf belum diisi')
+        ->assertSee('Dibuat 21 Oktober 2026')
+        ->assertSee('>Lanjutkan</a>', false);
+});
+
+it('menampilkan tombol Perbaiki untuk pengajuan yang membutuhkan revisi', function () {
+    [$pemohon] = buatAkunDemo();
+
+    $laporan = buatPengajuanTerkirim($pemohon, [
+        'no_pengajuan' => 'SD-20261020-0011',
+        'status_pengajuan' => LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI,
+    ]);
+
+    $this->actingAs($pemohon)->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Perlu Tindakan Anda')
+        ->assertSee('>Perbaiki</a>', false)
+        ->assertSee(route('laporan.ubah', $laporan));
+});
+
+it('menampilkan tombol Lihat untuk pengajuan yang sudah selesai', function () {
+    [$pemohon] = buatAkunDemo();
+
+    $laporan = buatPengajuanTerkirim($pemohon, [
+        'no_pengajuan' => 'SD-20261020-0012',
+        'status_pengajuan' => LaporanKematian::STATUS_SELESAI,
+    ]);
+
+    $this->actingAs($pemohon)->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('>Lihat</a>', false)
+        ->assertSee(route('pengajuan.detail', $laporan))
+        ->assertDontSee('Perlu Tindakan Anda');
+});
+
+it('membatasi pengajuan saya menjadi lima baris terbaru', function () {
+    [$pemohon] = buatAkunDemo();
+
+    foreach (range(1, 7) as $urutan) {
+        buatPengajuanTerkirim($pemohon, [
+            'no_pengajuan' => sprintf('SD-20261020-%04d', $urutan),
+            'nama_almarhum' => 'Almarhum '.$urutan,
+            'status_pengajuan' => LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+            'dibuat_pada' => now()->subMinutes(10 - $urutan),
+        ]);
+    }
+
+    $respons = $this->actingAs($pemohon)->get(route('dashboard'))->assertOk();
+
+    expect($respons->viewData('pengajuanSaya'))->toHaveCount(5);
+
+    $respons->assertSee('Almarhum 7')
+        ->assertSee('Almarhum 3')
+        ->assertDontSee('Almarhum 2')
+        ->assertDontSee('Almarhum 1')
+        ->assertSee('Lihat semua');
+});
+
 it('menampilkan ringkasan status pengajuan di dashboard pemohon', function () {
     [$pemohon] = buatAkunDemo();
 

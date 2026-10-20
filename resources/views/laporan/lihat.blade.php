@@ -4,23 +4,10 @@
 
 @section('navigasi')
     <a href="{{ route('dashboard') }}" class="text-sm text-gray-600 hover:underline">Dashboard</a>
-    <span class="text-sm text-gray-700">{{ $pengguna->nama_lengkap }}</span>
-    <form method="POST" action="{{ route('keluar') }}">
-        @csrf
-        <button type="submit" class="text-sm font-medium text-red-600 hover:underline">Keluar</button>
-    </form>
+    @include('komponen.menu_avatar', ['pengguna' => $pengguna])
 @endsection
 
 @section('konten')
-    @php
-        $warnaStatus = match ($laporan->status_pengajuan) {
-            \App\Models\LaporanKematian::STATUS_DRAF => 'bg-gray-100 text-gray-700',
-            \App\Models\LaporanKematian::STATUS_SELESAI => 'bg-green-100 text-green-800',
-            \App\Models\LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI => 'bg-red-100 text-red-800',
-            default => 'bg-amber-100 text-amber-800',
-        };
-    @endphp
-
     <div class="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -32,9 +19,7 @@
                     </span>
                 </p>
             </div>
-            <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $warnaStatus }}">
-                {{ $laporan->status_pengajuan }}
-            </span>
+            @include('komponen.badge_status', ['status' => $laporan->status_pengajuan])
         </div>
 
         @if ($laporan->tanggal_pengajuan !== null)

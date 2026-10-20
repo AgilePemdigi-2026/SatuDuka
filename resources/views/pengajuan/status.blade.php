@@ -4,22 +4,10 @@
 
 @section('navigasi')
     <a href="{{ route('dashboard') }}" class="text-sm text-gray-600 hover:underline">Dashboard</a>
-    <span class="text-sm text-gray-700">{{ $pengguna->nama_lengkap }}</span>
-    <form method="POST" action="{{ route('keluar') }}">
-        @csrf
-        <button type="submit" class="text-sm font-medium text-red-600 hover:underline">Keluar</button>
-    </form>
+    @include('komponen.menu_avatar', ['pengguna' => $pengguna])
 @endsection
 
 @section('konten')
-    @php
-        $warnaStatus = fn (string $status) => match ($status) {
-            \App\Models\LaporanKematian::STATUS_SELESAI => 'bg-green-100 text-green-800',
-            \App\Models\LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI => 'bg-red-100 text-red-800',
-            default => 'bg-amber-100 text-amber-800',
-        };
-    @endphp
-
     <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
         <h1 class="text-xl font-bold text-slate-800 sm:text-2xl">Lacak Status Pengajuan</h1>
         <p class="mt-1 text-sm text-gray-500">
@@ -81,9 +69,7 @@
                                         {{ $laporan->tanggal_pengajuan?->translatedFormat('j F Y, H:i') ?? '—' }}
                                     </td>
                                     <td class="py-3">
-                                        <span class="rounded-full px-2 py-0.5 text-xs font-medium {{ $warnaStatus($laporan->status_pengajuan) }}">
-                                            {{ $laporan->status_pengajuan }}
-                                        </span>
+                                        @include('komponen.badge_status', ['status' => $laporan->status_pengajuan])
                                     </td>
                                 </tr>
                             @endforeach

@@ -186,14 +186,8 @@ class ProfilController extends Controller
             return Storage::disk('local')->response($pengguna->path_foto);
         }
 
-        $inisial = collect(preg_split('/\s+/u', trim((string) $pengguna->nama_lengkap)) ?: [])
-            ->filter()
-            ->take(2)
-            ->map(fn (string $kata) => mb_strtoupper(mb_substr($kata, 0, 1)))
-            ->implode('');
-
         return response(
-            view('profil.inisial', ['inisial' => $inisial !== '' ? $inisial : '?']),
+            view('profil.inisial', ['inisial' => $pengguna->inisial()]),
             200,
             ['Content-Type' => 'image/svg+xml'],
         );
