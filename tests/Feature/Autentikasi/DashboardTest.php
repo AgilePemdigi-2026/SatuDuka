@@ -16,15 +16,18 @@ it('menampilkan dashboard sesuai peran pengguna', function () {
 
     $this->actingAs($pemohon)->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Dashboard Pemohon');
+        ->assertSee('Dashboard Pemohon')
+        ->assertSee('Kelola Profil');
 
     $this->actingAs($verifikator)->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Dashboard Verifikator');
+        ->assertSee('Dashboard Verifikator')
+        ->assertSee('Kelola Profil');
 
     $this->actingAs($pejabat)->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Dashboard Pejabat Penanda Tangan');
+        ->assertSee('Dashboard Pejabat Penanda Tangan')
+        ->assertSee('Kelola Profil');
 });
 
 it('membatasi akses rute berdasarkan peran melalui middleware peran', function () {

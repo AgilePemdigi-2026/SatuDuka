@@ -3,6 +3,7 @@
 @section('judul', 'Dashboard Pejabat')
 
 @section('navigasi')
+    <a href="{{ route('profil.tampilkan') }}" class="text-sm text-gray-600 hover:underline">Kelola Profil</a>
     <span class="text-sm text-gray-700">{{ $pengguna->nama_lengkap }}</span>
     <form method="POST" action="{{ route('keluar') }}">
         @csrf
@@ -24,7 +25,9 @@
             </div>
             <div class="rounded-lg border border-gray-200 p-4">
                 <h2 class="font-semibold text-slate-800">Profil Saya</h2>
-                <p class="mt-1 text-sm text-gray-500">Segera hadir.</p>
+                <p class="mt-1 text-sm text-gray-500">
+                    <a href="{{ route('profil.tampilkan') }}" class="text-slate-700 underline">Kelola Profil</a>
+                </p>
             </div>
         </div>
     </div>

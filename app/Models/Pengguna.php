@@ -65,6 +65,8 @@ class Pengguna extends Authenticatable
         'email',
         'kata_sandi',
         'no_telepon',
+        'alamat',
+        'path_foto',
         'peran',
     ];
 

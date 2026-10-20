@@ -4,6 +4,7 @@ use App\Http\Controllers\AturUlangKataSandiController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\RegistrasiController;
 use App\Http\Controllers\StatusPengajuanController;
 use Illuminate\Support\Facades\Route;
@@ -49,6 +50,15 @@ Route::post('/keluar', [LoginController::class, 'keluar'])
 Route::get('/dashboard', [DashboardController::class, 'tampilkan'])
     ->middleware('auth')
     ->name('dashboard');
+
+// Pengelolaan profil seluruh peran (use case 5.2.4).
+Route::middleware('auth')->group(function () {
+    Route::get('/profil', [ProfilController::class, 'tampilkan'])->name('profil.tampilkan');
+    Route::put('/profil', [ProfilController::class, 'simpan'])->name('profil.simpan');
+    Route::post('/profil/foto', [ProfilController::class, 'unggahFoto'])->name('profil.foto');
+    Route::get('/profil/foto', [ProfilController::class, 'tampilkanFoto'])->name('profil.foto.tampil');
+    Route::put('/profil/kata-sandi', [ProfilController::class, 'ubahKataSandi'])->name('profil.kata_sandi');
+});
 
 // Pengajuan laporan kematian oleh Pemohon (use case 5.2.3).
 Route::middleware(['auth', 'peran:pemohon'])->group(function () {
