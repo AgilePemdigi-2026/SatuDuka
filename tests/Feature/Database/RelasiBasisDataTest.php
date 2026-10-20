@@ -7,6 +7,7 @@ use App\Models\HasilVerifikasi;
 use App\Models\LaporanKematian;
 use App\Models\LogAudit;
 use App\Models\Pengguna;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -125,4 +126,36 @@ it('menyimpan kolom waktu domain dengan benar', function () {
     expect($laporan->tanggal_kematian->toDateString())->toBe('2026-01-15')
         ->and($laporan->tanggal_pengajuan->format('Y-m-d H:i:s'))->toBe('2026-01-16 09:30:00')
         ->and($laporan->perlu_verifikasi_manual)->toBeFalse();
+});
+
+it('menyimpan serta memperbarui kolom waktu buat dan ubah pada tabel pengajuan', function () {
+    Carbon::setTestNow(Carbon::parse('2026-02-01 08:00:00'));
+
+    $laporan = LaporanKematian::factory()->create();
+
+    expect($laporan->dibuat_pada->toDateTimeString())->toBe('2026-02-01 08:00:00')
+        ->and($laporan->diperbarui_pada->toDateTimeString())->toBe('2026-02-01 08:00:00');
+
+    Carbon::setTestNow(Carbon::parse('2026-02-01 09:30:00'));
+
+    $laporan->update(['sebab_kematian' => 'Penyakit Jantung Koroner']);
+    $laporan->refresh();
+
+    expect($laporan->dibuat_pada->toDateTimeString())->toBe('2026-02-01 08:00:00')
+        ->and($laporan->diperbarui_pada->toDateTimeString())->toBe('2026-02-01 09:30:00');
+
+    Carbon::setTestNow();
+});
+
+it('menyimpan kolom waktu buat dan ubah pada tabel verifikasi, anomali, dan dokumen', function () {
+    $hasil = HasilVerifikasi::factory()->create();
+    $anomali = AnomaliDokumen::factory()->create();
+    $dokumen = DokumenResmi::factory()->create();
+
+    expect($hasil->dibuat_pada)->not->toBeNull()
+        ->and($hasil->diperbarui_pada)->not->toBeNull()
+        ->and($anomali->dibuat_pada)->not->toBeNull()
+        ->and($anomali->diperbarui_pada)->not->toBeNull()
+        ->and($dokumen->dibuat_pada)->not->toBeNull()
+        ->and($dokumen->diperbarui_pada)->not->toBeNull();
 });

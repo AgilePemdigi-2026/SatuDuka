@@ -28,6 +28,8 @@ class HasilVerifikasiFactory extends Factory
             'status_verifikasi' => HasilVerifikasi::STATUS_DITERIMA,
             'catatan' => 'Berkas lengkap dan data sesuai dengan data kependudukan.',
             'tanggal_verifikasi' => now(),
+            'dibuat_pada' => now(),
+            'diperbarui_pada' => now(),
         ];
     }
 

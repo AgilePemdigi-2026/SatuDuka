@@ -4,12 +4,19 @@ Dokumen ini disusun setelah **Fase 1 (Database)** selesai: 7 tabel aplikasi, 7 m
 Eloquent, 7 factory, 4 seeder, migration RLS, dan tes relasi sudah terpasang,
 `php artisan migrate:fresh --seed` berhasil di Supabase, dan `php artisan test` hijau.
 
+> **Status: SUDAH DIPUTUSKAN pemilik proyek (2026-10-20).** Seluruh pertanyaan pada
+> bagian (e) telah dijawab dan keputusannya tercatat pada `PROGRESS.md` bagian
+> "Keputusan Pemilik Proyek", termasuk tambahan: kolom waktu buat/ubah pada empat
+> tabel pengajuan, nomor pengajuan aman race condition, login satu formulir
+> "NIK atau NIP", reset kata sandi lewat surel, dan `LayananAudit::catat(...)`.
+> Dokumen ini tetap dipertahankan sebagai catatan temuan dan alasan.
+
 Bagian:
 (a) Ringkasan skema dan keputusan improvisasi
 (b) Ketidakkonsistenan SRS yang ditemukan
 (c) Risiko teknis tiap fitur berikutnya
 (d) Rekomendasi urutan dan penyesuaian Fase 2-10
-(e) Pertanyaan yang membutuhkan keputusan Anda
+(e) Pertanyaan yang membutuhkan keputusan Anda (sudah terjawab, lihat PROGRESS.md)
 
 ---
 
@@ -281,7 +288,28 @@ pencatatan dan tidak ada aksi penting yang lupa masuk `log_audit`.
 
 ---
 
-*Lampiran: 13 tes Pest hijau (37 asersi), `php artisan migrate:fresh --seed` berhasil
+## (f) Ringkasan jawaban pemilik proyek (2026-10-20)
+
+| Pertanyaan (e) | Jawaban | Dampak teknis |
+|---|---|---|
+| 1. Email pada registrasi | **Wajib** (deviasi dari use case 5.2.1) | `pengguna.email` NOT NULL UNIQUE; dicatat sebagai penyimpangan di `PROGRESS.md` |
+| 2. Penyimpanan penghitung kunci 15 menit | **Cache**, bukan tabel; penguncian dicatat ke `log_audit` | `App\Services\LayananPenguncian` dengan TTL 15 menit |
+| 3. Enkripsi NIK | **Ditunda ke Fase 9**; pencarian NIK dipusatkan | `Pengguna::cariByNik()` sebagai satu-satunya jalur pencarian NIK |
+| 4. Status pengajuan tambahan | **Resmi** menjadi status pengajuan | Sudah konstanta dan masuk `LaporanKematian::DAFTAR_STATUS` |
+| 5. Status anomali "Ditolak - Anomali Data Fatal" | **Dipertahankan** | Sudah konstanta `AnomaliDokumen::STATUS_DITOLAK_PERMANEN` |
+| 6. Kolom waktu pada tabel lain | **Ditambahkan** lewat migration baru | `2026_10_20_000009_tambah_kolom_waktu_ke_tabel_pengajuan`; model, factory, tes, `docs/DATABASE.md` diperbarui |
+| 7. Nomor pengajuan | Tetap `SD-YYYYMMDD-NNNN`, tanpa kode wilayah, aman race condition | `App\Services\LayananNomorPengajuan` memakai `pg_advisory_xact_lock` + indeks unik |
+| 8. Tabel notifikasi | Dibuat **nanti pada Fase 6** | Tidak ada perubahan skema sekarang |
+| 9. Data SIAK dummy | **Diperbanyak pada Fase 6** | Tetap 15 catatan untuk sekarang |
+| 10. Penghapusan tabel `users` | **Disetujui** | Migration bawaan diganti nama (hanya sesi + token reset) |
+
+Tambahan: login satu formulir "NIK atau NIP" (16 digit ke `nik`, 18 digit ke `nip`),
+reset kata sandi lewat surel terdaftar yang dicari dari NIK/NIP (`MAIL_MAILER=log` untuk
+demo), dan pembuatan `LayananAudit::catat(...)` yang dipakai pada semua aksi penting.
+
+---
+
+*Lampiran: 21 tes Pest hijau (75 asersi), `php artisan migrate:fresh --seed` berhasil
 di Supabase (host `aws-0-ap-northeast-1.pooler.supabase.com`, port `6543`, basis data
 `postgres`, project ref `grurcuiuzmnozciyjhiy`), seluruh tabel di skema `public` memiliki
 RLS aktif tanpa policy.*

@@ -61,10 +61,13 @@ class LaporanKematian extends Model
     protected $primaryKey = 'id_laporan';
 
     /**
-     * Tabel ini hanya memakai kolom waktu domain (tanggal_pengajuan), bukan
-     * created_at/updated_at.
+     * Kolom waktu buat dan ubah.
      */
-    public $timestamps = false;
+    public const CREATED_AT = 'dibuat_pada';
+
+    public const UPDATED_AT = 'diperbarui_pada';
+
+    public $timestamps = true;
 
     /**
      * @var list<string>
@@ -94,6 +97,8 @@ class LaporanKematian extends Model
             'tanggal_kematian' => 'date',
             'tanggal_pengajuan' => 'datetime',
             'perlu_verifikasi_manual' => 'boolean',
+            'dibuat_pada' => 'datetime',
+            'diperbarui_pada' => 'datetime',
         ];
     }
 

@@ -43,7 +43,14 @@ class HasilVerifikasi extends Model
 
     protected $primaryKey = 'id_verifikasi';
 
-    public $timestamps = false;
+    /**
+     * Kolom waktu buat dan ubah.
+     */
+    public const CREATED_AT = 'dibuat_pada';
+
+    public const UPDATED_AT = 'diperbarui_pada';
+
+    public $timestamps = true;
 
     /**
      * @var list<string>
@@ -63,6 +70,8 @@ class HasilVerifikasi extends Model
     {
         return [
             'tanggal_verifikasi' => 'datetime',
+            'dibuat_pada' => 'datetime',
+            'diperbarui_pada' => 'datetime',
         ];
     }
 

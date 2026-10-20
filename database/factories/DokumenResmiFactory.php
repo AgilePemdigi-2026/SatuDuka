@@ -29,6 +29,8 @@ class DokumenResmiFactory extends Factory
             'status_ttd' => DokumenResmi::STATUS_MENUNGGU,
             'file_dokumen' => null,
             'alasan_pengembalian' => null,
+            'dibuat_pada' => now(),
+            'diperbarui_pada' => now(),
         ];
     }
 

@@ -53,7 +53,14 @@ class AnomaliDokumen extends Model
 
     protected $primaryKey = 'id_anomali';
 
-    public $timestamps = false;
+    /**
+     * Kolom waktu buat dan ubah.
+     */
+    public const CREATED_AT = 'dibuat_pada';
+
+    public const UPDATED_AT = 'diperbarui_pada';
+
+    public $timestamps = true;
 
     /**
      * @var list<string>
@@ -73,6 +80,8 @@ class AnomaliDokumen extends Model
     {
         return [
             'tanggal_rekonsiliasi' => 'datetime',
+            'dibuat_pada' => 'datetime',
+            'diperbarui_pada' => 'datetime',
         ];
     }
 

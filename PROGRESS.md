@@ -70,12 +70,13 @@ Sumber kebenaran: `docs/SRS_clean.md`, `docs/DATABASE.md`, `docs/gui/`, `docs/di
 
 ## Fase 1 — Database
 
-- **Status:** Selesai (2026-10-20).
+- **Status:** Selesai (2026-10-20), dilanjutkan dengan perbaikan berdasarkan keputusan
+  pemilik proyek (lihat bagian "Keputusan Pemilik Proyek" di bawah).
 - **Ringkasan:** Tujuh tabel aplikasi, model Eloquent, factory, seeder, migration RLS, dan
   tes relasi telah dibuat. `php artisan migrate:fresh --seed` berhasil dijalankan terhadap
-  Supabase dan `php artisan test` hijau (13 test, 37 asersi).
+  Supabase dan `php artisan test` hijau (21 test, 75 asersi).
 - **Rincian lengkap, ketidakkonsistenan SRS, dan pertanyaan:** `docs/REKOMENDASI.md`
-  (dibaca sebelum memulai Fase 2).
+  (keputusan pemilik proyek sudah tercatat pada bagian di bawah).
 
 ### Skema yang dibuat
 
@@ -107,9 +108,12 @@ Tabel sesi/cache/job bawaan Laravel tetap dipertahankan (`sessions`,
   `varchar + check` di kedua driver, bukan tipe ENUM PostgreSQL asli), `detail` memakai
   `jsonb` (Laravel menurunkannya menjadi `text` pada SQLite). Tidak ada tipe khusus
   PostgreSQL lain yang dipakai.
-- **Kolom waktu:** hanya `pengguna` yang memiliki `dibuat_pada`/`diperbarui_pada`;
-  `log_audit` hanya `dibuat_pada` dan bersifat append-only (model menolak update dan
-  delete). Tabel lain memakai kolom waktu domainnya masing-masing.
+- **Kolom waktu:** seluruh tabel aplikasi kini memiliki `dibuat_pada` dan
+  `diperbarui_pada`, kecuali `log_audit` yang hanya memiliki `dibuat_pada` dan bersifat
+  append-only (model menolak update dan delete). Tabel `laporan_kematian`,
+  `hasil_verifikasi`, `anomali_dokumen`, dan `dokumen_resmi` mendapat kolom tersebut
+  melalui **migration baru** `2026_10_20_000009_tambah_kolom_waktu_ke_tabel_pengajuan`
+  (migration lama tidak diubah). Tabel lain tetap memakai kolom waktu domainnya.
 - **Relasi 1:1** `laporan_kematian` -> `dokumen_resmi` dijamin indeks unik pada
   `id_laporan`; `no_dokumen` dan `id_pengguna` pada `dokumen_resmi` nullable sampai
   proses TTE selesai.
@@ -148,14 +152,45 @@ user `postgres.grurcuiuzmnozciyjhiy` (project ref `grurcuiuzmnozciyjhiy`).
 Isi database sebelum wiped hanya tabel skeleton Laravel dari Fase 0 dan seluruhnya
 kosong, sehingga dipastikan ini proyek Supabase SATUDUKA.
 
+### Keputusan Pemilik Proyek (hasil baca `docs/REKOMENDASI.md`, 2026-10-20)
+
+| No | Keputusan | Dampak pada Fase 1 |
+|---|---|---|
+| 1 | Email **wajib** diisi saat registrasi (deviasi dari use case 5.2.1 yang hanya meminta NIK dan kata sandi) | `pengguna.email` sudah NOT NULL UNIQUE; penyimpangan dicatat di sini dan akan dicatat juga di view registrasi pada Fase 2 |
+| 2 | Penghitung kunci 15 menit (login dan TTE) disimpan di **cache**, bukan tabel; setiap penguncian dicatat ke `log_audit` | Dibuat `App\Services\LayananPenguncian` (cache + TTL 15 menit + catat ke log audit) |
+| 3 | Enkripsi NIK **ditunda ke Fase 9**; pencarian NIK dipusatkan pada satu method | Dibuat `Pengguna::cariByNik()` (bersama `cariByNip()`, `cariByEmail()`, `cariDenganNikAtauNip()`) sebagai satu-satunya jalur pencarian NIK |
+| 4 | Status `Dalam Rekonsiliasi Anomali` dan `Pending - Menunggu Perbaikan Berkas Pelapor` **resmi** menjadi status pengajuan | Sudah menjadi konstanta dan masuk `LaporanKematian::DAFTAR_STATUS`; kini resmi, bukan status internal |
+| 5 | Status anomali `Ditolak - Anomali Data Fatal` **dipertahankan** | Sudah menjadi `AnomaliDokumen::STATUS_DITOLAK_PERMANEN` dan masuk daftar status |
+| 6 | Tambah `dibuat_pada` dan `diperbarui_pada` pada `laporan_kematian`, `hasil_verifikasi`, `anomali_dokumen`, `dokumen_resmi` lewat **migration baru** | Migration `2026_10_20_000009_tambah_kolom_waktu_ke_tabel_pengajuan`; model, factory, tes, dan `docs/DATABASE.md` diperbarui |
+| 7 | Nomor pengajuan tetap `SD-YYYYMMDD-NNNN` tanpa kode wilayah, dan `NNNN` dibuat aman dari race condition | Dibuat `App\Services\LayananNomorPengajuan` (advisory lock `pg_advisory_xact_lock` pada PostgreSQL + indeks unik) |
+| 8 | Tabel notifikasi dibuat **nanti pada Fase 6** | Tidak ada perubahan skema pada fase ini |
+| 9 | Data SIAK dummy **diperbanyak pada Fase 6** | `database/data/siak_dummy.json` tetap 15 catatan untuk sekarang |
+| 10 | Penghapusan tabel `users` **disetujui** | Migration bawaan diganti nama menjadi `0001_01_01_000000_create_sessions_and_password_reset_tokens_table.php` |
+
+**Tambahan dari pemilik proyek:**
+
+- **Login satu formulir "NIK atau NIP":** identitas 16 digit dibaca sebagai `nik`,
+  identitas 18 digit dibaca sebagai `nip`. Flux ini dipakai
+  `Pengguna::cariDenganNikAtauNip()` pada Fase 2.
+- **Reset kata sandi lewat surel yang terdaftar** (surel dicari dari NIK/NIP yang
+  diketik). `MAIL_MAILER=log` untuk mode demo; `password_reset_tokens` tetap dipakai.
+- **`LayananAudit::catat(...)` dibuat** (`app/Services/LayananAudit.php`) dan dipakai
+  untuk seluruh aksi penting. Saat ini dipakai pada seeder log audit dan pada
+  pencatatan penguncian; Fase 2 sampai Fase 8 wajib memakainya.
+- **Akun demo:** `pemohon@demo.satuduka.id` (NIK `9999990101900001`),
+  `verifikator@demo.satuduka.id` (NIP `999999991234567890`),
+  `pejabat@demo.satuduka.id` (NIP `999999992345678901`); kata sandi semuanya
+  `password123`.
+
 ### Masalah Terbuka (Fase 1)
 
 - `FORCE ROW LEVEL SECURITY` belum diaktifkan; saat ini RLS hanya bergantung pada
   kenyataan bahwa role `postgres` adalah pemilik tabel sehingga RLS diabaikan untuk
   role tersebut. Pengaman tambahan di level database dikerjakan di Fase 9.
-- Optimistic locking untuk rekonsiliasi anomali belum tersedia karena tabel
-  `anomali_dokumen` dan `laporan_kematian` tidak memiliki kolom versi/waktu ubah.
-- Penghitung kunci 15 menit (NFR-02 dan NFR-03) belum ada tempat penyimpanannya.
-- Jumlah data SIAK dummy masih 15 catatan dan belum mencakup NIK pelapor.
-- Banyak keputusan yang menunggu jawaban Anda pada bagian (e) `docs/REKOMENDASI.md`
-  (email registrasi, enkripsi NIK, status tambahan, tabel notifikasi, dan lainnya).
+- Optimistic locking untuk rekonsiliasi anomali belum ada: kolom `diperbarui_pada`
+  kini sudah tersedia pada `anomali_dokumen` dan `laporan_kematian`, tetapi pemeriksaan
+  versi masih harus dirancang pada Fase 7.
+- Jumlah data SIAK dummy masih 15 catatan dan belum mencakup NIK pelapor; diperbanyak
+  pada Fase 6.
+- Batas nomor urut harian `NNNN` adalah 9999 per hari; bila someday terlampaui perlu
+  nomor dengan panjang lebih (format `SD-YYYYMMDD-NNNN` tetap berlaku).

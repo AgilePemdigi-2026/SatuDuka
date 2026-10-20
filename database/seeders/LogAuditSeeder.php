@@ -4,11 +4,13 @@ namespace Database\Seeders;
 
 use App\Models\LogAudit;
 use App\Models\Pengguna;
+use App\Services\LayananAudit;
 use Illuminate\Database\Seeder;
 
 /**
  * Contoh jejak audit. Tabel `log_audit` bersifat append-only: tidak ada pembaruan
- * maupun penghapusan baris log.
+ * maupun penghapusan baris log. Seluruh pencatatan memakai {@see LayananAudit}
+ * agar formatnya sama dengan aksi pada aplikasi.
  */
 class LogAuditSeeder extends Seeder
 {
@@ -17,30 +19,24 @@ class LogAuditSeeder extends Seeder
         $pemohon = Pengguna::where('email', 'pemohon@demo.satuduka.id')->firstOrFail();
         $verifikator = Pengguna::where('peran', Pengguna::PERAN_VERIFIKATOR)->firstOrFail();
 
-        LogAudit::factory()->create([
-            'id_pengguna' => $pemohon->id_pengguna,
-            'aksi' => 'mengajukan_laporan',
-            'objek' => 'laporan_kematian',
-            'id_objek' => null,
-            'detail' => ['sumber' => 'formulir pengajuan', 'versi' => 1],
-        ]);
+        LayananAudit::catat(
+            aksi: 'mengajukan_laporan',
+            objek: 'laporan_kematian',
+            detail: ['sumber' => 'formulir pengajuan', 'versi' => 1],
+            pengguna: $pemohon,
+        );
 
-        LogAudit::factory()->create([
-            'id_pengguna' => $verifikator->id_pengguna,
-            'aksi' => 'memverifikasi_berkas',
-            'objek' => 'laporan_kematian',
-            'id_objek' => null,
-            'detail' => ['hasil' => 'diterima'],
-        ]);
+        LayananAudit::catat(
+            aksi: 'memverifikasi_berkas',
+            objek: 'laporan_kematian',
+            detail: ['hasil' => 'diterima'],
+            pengguna: $verifikator,
+        );
 
-        LogAudit::factory()->create([
-            'id_pengguna' => null,
-            'aksi' => 'memeriksa_layanan_eksternal',
-            'objek' => 'layanan',
-            'id_objek' => null,
-            'detail' => ['parameter' => 'nik_almarhum'],
-            'layanan_eksternal' => LogAudit::LAYANAN_SIAK,
-            'hasil' => LogAudit::HASIL_SUKSES,
-        ]);
+        LayananAudit::catatLayanan(
+            layanan: LogAudit::LAYANAN_SIAK,
+            hasil: LogAudit::HASIL_SUKSES,
+            detail: ['parameter' => 'nik_almarhum'],
+        );
     }
 }

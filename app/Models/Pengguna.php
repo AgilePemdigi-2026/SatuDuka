@@ -119,6 +119,74 @@ class Pengguna extends Authenticatable
 
     /*
     |--------------------------------------------------------------------------
+    | Pencarian pengguna
+    |--------------------------------------------------------------------------
+    |
+    | Semua pencarian NIK/NIP dipusatkan di sini agar mudah dienkripsi pada
+    | Fase 9 (keputusan pemilik proyek, lihat PROGRESS.md).
+    |
+    */
+
+    /**
+     * Cari pengguna berdasarkan NIK.
+     */
+    public static function cariByNik(string $nik): ?self
+    {
+        $nik = trim($nik);
+
+        if ($nik === '') {
+            return null;
+        }
+
+        return self::query()->where('nik', $nik)->first();
+    }
+
+    /**
+     * Cari pengguna berdasarkan NIP.
+     */
+    public static function cariByNip(string $nip): ?self
+    {
+        $nip = trim($nip);
+
+        if ($nip === '') {
+            return null;
+        }
+
+        return self::query()->where('nip', $nip)->first();
+    }
+
+    /**
+     * Cari pengguna berdasarkan surel terdaftar.
+     */
+    public static function cariByEmail(string $email): ?self
+    {
+        $email = trim($email);
+
+        if ($email === '') {
+            return null;
+        }
+
+        return self::query()->where('email', $email)->first();
+    }
+
+    /**
+     * Cari pengguna dari satu identitas "NIK atau NIP" pada formulir login.
+     *
+     * Identitas 16 digit dibaca sebagai NIK, identitas 18 digit dibaca sebagai NIP.
+     */
+    public static function cariDenganNikAtauNip(string $identitas): ?self
+    {
+        $identitas = trim($identitas);
+
+        return match (strlen($identitas)) {
+            16 => self::cariByNik($identitas),
+            18 => self::cariByNip($identitas),
+            default => null,
+        };
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Relasi (Tabel 8.2)
     |--------------------------------------------------------------------------
     */

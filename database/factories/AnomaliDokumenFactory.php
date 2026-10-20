@@ -33,6 +33,8 @@ class AnomaliDokumenFactory extends Factory
             'deskripsi' => 'Data pada berkas tidak sama dengan data master kependudukan.',
             'status_rekonsiliasi' => AnomaliDokumen::STATUS_TERBUKA,
             'tanggal_rekonsiliasi' => null,
+            'dibuat_pada' => now(),
+            'diperbarui_pada' => now(),
         ];
     }
 

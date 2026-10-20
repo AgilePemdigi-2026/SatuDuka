@@ -39,7 +39,14 @@ class DokumenResmi extends Model
 
     protected $primaryKey = 'id_dokumen';
 
-    public $timestamps = false;
+    /**
+     * Kolom waktu buat dan ubah.
+     */
+    public const CREATED_AT = 'dibuat_pada';
+
+    public const UPDATED_AT = 'diperbarui_pada';
+
+    public $timestamps = true;
 
     /**
      * @var list<string>
@@ -61,6 +68,8 @@ class DokumenResmi extends Model
     {
         return [
             'tanggal_terbit' => 'datetime',
+            'dibuat_pada' => 'datetime',
+            'diperbarui_pada' => 'datetime',
         ];
     }
 

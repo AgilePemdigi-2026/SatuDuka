@@ -57,6 +57,8 @@ class LaporanKematianFactory extends Factory
             'tanggal_pengajuan' => null,
             'catatan_revisi' => null,
             'perlu_verifikasi_manual' => false,
+            'dibuat_pada' => now(),
+            'diperbarui_pada' => now(),
         ];
     }
 
