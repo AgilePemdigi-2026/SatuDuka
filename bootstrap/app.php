@@ -21,9 +21,22 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Tamu yang membuka halaman terproteksi diarahkan ke halaman masuk;
-        // pengguna yang sudah masuk tidak melihat halaman masuk/registrasi lagi.
+        // pengguna yang sudah masuk tidak melihat halaman masuk/registrasi lagi,
+        // tetapi diberi tahu akun mana yang sedang aktif.
         $middleware->redirectGuestsTo(fn () => route('masuk'));
-        $middleware->redirectUsersTo(fn () => route('dashboard'));
+        $middleware->redirectUsersTo(function (Request $request) {
+            $pengguna = $request->user();
+
+            if ($pengguna !== null) {
+                $request->session()->flash(
+                    'info',
+                    'Anda sudah masuk sebagai '.$pengguna->nama_lengkap.' ('.$pengguna->labelPeran().'). '
+                    .'Keluar terlebih dahulu untuk berganti akun.',
+                );
+            }
+
+            return route('dashboard');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

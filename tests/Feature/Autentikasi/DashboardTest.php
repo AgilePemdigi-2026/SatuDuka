@@ -18,18 +18,23 @@ it('menampilkan dashboard sesuai peran pengguna', function () {
     $this->actingAs($pemohon)->get(route('dashboard'))
         ->assertOk()
         ->assertSee('Dashboard Pemohon')
+        ->assertSee('Anda masuk sebagai Pemohon')
         ->assertSee('Kelola Profil')
         ->assertDontSee('Profil Saya');
 
     $this->actingAs($verifikator)->get(route('dashboard'))
         ->assertOk()
         ->assertSee('Dashboard Verifikator')
-        ->assertSee('Kelola Profil');
+        ->assertSee('Anda masuk sebagai Verifikator')
+        ->assertSee('Kelola Profil')
+        ->assertDontSee('Profil Saya');
 
     $this->actingAs($pejabat)->get(route('dashboard'))
         ->assertOk()
         ->assertSee('Dashboard Pejabat Penanda Tangan')
-        ->assertSee('Kelola Profil');
+        ->assertSee('Anda masuk sebagai Pejabat')
+        ->assertSee('Kelola Profil')
+        ->assertDontSee('Profil Saya');
 });
 
 it('menampilkan menu avatar dengan inisial saat foto profil belum ada', function () {

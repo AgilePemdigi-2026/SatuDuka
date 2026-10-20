@@ -55,7 +55,8 @@ it('mengarahkan verifikator ke dashboard verifikator saat masuk dengan nip', fun
 
     $this->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Dashboard Verifikator');
+        ->assertSee('Dashboard Verifikator')
+        ->assertSee('Anda masuk sebagai Verifikator');
 });
 
 // Skenario: Berhasil masuk dengan kredensial Pejabat yang valid (NIP 18 digit).
@@ -72,7 +73,8 @@ it('mengarahkan pejabat ke dashboard pejabat saat masuk dengan nip', function ()
 
     $this->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Dashboard Pejabat Penanda Tangan');
+        ->assertSee('Dashboard Pejabat Penanda Tangan')
+        ->assertSee('Anda masuk sebagai Pejabat');
 });
 
 // Skenario: Berhasil masuk dengan opsi Ingat Saya.
@@ -231,7 +233,32 @@ it('mengalihkan pengguna yang sudah masuk dari halaman masuk ke dashboard', func
 
     $this->actingAs($pemohon)
         ->get(route('masuk'))
-        ->assertRedirect(route('dashboard'));
+        ->assertRedirect(route('dashboard'))
+        ->assertSessionHas('info', 'Anda sudah masuk sebagai Pemohon Demo (Pemohon). Keluar terlebih dahulu untuk berganti akun.');
+});
+
+it('memberi tahu akun verifikator yang masih aktif saat membuka halaman masuk', function () {
+    [, $verifikator] = buatAkunDemo();
+
+    $this->actingAs($verifikator)
+        ->followingRedirects()
+        ->get(route('masuk'))
+        ->assertOk()
+        ->assertSee('Anda sudah masuk sebagai Verifikator Demo (Verifikator).')
+        ->assertSee('Keluar terlebih dahulu untuk berganti akun.')
+        ->assertSee('Dashboard Verifikator');
+});
+
+it('memberi tahu akun pejabat yang masih aktif saat membuka halaman registrasi', function () {
+    [,, $pejabat] = buatAkunDemo();
+
+    $this->actingAs($pejabat)
+        ->followingRedirects()
+        ->get(route('registrasi'))
+        ->assertOk()
+        ->assertSee('Anda sudah masuk sebagai Pejabat Demo (Pejabat).')
+        ->assertSee('Keluar terlebih dahulu untuk berganti akun.')
+        ->assertSee('Dashboard Pejabat Penanda Tangan');
 });
 
 // Keluar dari sistem mengakhiri sesi.

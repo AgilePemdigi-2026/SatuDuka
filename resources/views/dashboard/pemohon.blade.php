@@ -12,7 +12,8 @@
             <div>
                 <h1 class="text-2xl font-bold text-slate-800">Dashboard Pemohon</h1>
                 <p class="mt-1 text-sm text-gray-500">
-                    Selamat datang, {{ $pengguna->nama_lengkap }}. Layanan Pencatatan &amp; Administrasi Kematian Kota Yogyakarta.
+                    Selamat datang, {{ $pengguna->nama_lengkap }}. Anda masuk sebagai {{ $pengguna->labelPeran() }}.
+                    Layanan Pencatatan &amp; Administrasi Kematian Kota Yogyakarta.
                 </p>
             </div>
             <a href="{{ route('laporan.baru') }}"

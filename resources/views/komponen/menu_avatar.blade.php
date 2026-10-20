@@ -1,10 +1,5 @@
 @php
-    $labelPeran = match ($pengguna->peran) {
-        \App\Models\Pengguna::PERAN_PEMOHON => 'Pemohon',
-        \App\Models\Pengguna::PERAN_VERIFIKATOR => 'Verifikator',
-        \App\Models\Pengguna::PERAN_PEJABAT => 'Pejabat',
-        default => ucfirst($pengguna->peran),
-    };
+    $labelPeran = $pengguna->labelPeran();
 @endphp
 
 <details class="relative">

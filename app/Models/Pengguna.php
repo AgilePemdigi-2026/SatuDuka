@@ -136,6 +136,19 @@ class Pengguna extends Authenticatable
     }
 
     /**
+     * Label peran untuk ditampilkan di antarmuka.
+     */
+    public function labelPeran(): string
+    {
+        return match ($this->peran) {
+            self::PERAN_PEMOHON => 'Pemohon',
+            self::PERAN_VERIFIKATOR => 'Verifikator',
+            self::PERAN_PEJABAT => 'Pejabat',
+            default => ucfirst((string) $this->peran),
+        };
+    }
+
+    /**
      * Inisial nama untuk avatar saat foto profil belum diunggah.
      */
     public function inisial(): string
