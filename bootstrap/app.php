@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\PastikanPeran;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,7 +13,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Alias middleware pembatas peran: Route::middleware('peran:pemohon').
+        $middleware->alias([
+            'peran' => PastikanPeran::class,
+        ]);
+
+        // Tamu yang membuka halaman terproteksi diarahkan ke halaman masuk;
+        // pengguna yang sudah masuk tidak melihat halaman masuk/registrasi lagi.
+        $middleware->redirectGuestsTo(fn () => route('masuk'));
+        $middleware->redirectUsersTo(fn () => route('dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

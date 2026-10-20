@@ -15,6 +15,7 @@ Gunakan `$table`, `$primaryKey`, dan `$timestamps` eksplisit di model karena tid
 | kata_sandi | varchar(255) | hash; override `getAuthPassword()` |
 | no_telepon | varchar(15) | |
 | peran | enum('pemohon','verifikator','pejabat') | |
+| remember_token | varchar(100) nullable | IMPROVISASI (Fase 2): tidak ada di PDM; dibutuhkan Laravel untuk fitur "Ingat Saya" use case 5.2.2 alur 4.b. Migration `2026_10_20_000010` |
 | dibuat_pada / diperbarui_pada | timestamp | map ke created_at/updated_at |
 
 Auth Laravel: set `config/auth.php` provider ke model `Pengguna`; `getAuthPassword()` mengembalikan `kata_sandi`; `getAuthIdentifierName()` = `id_pengguna`.

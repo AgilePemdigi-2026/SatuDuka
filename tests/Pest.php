@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Pengguna;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,6 +18,42 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
+
+/*
+|--------------------------------------------------------------------------
+| Fungsi Bantu Pengujian
+|--------------------------------------------------------------------------
+*/
+
+/**
+ * Kredensial demo SATUDUKA (docs/DATABASE.md): kata sandi seluruh akun adalah
+ * `password123`.
+ */
+function buatAkunDemo(): array
+{
+    $pemohon = Pengguna::factory()->pemohon()->create([
+        'nama_lengkap' => 'Pemohon Demo',
+        'nik' => '9999990101900001',
+        'email' => 'pemohon@demo.satuduka.id',
+        'kata_sandi' => 'password123',
+    ]);
+
+    $verifikator = Pengguna::factory()->verifikator()->create([
+        'nama_lengkap' => 'Verifikator Demo',
+        'nip' => '999999991234567890',
+        'email' => 'verifikator@demo.satuduka.id',
+        'kata_sandi' => 'password123',
+    ]);
+
+    $pejabat = Pengguna::factory()->pejabat()->create([
+        'nama_lengkap' => 'Pejabat Demo',
+        'nip' => '999999992345678901',
+        'email' => 'pejabat@demo.satuduka.id',
+        'kata_sandi' => 'password123',
+    ]);
+
+    return [$pemohon, $verifikator, $pejabat];
+}
 
 /*
 |--------------------------------------------------------------------------
