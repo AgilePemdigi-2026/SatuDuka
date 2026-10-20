@@ -1,0 +1,122 @@
+[
+    {
+        "nik": "9999990101900101",
+        "nama_lengkap": "Suharto Wiryo",
+        "tanggal_lahir": "1955-03-12",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Malioboro No. 12, Gondokusuman, Yogyakarta",
+        "jenis_kelamin": "L"
+    },
+    {
+        "nik": "9999990101900102",
+        "nama_lengkap": "Siti Aminah",
+        "tanggal_lahir": "1960-07-24",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Malioboro No. 14, Gondokusuman, Yogyakarta",
+        "jenis_kelamin": "P"
+    },
+    {
+        "nik": "9999990101900103",
+        "nama_lengkap": "Budi Santoso",
+        "tanggal_lahir": "1948-11-05",
+        "tempat_lahir": "Sleman",
+        "alamat": "Jl. Kaliurang KM 5, Ngemplak, Sleman",
+        "jenis_kelamin": "L"
+    },
+    {
+        "nik": "9999990101900104",
+        "nama_lengkap": "Sri Wahyuni",
+        "tanggal_lahir": "1955-09-18",
+        "tempat_lahir": "Bantul",
+        "alamat": "Jl.oho No. 3, Pundong, Bantul",
+        "jenis_kelamin": "P"
+    },
+    {
+        "nik": "9999990101900105",
+        "nama_lengkap": "Warjo Darto",
+        "tanggal_lahir": "1942-01-30",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Kaliurang KM 8, Sewon, Bantul",
+        "jenis_kelamin": "L"
+    },
+    {
+        "nik": "9999990101900106",
+        "nama_lengkap": "Ratna Kumala",
+        "tanggal_lahir": "1963-05-22",
+        "tempat_lahir": "Kulon Progo",
+        "alamat": "Jl. Surokonto No. 21, Wates, Kulon Progo",
+        "jenis_kelamin": "P"
+    },
+    {
+        "nik": "9999990101900107",
+        "nama_lengkap": "Haryanto",
+        "tanggal_lahir": "1950-12-09",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Kusumanegara No. 5, Kem-buyakan, Yogyakarta",
+        "jenis_kelamin": "L"
+    },
+    {
+        "nik": "9999990101900108",
+        "nama_lengkap": "Endang Wahyuni",
+        "tanggal_lahir": "1958-08-14",
+        "tempat_lahir": "Gunung Kidul",
+        "alamat": "Jl. Sandang No. 2, Wonosari, Gunung Kidul",
+        "jenis_kelamin": "P"
+    },
+    {
+        "nik": "9999990101900109",
+        "nama_lengkap": "Sukamto",
+        "tanggal_lahir": "1946-02-27",
+        "tempat_lahir": "Sleman",
+        "alamat": "Jl. Magelang KM 12, Ngaglik, Sleman",
+        "jenis_kelamin": "L"
+    },
+    {
+        "nik": "9999990101900110",
+        "nama_lengkap": "Karsih",
+        "tanggal_lahir": "1953-06-03",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Kotagede No. 30, Kotagede, Yogyakarta",
+        "jenis_kelamin": "P"
+    },
+    {
+        "nik": "9999990101900111",
+        "nama_lengkap": "Sudarmo",
+        "tanggal_lahir": "1940-10-16",
+        "tempat_lahir": "Bantul",
+        "alamat": "Jl. Imogiri KM 7, Banguntapan, Bantul",
+        "jenis_kelamin": "L"
+    },
+    {
+        "nik": "9999990101900112",
+        "nama_lengkap": "Nurhayati",
+        "tanggal_lahir": "1965-04-11",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Nagan Lor No. 1, Mantrijeron, Yogyakarta",
+        "jenis_kelamin": "P"
+    },
+    {
+        "nik": "9999990101900113",
+        "nama_lengkap": "Mulyadi",
+        "tanggal_lahir": "1951-03-08",
+        "tempat_lahir": "Kulon Progo",
+        "alamat": "Jl. Canggaharu No. 4, Sentolo, Kulon Progo",
+        "jenis_kelamin": "L"
+    },
+    {
+        "nik": "9999990101900114",
+        "nama_lengkap": "Yatmiati",
+        "tanggal_lahir": "1959-11-25",
+        "tempat_lahir": "Sleman",
+        "alamat": "Jl. Pandeglang No. 9, Ngaglik, Sleman",
+        "jenis_kelamin": "P"
+    },
+    {
+        "nik": "9999990101900115",
+        "nama_lengkap": "Wardiman",
+        "tanggal_lahir": "1945-07-19",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Colombo No. 8, Gondokusuman, Yogyakarta",
+        "jenis_kelamin": "L"
+    }
+]
