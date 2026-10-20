@@ -138,7 +138,9 @@ it('menyimpan serta memperbarui kolom waktu buat dan ubah pada tabel pengajuan',
 
     Carbon::setTestNow(Carbon::parse('2026-02-01 09:30:00'));
 
-    $laporan->update(['sebab_kematian' => 'Penyakit Jantung Koroner']);
+    // Nilai pembaruan sengaja bukan salah satu nilai acak pada factory agar
+    // atribut selalu teranggap berubah.
+    $laporan->update(['sebab_kematian' => 'Sebab kematian hasil pembaruan uji']);
     $laporan->refresh();
 
     expect($laporan->dibuat_pada->toDateTimeString())->toBe('2026-02-01 08:00:00')

@@ -194,3 +194,78 @@ kosong, sehingga dipastikan ini proyek Supabase SATUDUKA.
   pada Fase 6.
 - Batas nomor urut harian `NNNN` adalah 9999 per hari; bila someday terlampaui perlu
   nomor dengan panjang lebih (format `SD-YYYYMMDD-NNNN` tetap berlaku).
+
+## Fase 2 - Autentikasi (Registrasi, Login, Dashboard Per Peran)
+
+- **Status:** Selesai (2026-10-20). `php artisan test` hijau: **54 passed (229 assertions)**;
+  `php artisan migrate:fresh --seed` sukses di Supabase (termasuk migration baru
+  `2026_10_20_000010_tambah_remember_token_ke_pengguna`); kolom `pengguna.remember_token`
+  terverifikasi ada dan RLS tetap aktif pada seluruh tabel skema `public`.
+
+### Yang dibangun
+
+- `RegistrasiController` (use case 5.2.1): formulir NIK + alamat surel + kata sandi +
+  konfirmasi; NIK diverifikasi pada data kependudukan (`App\Support\DataSIAK`); nama lengkap
+  diambil dari SIAK; hanya peran `pemohon` yang bisa mendaftar sendiri.
+- `LoginController` (use case 5.2.2): satu formulir "NIK / NIP" untuk semua peran
+  (`Pengguna::cariDenganNikAtauNip`), opsi "Ingat Saya", penghitungan gagal via
+  `LayananPenguncian` (kunci 15 menit setelah 5 gagal berturut-turut), keluar (logout).
+- `AturUlangKataSandiController`: NIK/NIP → tautan dikirim ke **surel terdaftar** akun
+  (`MAIL_MAILER=log` untuk demo) → formulir kata sandi baru dari tautan surel. Surel
+  berbahasa Indonesia via `App\Notifications\TautanAturUlangKataSandi`.
+- `DashboardController` + 3 kerangka dashboard (pemohon/verifikator/pejabat) dengan
+  navigasi placeholder sesuai fase berikutnya; middleware peran `App\Http\Middleware\PastikanPeran`
+  (alias `peran:pemohon` dll.) terdaftar di `bootstrap/app.php` beserta pengalihan tamu →
+  `route('masuk')` dan pengguna terautentikasi → `route('dashboard')`.
+- Aksi `registrasi`, `masuk`, `masuk_gagal`, `percobaan_masuk_saat_terkunci`, `keluar`,
+  `minta_atur_ulang_kata_sandi(_gagal)`, `atur_ulang_kata_sandi` dicatat ke `log_audit`
+  lewat `LayananAudit::catat(...)`.
+- `config/auth.php`: provider/broker dinamai `pengguna` (menggantikan `users` bawaan).
+- View: `autentikasi/{masuk,daftar,lupa_kata_sandi,atur_ulang_kata_sandi}.blade.php` mengikuti
+  mockup gambar 7.1/7.2 (kartu terpusat, ikon mata tampilkan kata sandi, tautan silang).
+- Gherkin `features/login.feature` (10 skenario) dan `features/register.feature` (9 skenario)
+  dari Bab VI, dipetakan ke `tests/Feature/Autentikasi/{MasukTest,DaftarTest,
+  AturUlangKataSandiTest,DashboardTest}.php` (Behat–Mink tetap diganti Pest, keputusan Fase 0).
+
+### Keputusan Teknis & Penyimpangan Fase 2
+
+- **NFR-02 tidak menyebut jumlah percobaan gagal** (hanya "terlalu banyak percobaan login
+  gagal" + kunci 15 menit; TTE pada NFR-03 = 3 kali). Dipilih **5 percobaan** untuk login
+  (`LayananPenguncian::MAKS_GAGAL_LOGIN = 5`); jumlah ini keputusan implementasi, bukan
+  angka SRS. TTE tetap 3 sesuai NFR-03 (dipakai pada Fase 8).
+- **Pesan kegagalan login generik** "NIK/NIP atau kata sandi salah" untuk identitas tak
+  dikenal maupun kata sandi salah. Use case 5.2.2 alur 4.d membedakan "NIK/NIP tidak
+  ditemukan" dan "Kata sandi tidak cocok", tetapi user story 6.2.1 memakai satu pesan umum;
+  pesan umum dipilih agar tidak membocorkan keberadaan akun.
+- **Kolom surel wajib** saat registrasi (keputusan pemilik proyek no. 1); pesan baru
+  "Format alamat surel tidak valid" / "Surel sudah terdaftar" tidak ada di SRS.
+- **Nama lengkap diambil dari data SIAK** berdasarkan NIK (formulir registrasi tidak punya
+  kolom nama). Konsekuensi: NIK pendaftar harus ada di `database/data/siak_dummy.json`
+  (mis. `9999990101900115`); NIK akun demo pemohon `9999990101900001` TIDAK ada di SIAK
+  karena akun seed melewati verifikasi registrasi. Fase 6 menambah NIK pelapor ke SIAK dummy.
+- **`DataSIAK` dipakai langsung** di controller registrasi; Fase 6 mengalihkannya ke
+  `SIAKService` sesuai arsitektur BCE.
+- **Kolom `pengguna.remember_token`** ditambahkan lewat migration baru
+  (`2026_10_20_000010`) sebagai IMPROVISASI: tidak ada di PDM, tetapi dibutuhkan Laravel
+  untuk fitur "Ingat Saya" (use case 5.2.2 alur 4.b "Menyimpan sesi pengguna pada perangkat").
+  Tercatat di `docs/DATABASE.md`.
+- **Label kolom login "NIK / NIP"** (mockup menulis "Nomor Induk Kependudukan") karena satu
+  formulir melayani NIK dan NIP; branding UI memakai SATUDUKA (mockup memakai "SKD").
+- **Alur reset kata sandi menyimpang dari user story 6.2.1**: setelah "Kirim", sistem
+  mengirim tautan ke surel terdaftar (bukan menampilkan formulir kata sandi baru langsung),
+  sesuai keputusan pemilik proyek. Pesan akhir tetap persis SRS: "Kata sandi berhasil
+  direset. Silakan login."
+- **Pesan "Kata sandi tidak cocok"** (use case 5.2.1) dipakai untuk konfirmasi tidak cocok;
+  user story 6.2.2 punya varian kalimat lain, dipilih yang dari use case.
+- Gotcha pengujian: `assertSessionHasErrors()` mengonsumsi flash galat sehingga GET
+  berikutnya tidak lagi menampilkan pesan; untuk asersi tampilan gunakan
+  `followRedirects($this->post(...))` setelah GET awal (agar `back()` menunjuk halaman form).
+
+### Masalah Terbuka (Fase 2)
+
+- Penghitungan gagal login dikunci per identitas, belum per kombinasi identitas+IP;
+  penguatan rate limit dikerjakan pada Fase 9.
+- Pesan "NIK/NIP tidak ditemukan" pada formulir lupa kata sandi membuka risiko enumerasi
+  akun; diterima untuk demo, dicatat untuk peninjauan Fase 9.
+- Halaman 403 bawaan Laravel masih berbahasa Inggris; kustomisasi halaman galat masuk
+  Fase 9 (penguatan).

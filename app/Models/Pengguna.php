@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Notifications\TautanAturUlangKataSandi;
 use Database\Factories\PenggunaFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 /**
  * Model autentikasi SATUDUKA (menggantikan tabel `users` bawaan Laravel).
@@ -16,6 +18,12 @@ class Pengguna extends Authenticatable
 {
     /** @use HasFactory<PenggunaFactory> */
     use HasFactory;
+
+    /**
+     * Trait notifikasi (dipakai surel pengaturan ulang kata sandi dan
+     * fitur "Ingat Saya").
+     */
+    use Notifiable;
 
     public const PERAN_PEMOHON = 'pemohon';
 
@@ -115,6 +123,14 @@ class Pengguna extends Authenticatable
     public function getEmailForPasswordReset(): string
     {
         return $this->email;
+    }
+
+    /**
+     * Surel pengaturan ulang kata sandi berbahasa Indonesia.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new TautanAturUlangKataSandi($token));
     }
 
     /*
