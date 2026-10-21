@@ -29,6 +29,8 @@ class LogAudit extends Model
 
     public const LAYANAN_NOTIFIKASI = 'Notifikasi';
 
+    public const LAYANAN_AI = 'AI';
+
     /**
      * Hasil pemanggilan layanan eksternal.
      */

@@ -7,6 +7,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\RegistrasiController;
 use App\Http\Controllers\StatusPengajuanController;
+use App\Http\Controllers\VerifikasiController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -67,6 +68,7 @@ Route::middleware(['auth', 'peran:pemohon'])->group(function () {
 
     Route::get('/laporan/{laporan}/ubah', [LaporanController::class, 'tampilkanUbah'])->name('laporan.ubah');
     Route::post('/laporan/{laporan}/draf', [LaporanController::class, 'simpanDraf'])->name('laporan.draf.ubah');
+    Route::post('/laporan/{laporan}/periksa-ai', [LaporanController::class, 'periksaAi'])->name('laporan.periksa_ai');
     Route::post('/laporan/{laporan}/kirim', [LaporanController::class, 'kirim'])->name('laporan.kirim');
     Route::post('/laporan/{laporan}/berkas', [LaporanController::class, 'unggahBerkas'])->name('laporan.berkas.unggah');
     Route::get('/laporan/{laporan}/berkas/{berkas}', [LaporanController::class, 'pratinjauBerkas'])->name('laporan.berkas');
@@ -76,4 +78,14 @@ Route::middleware(['auth', 'peran:pemohon'])->group(function () {
     Route::get('/pengajuan/status', [StatusPengajuanController::class, 'daftar'])->name('pengajuan.status');
     Route::get('/pengajuan/status/{laporan}', [StatusPengajuanController::class, 'detail'])->name('pengajuan.detail');
     Route::get('/pengajuan/{laporan}/dokumen', [StatusPengajuanController::class, 'unduh'])->name('pengajuan.unduh');
+});
+
+// Verifikasi berkas versi baca saja untuk Verifikator.
+Route::middleware(['auth', 'peran:verifikator'])->group(function () {
+    Route::get('/verifikasi', [VerifikasiController::class, 'daftar'])->name('verifikasi.daftar');
+    Route::get('/verifikasi/{laporan}/berkas/{berkas}', [VerifikasiController::class, 'pratinjauBerkas'])
+        ->name('verifikasi.berkas');
+    Route::post('/verifikasi/{laporan}/analisis-ai', [VerifikasiController::class, 'analisis'])
+        ->name('verifikasi.analisis_ai');
+    Route::get('/verifikasi/{laporan}', [VerifikasiController::class, 'detail'])->name('verifikasi.detail');
 });

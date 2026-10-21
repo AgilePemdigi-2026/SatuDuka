@@ -17,7 +17,10 @@
         <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div class="rounded-lg border border-gray-200 p-4">
                 <h2 class="font-semibold text-slate-800">Verifikasi Berkas</h2>
-                <p class="mt-1 text-sm text-gray-500">Segera hadir.</p>
+                <p class="mt-1 text-sm text-gray-500">Periksa pengajuan yang menunggu verifikasi.</p>
+                <a href="{{ route('verifikasi.daftar') }}" class="mt-2 inline-block text-sm text-slate-700 underline">
+                    Buka daftar verifikasi
+                </a>
             </div>
             <div class="rounded-lg border border-gray-200 p-4">
                 <h2 class="font-semibold text-slate-800">Rekonsiliasi Anomali</h2>

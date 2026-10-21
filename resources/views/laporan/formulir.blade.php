@@ -355,6 +355,26 @@
                         </ul>
                     </div>
 
+                    <div class="mt-4 rounded-lg border border-gray-200 p-4">
+                        <h3 class="font-semibold text-slate-800">Pemeriksaan Dokumen (AI)</h3>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Hasil bantuan AI, hanya saran. Pemeriksaan ini tidak menghalangi pengiriman pengajuan.
+                        </p>
+
+                        @if ($laporan !== null)
+                            <button type="submit" form="form-analisis-ai"
+                                    class="mt-3 rounded-md bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+                                Periksa dokumen (AI)
+                            </button>
+                        @else
+                            <p class="mt-3 text-sm text-gray-500">Simpan draf terlebih dahulu untuk memeriksa dokumen.</p>
+                        @endif
+
+                        @if (session('analisis_ai'))
+                            @include('laporan.panel_analisis_ai', ['analisis' => session('analisis_ai')])
+                        @endif
+                    </div>
+
                     <label class="mt-5 flex items-start gap-2 text-sm text-gray-700">
                         <input type="checkbox" name="pernyataan" id="pernyataan" value="1" @checked(old('pernyataan'))
                                class="mt-0.5 rounded border-gray-300 text-slate-800 focus:ring-slate-500">
@@ -398,6 +418,12 @@
                 </div>
             </div>
         </form>
+
+        @if ($laporan !== null)
+            <form id="form-analisis-ai" method="POST" action="{{ route('laporan.periksa_ai', $laporan) }}" class="hidden">
+                @csrf
+            </form>
+        @endif
     @endif
 
     <script>

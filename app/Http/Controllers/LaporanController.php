@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BerkasPendukung;
 use App\Models\LaporanKematian;
 use App\Models\Pengguna;
+use App\Services\Ai\LayananAnalisisAi;
 use App\Services\LayananAudit;
 use App\Services\LayananNomorPengajuan;
 use Illuminate\Http\Request;
@@ -305,6 +306,44 @@ class LaporanController extends Controller
         abort_unless($berkas->path_file !== '' && Storage::disk('local')->exists($berkas->path_file), 404);
 
         return Storage::disk('local')->response($berkas->path_file, $berkas->nama_file);
+    }
+
+    /**
+     * Memeriksa surat keterangan kematian dengan bantuan AI.
+     *
+     * Hasil hanya disimpan sebagai saran; status pengajuan tidak diubah dan
+     * tombol Kirim tetap dapat dipakai meskipun analisis gagal.
+     */
+    public function periksaAi(
+        Request $request,
+        LaporanKematian $laporan,
+        LayananAnalisisAi $layanan,
+    ) {
+        $laporan = $this->laporanMilik($request, $laporan);
+        $this->pastikanBolehDiubah($laporan);
+
+        $berkas = $laporan->berkasPendukung()
+            ->where('jenis_dokumen', BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN)
+            ->first();
+
+        if ($berkas === null) {
+            return redirect()
+                ->to($this->alamatLangkah($laporan, 4))
+                ->with('galat', 'Unggah Surat Keterangan Kematian terlebih dahulu untuk memeriksa dokumen.');
+        }
+
+        $hasil = $layanan->periksa($berkas, $request->user(), 'pemohon_review');
+
+        if (! $hasil['berhasil']) {
+            return redirect()
+                ->to($this->alamatLangkah($laporan, 4))
+                ->with('galat', $hasil['pesan']);
+        }
+
+        return redirect()
+            ->to($this->alamatLangkah($laporan, 4))
+            ->with('analisis_ai', $hasil)
+            ->with('sukses', 'Analisis AI selesai. Hasil bantuan AI, hanya saran.');
     }
 
     /**

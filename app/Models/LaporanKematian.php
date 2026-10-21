@@ -151,6 +151,14 @@ class LaporanKematian extends Model
         return $this->hasOne(DokumenResmi::class, 'id_laporan', 'id_laporan');
     }
 
+    /**
+     * Riwayat analisis dokumen berbantuan AI untuk laporan ini.
+     */
+    public function analisisAi(): HasMany
+    {
+        return $this->hasMany(AnalisisAi::class, 'id_laporan', 'id_laporan');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Pembantu
