@@ -23,6 +23,7 @@ class LayananAnalisisAi
     public function __construct(
         private readonly AIService $ai,
         private readonly LayananPerbandinganData $perbandingan,
+        private readonly LayananSkorKecurigaan $skorKecurigaan,
     ) {}
 
     /**
@@ -128,6 +129,166 @@ class LayananAnalisisAi
     }
 
     /**
+     * Menghitung dan menyimpan skor kecurigaan berbasis aturan.
+     *
+     * Skor tidak memanggil layanan eksternal dan tidak mengubah status.
+     *
+     * @param  array<string, mixed>|null  $perbandingan
+     * @return array{
+     *     skor: int,
+     *     alasan: list<array{kode: string, bobot: int, keterangan: string}>,
+     *     kategori: string
+     * }
+     */
+    public function skor(LaporanKematian $laporan, ?array $perbandingan = null): array
+    {
+        $hasil = $this->skorKecurigaan->hitung($laporan, $perbandingan);
+        $this->simpanSkor($laporan, $hasil);
+
+        return $hasil;
+    }
+
+    /**
+     * Membuat ringkasan ketidaksesuaian dengan bantuan AI.
+     *
+     * Bila AI gagal, ringkasan tidak tersedia tetapi skor aturan tetap ada.
+     *
+     * @param  array<string, mixed>  $perbandingan
+     * @return array{
+     *     berhasil: bool,
+     *     pesan: string|null,
+     *     ringkasan: string|null,
+     *     saran: list<string>,
+     *     model: string
+     * }
+     */
+    public function ringkas(
+        LaporanKematian $laporan,
+        array $perbandingan,
+        Pengguna $pengguna,
+        string $pemicu,
+    ): array {
+        $model = $this->ai->namaModel();
+
+        if (! $this->bolehMemanggil($pengguna)) {
+            return $this->gagalRingkasan($laporan, $model, $pengguna, $pemicu);
+        }
+
+        try {
+            $hasil = $this->ai->ringkasKetidaksesuaian($perbandingan);
+        } catch (\Throwable) {
+            return $this->gagalRingkasan($laporan, $model, $pengguna, $pemicu);
+        }
+
+        if (! is_array($hasil) || ($hasil['berhasil'] ?? false) !== true) {
+            return $this->gagalRingkasan($laporan, $model, $pengguna, $pemicu);
+        }
+
+        AnalisisAi::create([
+            'id_laporan' => $laporan->id_laporan,
+            'id_berkas' => null,
+            'jenis' => AnalisisAi::JENIS_RINGKASAN,
+            'hasil' => $hasil,
+            'skor' => null,
+            'skor_kecurigaan' => null,
+            'model' => $model,
+            'status' => AnalisisAi::STATUS_BERHASIL,
+            'hash_berkas' => null,
+            'dibuat_pada' => now(),
+        ]);
+
+        $this->audit(
+            laporan: $laporan,
+            model: $model,
+            pemicu: $pemicu,
+            pengguna: $pengguna,
+            hasil: 'Sukses',
+            jenis: AnalisisAi::JENIS_RINGKASAN,
+            aksi: 'membuat_ringkasan_ai',
+        );
+
+        return [
+            'berhasil' => true,
+            'pesan' => null,
+            'ringkasan' => $hasil['ringkasan'] ?? null,
+            'saran' => $hasil['saran'] ?? [],
+            'model' => $model,
+        ];
+    }
+
+    /**
+     * @param  array{skor: int, alasan: list<array<string, mixed>>, kategori: string}  $hasil
+     */
+    private function simpanSkor(LaporanKematian $laporan, array $hasil): void
+    {
+        $terakhir = AnalisisAi::query()
+            ->where('id_laporan', $laporan->id_laporan)
+            ->where('jenis', AnalisisAi::JENIS_SKOR)
+            ->orderByDesc('id_analisis')
+            ->first();
+
+        if ($terakhir !== null
+            && (int) $terakhir->skor_kecurigaan === (int) $hasil['skor']
+            && $terakhir->hasil == $hasil) {
+            return;
+        }
+
+        AnalisisAi::create([
+            'id_laporan' => $laporan->id_laporan,
+            'id_berkas' => null,
+            'jenis' => AnalisisAi::JENIS_SKOR,
+            'hasil' => $hasil,
+            'skor' => null,
+            'skor_kecurigaan' => (float) $hasil['skor'],
+            'model' => 'aturan-rule-v1',
+            'status' => AnalisisAi::STATUS_BERHASIL,
+            'hash_berkas' => null,
+            'dibuat_pada' => now(),
+        ]);
+    }
+
+    /**
+     * @return array{berhasil: bool, pesan: string, ringkasan: null, saran: list<string>, model: string}
+     */
+    private function gagalRingkasan(
+        LaporanKematian $laporan,
+        string $model,
+        Pengguna $pengguna,
+        string $pemicu,
+    ): array {
+        AnalisisAi::create([
+            'id_laporan' => $laporan->id_laporan,
+            'id_berkas' => null,
+            'jenis' => AnalisisAi::JENIS_RINGKASAN,
+            'hasil' => ['pesan' => 'Layanan AI tidak tersedia.'],
+            'skor' => null,
+            'skor_kecurigaan' => null,
+            'model' => $model,
+            'status' => AnalisisAi::STATUS_GAGAL,
+            'hash_berkas' => null,
+            'dibuat_pada' => now(),
+        ]);
+
+        $this->audit(
+            laporan: $laporan,
+            model: $model,
+            pemicu: $pemicu,
+            pengguna: $pengguna,
+            hasil: 'Gagal',
+            jenis: AnalisisAi::JENIS_RINGKASAN,
+            aksi: 'membuat_ringkasan_ai',
+        );
+
+        return [
+            'berhasil' => false,
+            'pesan' => 'Analisis AI tidak tersedia, lanjutkan secara manual',
+            'ringkasan' => null,
+            'saran' => [],
+            'model' => $model,
+        ];
+    }
+
+    /**
      * Batasi laju pemanggilan per pengguna agar layanan tidak dibanjiri.
      */
     private function bolehMemanggil(Pengguna $pengguna): bool
@@ -212,13 +373,15 @@ class LayananAnalisisAi
         string $pemicu,
         Pengguna $pengguna,
         string $hasil,
+        string $jenis = AnalisisAi::JENIS_EKSTRAKSI,
+        string $aksi = 'menganalisis_dokumen_ai',
     ): void {
         LayananAudit::catat(
-            aksi: 'menganalisis_dokumen_ai',
+            aksi: $aksi,
             objek: 'laporan_kematian',
             idObjek: $laporan->id_laporan,
             detail: [
-                'jenis' => AnalisisAi::JENIS_EKSTRAKSI,
+                'jenis' => $jenis,
                 'model' => $model,
                 'pemicu' => $pemicu,
             ],

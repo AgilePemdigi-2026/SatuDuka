@@ -88,9 +88,105 @@ class OpenAiService implements AIService
         return $this->susunHasil($data);
     }
 
+    public function ringkasKetidaksesuaian(array $perbandingan): array
+    {
+        if (trim($this->apiKey) === '') {
+            throw new AiTidakTersedia('Kunci layanan AI belum dikonfigurasi.');
+        }
+
+        $konteks = json_encode($perbandingan, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $konteks = MaskerNik::terapkan($konteks === false ? '{}' : $konteks);
+
+        $prompt = 'Anda membantu verifikator dokumen kematian. '
+            .'Berikut data perbandingan isian pemohon, hasil ekstraksi dokumen, dan data SIAK. '
+            .'NIK pada data sudah dimasker. '
+            .'Buat ringkasan singkat dalam bahasa Indonesia dan saran tindakan pemeriksaan. '
+            .'Jangan menyetujui, menolak, atau mengubah status pengajuan. '
+            .'Data: '.$konteks;
+
+        try {
+            $respon = Http::withToken($this->apiKey)
+                ->acceptJson()
+                ->timeout(max(1, $this->timeout))
+                ->post(rtrim($this->baseUrl, '/').'/responses', [
+                    'model' => $this->model,
+                    'input' => [[
+                        'role' => 'user',
+                        'content' => [
+                            ['type' => 'input_text', 'text' => $prompt],
+                        ],
+                    ]],
+                    'text' => [
+                        'format' => [
+                            'type' => 'json_schema',
+                            'name' => 'ringkasan_ketidaksesuaian',
+                            'strict' => true,
+                            'schema' => $this->skemaRingkasan(),
+                        ],
+                    ],
+                ]);
+        } catch (ConnectionException) {
+            throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.');
+        }
+
+        if ($respon->failed()) {
+            throw new AiTidakTersedia('Layanan AI tidak dapat dihubungi.');
+        }
+
+        $teks = $this->teksKeluaran($respon->json());
+        $data = json_decode($teks, true);
+
+        if (! is_array($data)) {
+            throw new AiTidakTersedia('Hasil ringkasan AI tidak dapat dibaca.');
+        }
+
+        $ringkasan = is_string($data['ringkasan'] ?? null) ? trim($data['ringkasan']) : '';
+        $saran = [];
+
+        if (is_array($data['saran'] ?? null)) {
+            foreach ($data['saran'] as $item) {
+                if (is_string($item) && trim($item) !== '') {
+                    $saran[] = trim($item);
+                }
+            }
+        }
+
+        if ($ringkasan === '') {
+            throw new AiTidakTersedia('Hasil ringkasan AI tidak dapat dibaca.');
+        }
+
+        return [
+            'berhasil' => true,
+            'ringkasan' => $ringkasan,
+            'saran' => array_values($saran),
+            'pesan' => null,
+        ];
+    }
+
     public function namaModel(): string
     {
         return $this->model;
+    }
+
+    /**
+     * Skema keluaran ringkasan ketidaksesuaian.
+     *
+     * @return array<string, mixed>
+     */
+    private function skemaRingkasan(): array
+    {
+        return [
+            'type' => 'object',
+            'properties' => [
+                'ringkasan' => ['type' => 'string'],
+                'saran' => [
+                    'type' => 'array',
+                    'items' => ['type' => 'string'],
+                ],
+            ],
+            'required' => ['ringkasan', 'saran'],
+            'additionalProperties' => false,
+        ];
     }
 
     /**

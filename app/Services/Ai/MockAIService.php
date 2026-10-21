@@ -50,9 +50,78 @@ class MockAIService implements AIService
         ]);
     }
 
+    public function ringkasKetidaksesuaian(array $perbandingan): array
+    {
+        $kolom = collect($perbandingan['kolom'] ?? []);
+
+        $beda = $kolom
+            ->filter(fn (array $baris): bool => ($baris['status'] ?? null) === 'beda')
+            ->values();
+
+        $tidakTerbaca = $kolom
+            ->filter(fn (array $baris): bool => ($baris['status'] ?? null) === 'tidak terbaca')
+            ->values();
+
+        $bagian = [];
+
+        if ($beda->isNotEmpty()) {
+            $bagian[] = 'Ditemukan '.$beda->count().' kolom berbeda: '
+                .$this->labelKolom($beda->all()).'.';
+        }
+
+        if ($tidakTerbaca->isNotEmpty()) {
+            $bagian[] = 'Ada '.$tidakTerbaca->count().' kolom yang tidak terbaca: '
+                .$this->labelKolom($tidakTerbaca->all()).'.';
+        }
+
+        if ($bagian === []) {
+            $bagian[] = 'Tidak ditemukan ketidaksesuaian pada kolom yang diperiksa.';
+        }
+
+        $saran = [];
+
+        foreach ($beda as $baris) {
+            $saran[] = match ($baris['kunci'] ?? '') {
+                'nik' => 'Cocokkan NIK pada dokumen asli dengan data SIAK sebelum melanjutkan.',
+                'nama_almarhum' => 'Periksa kembali ejaan nama pada dokumen dan isian pemohon.',
+                'tanggal_kematian' => 'Pastikan tanggal kematian pada dokumen sesuai dengan isian pemohon.',
+                'tempat_kematian' => 'Konfirmasi tempat kematian pada dokumen asli.',
+                default => 'Periksa kembali kolom '.($baris['label'] ?? 'tersebut').' pada dokumen asli.',
+            };
+        }
+
+        if ($tidakTerbaca->isNotEmpty()) {
+            $saran[] = 'Minta dokumen yang lebih jelas atau lakukan verifikasi manual.';
+        }
+
+        if ($saran === []) {
+            $saran[] = 'Tetap periksa keaslian dokumen secara manual sebelum mengambil keputusan.';
+        }
+
+        return [
+            'berhasil' => true,
+            'ringkasan' => implode(' ', $bagian),
+            'saran' => array_values(array_unique($saran)),
+            'pesan' => null,
+        ];
+    }
+
     public function namaModel(): string
     {
         return 'mock-ai-v1';
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $baris
+     */
+    private function labelKolom(array $baris): string
+    {
+        $label = array_map(
+            fn (array $item): string => (string) ($item['label'] ?? $item['kunci'] ?? 'kolom'),
+            $baris,
+        );
+
+        return implode(', ', $label);
     }
 
     /**

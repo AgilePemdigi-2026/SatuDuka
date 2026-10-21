@@ -27,6 +27,21 @@ interface AIService
     public function ekstrakSuratKematian(BerkasPendukung $berkas): array;
 
     /**
+     * Membuat ringkasan ketidaksesuaian dan saran tindakan untuk verifikator.
+     *
+     * @param  array{kolom?: list<array<string, mixed>>}  $perbandingan
+     * @return array{
+     *     berhasil: bool,
+     *     ringkasan: string|null,
+     *     saran: list<string>,
+     *     pesan: string|null
+     * }
+     *
+     * @throws AiTidakTersedia
+     */
+    public function ringkasKetidaksesuaian(array $perbandingan): array;
+
+    /**
      * Nama model/driver yang dipakai pada catatan analisis.
      */
     public function namaModel(): string;

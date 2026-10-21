@@ -87,5 +87,7 @@ Route::middleware(['auth', 'peran:verifikator'])->group(function () {
         ->name('verifikasi.berkas');
     Route::post('/verifikasi/{laporan}/analisis-ai', [VerifikasiController::class, 'analisis'])
         ->name('verifikasi.analisis_ai');
+    Route::post('/verifikasi/{laporan}/ringkasan-ai', [VerifikasiController::class, 'ringkasanAi'])
+        ->name('verifikasi.ringkasan_ai');
     Route::get('/verifikasi/{laporan}', [VerifikasiController::class, 'detail'])->name('verifikasi.detail');
 });

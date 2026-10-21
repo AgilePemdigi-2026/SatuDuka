@@ -51,6 +51,7 @@ class AnalisisAi extends Model
         'jenis',
         'hasil',
         'skor',
+        'skor_kecurigaan',
         'model',
         'status',
         'hash_berkas',
@@ -65,6 +66,7 @@ class AnalisisAi extends Model
         return [
             'hasil' => 'array',
             'skor' => 'float',
+            'skor_kecurigaan' => 'float',
             'dibuat_pada' => 'datetime',
         ];
     }
