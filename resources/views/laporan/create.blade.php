@@ -846,9 +846,44 @@
                 </div>
 
                 <!-- NOTICE -->
-                <div class="notice" id="notice" role="status" aria-live="polite"></div>
+                
+<!-- NOTICE -->
+@if (session('success'))
+    <div class="notice" role="status" aria-live="polite">
+        {{ session('success') }}
 
-                <form id="applicationForm" novalidate>
+        @if (session('nomor_pengajuan'))
+            <p>
+                Nomor pengajuan:
+                <strong>{{ session('nomor_pengajuan') }}</strong>
+            </p>
+        @endif
+    </div>
+@endif
+
+@if ($errors->any())
+    <div class="notice" role="alert" aria-live="assertive">
+        <strong>Pengajuan belum berhasil dikirim.</strong>
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+<div class="notice" id="notice" role="status" aria-live="polite"></div>
+
+                
+<form
+    id="applicationForm"
+    action="{{ route('laporan.store') }}"
+    method="POST"
+    enctype="multipart/form-data"
+    novalidate
+>
+    @csrf
+
                     <!-- LANGKAH 1 -->
                     <section class="step-panel">
                         <div class="info-banner">
@@ -1422,7 +1457,7 @@
                             </button>
 
                             <button
-                                type="button"
+                                type="submit"
                                 id="submitButton"
                                 class="btn btn-primary"
                                 hidden
@@ -1711,20 +1746,47 @@
             }
         });
 
-        submitButton.addEventListener('click', () => {
-            if (!validateCurrentStep()) {
-                return;
-            }
+       
 
-            /*
-             * Backend pengiriman belum diimplementasikan.
-             * Belum ada request ke Laravel atau Supabase.
-             */
-            showNotice(
-                'Validasi di browser berhasil. Pengajuan belum dikirim. Langkah berikutnya adalah membuat endpoint Laravel, validasi server, penyimpanan berkas, dan koneksi database Supabase.',
-                ''
-            );
-        });
+const applicationForm = document.getElementById('applicationForm');
+
+applicationForm.addEventListener('submit', (event) => {
+    // Periksa semua step sebelum mengirim data ke Laravel.
+    for (let i = 0; i < panels.length; i++) {
+        const fields = panels[i].querySelectorAll(
+            'input, select, textarea'
+        );
+
+        for (const field of fields) {
+            if (field.type === 'file') {
+                if (!validateFile(field)) {
+                    event.preventDefault();
+                    showStep(i);
+                    field.reportValidity();
+                    field.focus();
+                    return;
+                }
+            } else {
+                field.setCustomValidity('');
+
+                if (!field.checkValidity()) {
+                    event.preventDefault();
+                    showStep(i);
+                    field.reportValidity();
+                    field.focus();
+                    return;
+                }
+            }
+        }
+    }
+
+    // Jika semua valid, lanjutkan submit POST ke Laravel.
+    submitButton.disabled = true;
+    submitButton.textContent = 'Mengirim Pengajuan...';
+});
+
+
+
 
         restoreDraft();
         showStep(0);
