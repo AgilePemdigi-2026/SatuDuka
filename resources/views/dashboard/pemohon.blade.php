@@ -19,8 +19,16 @@
 
         <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div class="rounded-lg border border-gray-200 p-4">
-                <h2 class="font-semibold text-slate-800">Ajukan Laporan Kematian</h2>
-                <p class="mt-1 text-sm text-gray-500">Menyusul pada Fase 3.</p>
+                
+<h2 class="font-semibold text-slate-800">Ajukan Laporan Kematian</h2>
+<p class="mt-1 text-sm text-gray-500">
+    Buat pengajuan laporan kematian secara online.
+</p>
+
+<a href="{{ route('laporan.create') }}"
+   class="mt-3 inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+    Ajukan Sekarang
+</a>
             </div>
             <div class="rounded-lg border border-gray-200 p-4">
                 <h2 class="font-semibold text-slate-800">Status Pengajuan</h2>

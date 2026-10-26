@@ -72,21 +72,24 @@ class LaporanKematian extends Model
     /**
      * @var list<string>
      */
-    protected $fillable = [
-        'id_pengguna',
-        'no_pengajuan',
-        'nama_pelapor',
-        'hubungan_pelapor',
-        'nama_almarhum',
-        'nik_almarhum',
-        'tanggal_kematian',
-        'tempat_kematian',
-        'sebab_kematian',
-        'status_pengajuan',
-        'tanggal_pengajuan',
-        'catatan_revisi',
-        'perlu_verifikasi_manual',
-    ];
+   protected $fillable = [
+    'id_pengguna',
+    'no_pengajuan',
+    'nama_pelapor',
+    'hubungan_pelapor',
+    'nama_almarhum',
+    'nik_almarhum',
+    'tanggal_kematian',
+    'jenis_kelamin',
+    'waktu_kematian',
+    'jenis_tempat',
+    'tempat_kematian',
+    'sebab_kematian',
+    'status_pengajuan',
+    'tanggal_pengajuan',
+    'catatan_revisi',
+    'perlu_verifikasi_manual',
+];
 
     /**
      * @return array<string, string>
