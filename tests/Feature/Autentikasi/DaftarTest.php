@@ -43,7 +43,7 @@ it('menyimpan akun pemohon baru dan mengarahkan ke halaman masuk', function () {
         ->and($pengguna->peran)->toBe('pemohon')
         ->and(Hash::check('Baru12345', $pengguna->kata_sandi))->toBeTrue();
 
-    // Aturan Fase 2 butir 3: registrasi dicatat ke log_audit.
+    // Registrasi wajib tercatat ke log_audit.
     expect(LogAudit::where('aksi', 'registrasi')->where('id_pengguna', $pengguna->id_pengguna)->exists())->toBeTrue();
 });
 

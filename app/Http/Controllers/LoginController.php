@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Hash;
  *
  * Satu formulir untuk semua peran: identitas 16 digit dibaca sebagai NIK
  * (Pemohon) dan identitas 18 digit dibaca sebagai NIP (Verifikator dan
- * Pejabat), sesuai keputusan pemilik proyek. Kegagalan login dihitung pada
+ * Pejabat). Kegagalan login dihitung pada
  * cache ({@see LayananPenguncian}) dan seluruh aksi dicatat ke `log_audit`
  * melalui {@see LayananAudit}.
  */
@@ -31,7 +31,7 @@ class LoginController extends Controller
      * Catatan: use case 5.2.2 alur 4.d membedakan "NIK/NIP tidak ditemukan"
      * dan "Kata sandi tidak cocok", tetapi user story 6.2.1 memakai satu
      * pesan umum untuk keduanya. Pesan umum dipakai agar tidak membocorkan
-     * keberadaan akun (lihat PROGRESS.md).
+     * keberadaan akun.
      */
     private const PESAN_SALAH = 'NIK/NIP atau kata sandi salah';
 

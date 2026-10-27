@@ -1,11 +1,12 @@
 <?php
 
 /**
- * Pengujian dashboard per peran dan middleware pembatas peran (Fase 2 butir 2).
+ * Pengujian dashboard per peran dan middleware pembatas peran.
  */
 
 use App\Models\Pengguna;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 it('mengalihkan tamu yang membuka dashboard ke halaman masuk', function () {
     $this->get(route('dashboard'))->assertRedirect(route('masuk'));
@@ -16,15 +17,47 @@ it('menampilkan dashboard sesuai peran pengguna', function () {
 
     $this->actingAs($pemohon)->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Dashboard Pemohon');
+        ->assertSee('Dashboard Pemohon')
+        ->assertSee('Anda masuk sebagai Pemohon')
+        ->assertSee('Kelola Profil')
+        ->assertDontSee('Profil Saya');
 
     $this->actingAs($verifikator)->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Dashboard Verifikator');
+        ->assertSee('Dashboard Verifikator')
+        ->assertSee('Anda masuk sebagai Verifikator')
+        ->assertSee('Kelola Profil')
+        ->assertDontSee('Profil Saya');
 
     $this->actingAs($pejabat)->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Dashboard Pejabat Penanda Tangan');
+        ->assertSee('Dashboard Pejabat Penanda Tangan')
+        ->assertSee('Anda masuk sebagai Pejabat')
+        ->assertSee('Kelola Profil')
+        ->assertDontSee('Profil Saya');
+});
+
+it('menampilkan menu avatar dengan inisial saat foto profil belum ada', function () {
+    [$pemohon] = buatAkunDemo();
+
+    $this->actingAs($pemohon)->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('PD')
+        ->assertSee('Pemohon')
+        ->assertSee(route('profil.tampilkan'))
+        ->assertSee(route('keluar'));
+});
+
+it('menampilkan foto avatar saat foto profil tersedia', function () {
+    Storage::fake('local');
+    [$pemohon] = buatAkunDemo();
+
+    Storage::disk('local')->put('foto_profil/uji.png', 'foto');
+    $pemohon->update(['path_foto' => 'foto_profil/uji.png']);
+
+    $this->actingAs($pemohon)->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee(route('profil.foto.tampil'));
 });
 
 it('membatasi akses rute berdasarkan peran melalui middleware peran', function () {

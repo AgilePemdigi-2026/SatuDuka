@@ -65,6 +65,8 @@ class Pengguna extends Authenticatable
         'email',
         'kata_sandi',
         'no_telepon',
+        'alamat',
+        'path_foto',
         'peran',
     ];
 
@@ -133,13 +135,40 @@ class Pengguna extends Authenticatable
         $this->notify(new TautanAturUlangKataSandi($token));
     }
 
+    /**
+     * Label peran untuk ditampilkan di antarmuka.
+     */
+    public function labelPeran(): string
+    {
+        return match ($this->peran) {
+            self::PERAN_PEMOHON => 'Pemohon',
+            self::PERAN_VERIFIKATOR => 'Verifikator',
+            self::PERAN_PEJABAT => 'Pejabat',
+            default => ucfirst((string) $this->peran),
+        };
+    }
+
+    /**
+     * Inisial nama untuk avatar saat foto profil belum diunggah.
+     */
+    public function inisial(): string
+    {
+        $inisial = collect(preg_split('/\s+/u', trim((string) $this->nama_lengkap)) ?: [])
+            ->filter()
+            ->take(2)
+            ->map(fn (string $kata) => mb_strtoupper(mb_substr($kata, 0, 1)))
+            ->implode('');
+
+        return $inisial !== '' ? $inisial : '?';
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Pencarian pengguna
     |--------------------------------------------------------------------------
     |
     | Semua pencarian NIK/NIP dipusatkan di sini agar mudah dienkripsi pada
-    | Fase 9 (keputusan pemilik proyek, lihat PROGRESS.md).
+    | penguatan keamanan nanti.
     |
     */
 

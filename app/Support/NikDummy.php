@@ -5,7 +5,7 @@ namespace App\Support;
 /**
  * Pembuat NIK dummy untuk data contoh.
  *
- * Seluruh data SATUDUKA pada fase ini adalah data contoh. Agar tidak mungkin
+ * Seluruh data SATUDUKA adalah data contoh. Agar tidak mungkin
  * bentrok dengan NIK warga asli, NIK dummy memakai kode wilayah fiktif `999999`
  * (kode provinsi/kabupaten/kecamatan yang tidak pernah dipakai). Dengan susunan
  * NIK 16 digit: 6 digit wilayah + 2 digit tanggal + 2 digit bulan + 2 digit tahun

@@ -26,6 +26,12 @@
             </div>
         @endif
 
+        @if (session('info'))
+            <div class="mb-4 rounded-md bg-blue-50 p-4 border border-blue-200 text-blue-800 text-sm">
+                {{ session('info') }}
+            </div>
+        @endif
+
         @if (session('galat') || session('error'))
             <div class="mb-4 rounded-md bg-red-50 p-4 border border-red-200 text-red-800 text-sm">
                 {{ session('galat') ?? session('error') }}

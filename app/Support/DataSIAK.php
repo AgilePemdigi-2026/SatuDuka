@@ -7,7 +7,7 @@ namespace App\Support;
  *
  * Data SIAK TIDAK disimpan pada tabel aplikasi, melainkan pada berkas
  * `database/data/siak_dummy.json` sesuai docs/DATABASE.md. Service mock SIAK
- * pada fase berikutnya akan memakai kelas ini.
+ * akan memakai kelas ini.
  */
 final class DataSIAK
 {

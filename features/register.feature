@@ -1,10 +1,10 @@
 # Sumber: SRS Bab VI, Tabel 6.2 User Story Proses Register (6.2.2).
-# Penyesuaian dari naskah SRS (keputusan pemilik proyek, lihat PROGRESS.md):
+# Penyesuaian dari naskah SRS:
 #   - Kolom "Alamat Surel" WAJIB diisi (pengguna.email NOT NULL UNIQUE dan
 #     dipakai untuk pengaturan ulang kata sandi).
 #   - Nama lengkap tidak diminta karena diambil dari data kependudukan (SIAK).
 # Setiap skenario dipetakan ke tests/Feature/Autentikasi/DaftarTest.php karena
-# integrasi Behat-Mink diganti Pest (keputusan Fase 0, lihat PROGRESS.md).
+# integrasi Behat-Mink diganti Pest.
 
 Feature: Register
   In order to submit a request for death registration and administration

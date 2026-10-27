@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Menambahkan kolom `remember_token` pada tabel `pengguna`.
  *
- * IMPROVISASI (Fase 2): kolom ini tidak ada pada PDM (docs/DATABASE.md), tetapi
+ * IMPROVISASI: kolom ini tidak ada pada PDM (docs/DATABASE.md), tetapi
  * dibutuhkan Laravel untuk fitur "Ingat Saya" pada use case 5.2.2 alur 4.b
  * (menyimpan sesi pengguna pada perangkat). Kolom dibuat nullable dan tidak
  * pernah ditampilkan.

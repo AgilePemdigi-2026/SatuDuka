@@ -3,8 +3,8 @@
 /**
  * Pengujian pengaturan ulang kata sandi (use case 5.2.2 alur 4.a).
  *
- * Sesuai keputusan pemilik proyek: tautan dikirim ke surel TERDAFTAR yang
- * dicari dari NIK/NIP yang diketik (MAIL_MAILER=log untuk demo).
+ * Tautan dikirim ke surel TERDAFTAR yang dicari dari NIK/NIP yang diketik
+ * (MAIL_MAILER=log untuk demo).
  */
 
 use App\Models\LogAudit;

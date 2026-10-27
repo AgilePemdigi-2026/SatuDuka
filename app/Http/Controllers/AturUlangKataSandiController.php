@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Password;
 /**
  * Controller pengaturan ulang kata sandi (use case 5.2.2 alur 4.a).
  *
- * Penyesuaian terhadap use case (keputusan pemilik proyek): pengguna memasukkan
+ * Penyesuaian terhadap use case: pengguna memasukkan
  * NIK/NIP, sistem mencari surel TERDAFTAR milik akun tersebut, lalu mengirim
  * tautan pengaturan ulang ke surel itu (MAIL_MAILER=log untuk demo). Formulir
  * kata sandi baru dibuka melalui tautan pada surel, bukan langsung setelah

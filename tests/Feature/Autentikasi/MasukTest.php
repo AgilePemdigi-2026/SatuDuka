@@ -55,7 +55,8 @@ it('mengarahkan verifikator ke dashboard verifikator saat masuk dengan nip', fun
 
     $this->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Dashboard Verifikator');
+        ->assertSee('Dashboard Verifikator')
+        ->assertSee('Anda masuk sebagai Verifikator');
 });
 
 // Skenario: Berhasil masuk dengan kredensial Pejabat yang valid (NIP 18 digit).
@@ -72,7 +73,8 @@ it('mengarahkan pejabat ke dashboard pejabat saat masuk dengan nip', function ()
 
     $this->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Dashboard Pejabat Penanda Tangan');
+        ->assertSee('Dashboard Pejabat Penanda Tangan')
+        ->assertSee('Anda masuk sebagai Pejabat');
 });
 
 // Skenario: Berhasil masuk dengan opsi Ingat Saya.
@@ -172,7 +174,7 @@ it('mengunci akun selama 15 menit setelah batas percobaan gagal tercapai', funct
 
     $this->assertGuest();
 
-    // Penguncian dicatat ke log audit (keputusan pemilik proyek butir 2).
+    // Penguncian dicatat ke log audit oleh LayananPenguncian.
     expect(LogAudit::where('aksi', 'mengunci_akses')->count())->toBe(1)
         ->and(LogAudit::where('aksi', 'masuk_gagal')->count())->toBe(5);
 });
@@ -192,7 +194,7 @@ it('menolak percobaan masuk saat akun sedang terkunci', function () {
     $this->assertGuest();
 });
 
-// Aturan Fase 2 butir 3: aksi masuk dicatat ke log_audit.
+// Aksi masuk yang berhasil wajib tercatat ke log_audit.
 it('mencatat aksi masuk yang berhasil ke log audit', function () {
     [$pemohon] = buatAkunDemo();
 
@@ -231,7 +233,32 @@ it('mengalihkan pengguna yang sudah masuk dari halaman masuk ke dashboard', func
 
     $this->actingAs($pemohon)
         ->get(route('masuk'))
-        ->assertRedirect(route('dashboard'));
+        ->assertRedirect(route('dashboard'))
+        ->assertSessionHas('info', 'Anda sudah masuk sebagai Pemohon Demo (Pemohon). Keluar terlebih dahulu untuk berganti akun.');
+});
+
+it('memberi tahu akun verifikator yang masih aktif saat membuka halaman masuk', function () {
+    [, $verifikator] = buatAkunDemo();
+
+    $this->actingAs($verifikator)
+        ->followingRedirects()
+        ->get(route('masuk'))
+        ->assertOk()
+        ->assertSee('Anda sudah masuk sebagai Verifikator Demo (Verifikator).')
+        ->assertSee('Keluar terlebih dahulu untuk berganti akun.')
+        ->assertSee('Dashboard Verifikator');
+});
+
+it('memberi tahu akun pejabat yang masih aktif saat membuka halaman registrasi', function () {
+    [,, $pejabat] = buatAkunDemo();
+
+    $this->actingAs($pejabat)
+        ->followingRedirects()
+        ->get(route('registrasi'))
+        ->assertOk()
+        ->assertSee('Anda sudah masuk sebagai Pejabat Demo (Pejabat).')
+        ->assertSee('Keluar terlebih dahulu untuk berganti akun.')
+        ->assertSee('Dashboard Pejabat Penanda Tangan');
 });
 
 // Keluar dari sistem mengakhiri sesi.

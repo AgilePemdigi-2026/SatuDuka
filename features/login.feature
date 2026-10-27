@@ -1,11 +1,11 @@
 # Sumber: SRS Bab VI, Tabel 6.1 User Story Proses Login (6.2.1).
-# Penyesuaian dari naskah SRS (keputusan pemilik proyek, lihat PROGRESS.md):
+# Penyesuaian dari naskah SRS:
 #   - Satu kolom "NIK/NIP" untuk semua peran (16 digit = NIK, 18 digit = NIP).
 #   - Kredensial demo memakai kata sandi "password123" (docs/DATABASE.md).
 #   - Pengaturan ulang kata sandi dikirim ke surel terdaftar, bukan menampilkan
 #     formulir kata sandi baru langsung setelah menekan "Kirim".
 # Setiap skenario dipetakan ke tests/Feature/Autentikasi/MasukTest.php karena
-# integrasi Behat-Mink diganti Pest (keputusan Fase 0, lihat PROGRESS.md).
+# integrasi Behat-Mink diganti Pest.
 
 Feature: Login
   In order to access the system with proper authentication and authorization
