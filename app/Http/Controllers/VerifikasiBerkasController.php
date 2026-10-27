@@ -11,8 +11,10 @@ use App\Support\DataSIAK;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class VerifikasiBerkasController extends Controller
 {
@@ -283,6 +285,85 @@ class VerifikasiBerkasController extends Controller
         return redirect()
             ->route('verifikasi.index')
             ->with('sukses', 'Berkas dialihkan ke proses rekonsiliasi anomali.');
+    }
+
+    /**
+     * Jenis berkas yang boleh ditampilkan langsung di browser.
+     */
+    private const MIME_PRATINJAU = [
+        'pdf' => 'application/pdf',
+        'png' => 'image/png',
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+    ];
+
+    /**
+     * Menampilkan berkas langsung di browser (tanpa mengunduh).
+     */
+    public function pratinjau(
+        LaporanKematian $laporan,
+        BerkasPendukung $berkas
+    ): StreamedResponse {
+        $path = $this->jalurBerkas($laporan, $berkas);
+
+        $ekstensi = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $mime = self::MIME_PRATINJAU[$ekstensi] ?? null;
+
+        abort_if(
+            $mime === null,
+            415,
+            'Jenis berkas ini tidak bisa dipratinjau. Silakan unduh.'
+        );
+
+        return Storage::disk('local')->response($path, $berkas->nama_file, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="' .
+                addcslashes(basename($berkas->nama_file), '"\\') . '"',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
+    }
+
+    /**
+     * Mengunduh berkas.
+     */
+    public function unduh(
+        LaporanKematian $laporan,
+        BerkasPendukung $berkas
+    ): StreamedResponse {
+        $path = $this->jalurBerkas($laporan, $berkas);
+
+        return Storage::disk('local')->download($path, $berkas->nama_file, [
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    /**
+     * Memastikan berkas milik laporan ini dan benar-benar ada di penyimpanan.
+     */
+    private function jalurBerkas(
+        LaporanKematian $laporan,
+        BerkasPendukung $berkas
+    ): string {
+        abort_unless(
+            $laporan->status_pengajuan === LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+            404
+        );
+        abort_unless(
+            (int) $berkas->id_laporan === (int) $laporan->id_laporan,
+            404
+        );
+        abort_unless(
+            $berkas->status_unggahan === BerkasPendukung::STATUS_BERHASIL,
+            404
+        );
+        abort_unless(
+            $berkas->path_file !== '' &&
+                Storage::disk('local')->exists($berkas->path_file),
+            404
+        );
+
+        return $berkas->path_file;
     }
 
     private function pastikanMenunggu(?LaporanKematian $laporan): void
