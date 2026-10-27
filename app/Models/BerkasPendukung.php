@@ -6,6 +6,7 @@ use Database\Factories\BerkasPendukungFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Dokumen pendukung yang dilampirkan pada laporan kematian.
@@ -90,5 +91,13 @@ class BerkasPendukung extends Model
     public function laporanKematian(): BelongsTo
     {
         return $this->belongsTo(LaporanKematian::class, 'id_laporan', 'id_laporan');
+    }
+
+    /**
+     * Riwayat analisis AI yang memakai berkas ini.
+     */
+    public function analisisAi(): HasMany
+    {
+        return $this->hasMany(AnalisisAi::class, 'id_berkas', 'id_berkas');
     }
 }

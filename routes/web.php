@@ -2,17 +2,16 @@
 
 use App\Http\Controllers\AturUlangKataSandiController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\RegistrasiController;
+use App\Http\Controllers\StatusPengajuanController;
+use App\Http\Controllers\VerifikasiController;
 use App\Http\Controllers\LaporanKematianController;
 use App\Http\Controllers\VerifikasiBerkasController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Rute SATUDUKA
-|--------------------------------------------------------------------------
-*/
 
 // Halaman awal.
 Route::get('/', function () {
@@ -65,54 +64,63 @@ Route::post('/keluar', [LoginController::class, 'keluar'])
     ->middleware('auth')
     ->name('keluar');
 
-// Dashboard pengguna yang sudah login.
+// Dashboard sesuai peran.
 Route::get('/dashboard', [DashboardController::class, 'tampilkan'])
     ->middleware('auth')
     ->name('dashboard');
 
-// Fitur pengajuan laporan kematian.
+// Pengelolaan profil seluruh peran (use case 5.2.4).
 Route::middleware('auth')->group(function () {
-    // Menampilkan formulir pengajuan.
-    Route::get('/pengajuan-laporan', [
-        LaporanKematianController::class,
-        'create',
-    ])->name('laporan.create');
-
-    // Mengirim pengajuan laporan.
-    Route::post('/pengajuan-laporan', [
-        LaporanKematianController::class,
-        'store',
-    ])->name('laporan.store');
+    Route::get('/profil', [ProfilController::class, 'tampilkan'])->name('profil.tampilkan');
+    Route::put('/profil', [ProfilController::class, 'simpan'])->name('profil.simpan');
+    Route::post('/profil/foto', [ProfilController::class, 'unggahFoto'])->name('profil.foto');
+    Route::get('/profil/foto', [ProfilController::class, 'tampilkanFoto'])->name('profil.foto.tampil');
+    Route::put('/profil/kata-sandi', [ProfilController::class, 'ubahKataSandi'])->name('profil.kata_sandi');
 });
 
-// Fitur verifikasi berkas khusus verifikator.
+// Pengajuan laporan kematian oleh Pemohon (use case 5.2.3).
+Route::middleware(['auth', 'peran:pemohon'])->group(function () {
+    Route::get('/laporan/baru', [LaporanController::class, 'tampilkanBaru'])->name('laporan.baru');
+    Route::post('/laporan/draf', [LaporanController::class, 'simpanDraf'])->name('laporan.draf');
+
+    Route::get('/laporan/{laporan}/ubah', [LaporanController::class, 'tampilkanUbah'])->name('laporan.ubah');
+    Route::post('/laporan/{laporan}/draf', [LaporanController::class, 'simpanDraf'])->name('laporan.draf.ubah');
+    Route::post('/laporan/{laporan}/periksa-ai', [LaporanController::class, 'periksaAi'])->name('laporan.periksa_ai');
+    Route::post('/laporan/{laporan}/kirim', [LaporanController::class, 'kirim'])->name('laporan.kirim');
+    Route::post('/laporan/{laporan}/berkas', [LaporanController::class, 'unggahBerkas'])->name('laporan.berkas.unggah');
+    Route::get('/laporan/{laporan}/berkas/{berkas}', [LaporanController::class, 'pratinjauBerkas'])->name('laporan.berkas');
+    Route::get('/laporan/{laporan}', [LaporanController::class, 'lihat'])->name('laporan.lihat');
+
+    // Pemantauan status pengajuan (use case 5.2.5).
+    Route::get('/pengajuan/status', [StatusPengajuanController::class, 'daftar'])->name('pengajuan.status');
+    Route::get('/pengajuan/status/{laporan}', [StatusPengajuanController::class, 'detail'])->name('pengajuan.detail');
+    Route::get('/pengajuan/{laporan}/dokumen', [StatusPengajuanController::class, 'unduh'])->name('pengajuan.unduh');
+});
+
+// Verifikasi berkas versi baca saja untuk Verifikator.
+Route::middleware(['auth', 'peran:verifikator'])->group(function () {
+    Route::get('/verifikasi', [VerifikasiController::class, 'daftar'])->name('verifikasi.daftar');
+    Route::get('/verifikasi/{laporan}/berkas/{berkas}', [VerifikasiController::class, 'pratinjauBerkas'])
+        ->name('verifikasi.berkas');
+    Route::post('/verifikasi/{laporan}/analisis-ai', [VerifikasiController::class, 'analisis'])
+        ->name('verifikasi.analisis_ai');
+    Route::post('/verifikasi/{laporan}/ringkasan-ai', [VerifikasiController::class, 'ringkasanAi'])
+        ->name('verifikasi.ringkasan_ai');
+    Route::get('/verifikasi/{laporan}', [VerifikasiController::class, 'detail'])->name('verifikasi.detail');
+});
+
+// Fitur verifikasi berkas dengan persetujuan, revisi, dan anomali (branch verifikasi-berkas-pengajuan).
 Route::middleware(['auth', 'peran:verifikator'])
     ->prefix('verifikasi-berkas')
     ->name('verifikasi.')
     ->group(function () {
-        // Daftar pengajuan.
-        Route::get('/', [VerifikasiBerkasController::class, 'index'])
-            ->name('index');
-
-        // Detail pengajuan.
-        Route::get('/{laporan}', [VerifikasiBerkasController::class, 'show'])
-            ->name('show');
-
-        // Menyetujui pengajuan.
-        Route::post('/{laporan}/setujui', [
-            VerifikasiBerkasController::class,
-            'setujui',
-        ])->name('setujui');
-
-        // Meminta revisi berkas.
-        Route::post('/{laporan}/revisi', [
-            VerifikasiBerkasController::class,
-            'mintaRevisi',
-        ])->name('revisi');
-
-        // Menandai anomali.
-        Route::post('/{laporan}/anomali', [
-            VerifikasiBerkasController::class,
-            'tandaiAnomali',
-        ])->name('anomali');
+        Route::get('/', [VerifikasiBerkasController::class, 'index'])->name('index');
+        Route::get('/{laporan}', [VerifikasiBerkasController::class, 'show'])->name('show');
+        Route::get('/{laporan}/berkas/{berkas}', [VerifikasiBerkasController::class, 'pratinjau'])->name('pratinjau');
+        Route::get('/{laporan}/berkas/{berkas}/unduh', [VerifikasiBerkasController::class, 'unduh'])->name('unduh');
+        Route::post('/{laporan}/setujui', [VerifikasiBerkasController::class, 'setujui'])->name('setujui');
+        Route::post('/{laporan}/revisi', [VerifikasiBerkasController::class, 'mintaRevisi'])->name('revisi');
+        Route::post('/{laporan}/anomali', [VerifikasiBerkasController::class, 'tandaiAnomali'])->name('anomali');
     });
+
+Route::redirect('/pengajuan-laporan', '/laporan/baru');

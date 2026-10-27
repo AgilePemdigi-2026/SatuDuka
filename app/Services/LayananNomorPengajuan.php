@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * Pembuat nomor pengajuan laporan kematian.
  *
- * Format: `SD-YYYYMMDD-NNNN` (keputusan pemilik proyek, tanpa kode wilayah).
+ * Format: `SD-YYYYMMDD-NNNN`, tanpa kode wilayah.
  *
  * Nomor dibuat aman terhadap race condition: pada PostgreSQL dipakai
  * `pg_advisory_xact_lock` sehingga hanya satu transaksi yang menghitung nomor

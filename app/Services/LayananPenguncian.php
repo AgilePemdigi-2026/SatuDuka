@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Cache;
 /**
  * Penghitung dan kunci akses sementara (15 menit).
  *
- * Keputusan pemilik proyek (lihat PROGRESS.md, Fase 1): penghitung kegagalan
- * login dan kredensial TTE **tidak** disimpan pada tabel, melainkan pada cache
- * dengan masa berlaku 15 menit. Setiap penguncian tetap dicatat pada `log_audit`
+ * Penghitung kegagalan login dan kredensial TTE **tidak** disimpan pada tabel,
+ * melainkan pada cache dengan masa berlaku 15 menit (sesuai NFR-02 dan NFR-03).
+ * Setiap penguncian tetap dicatat pada `log_audit`
  * melalui {@see LayananAudit} sehingga kejadiannya dapat ditelusuri.
  *
  * Kredensial TTE (PIN/OTP) sendiri tidak pernah disimpan di mana pun.

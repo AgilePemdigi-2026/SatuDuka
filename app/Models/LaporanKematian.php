@@ -56,6 +56,17 @@ class LaporanKematian extends Model
         self::STATUS_MENUNGGU_PERBAIKAN,
     ];
 
+    /**
+     * Status yang masih boleh diubah oleh pemohon.
+     *
+     * @var list<string>
+     */
+    public const DAFTAR_STATUS_BOLEH_DIUBAH = [
+        self::STATUS_DRAF,
+        self::STATUS_MENUNGGU_PERBAIKAN,
+        self::STATUS_DITOLAK_BUTUH_REVISI,
+    ];
+
     protected $table = 'laporan_kematian';
 
     protected $primaryKey = 'id_laporan';
@@ -143,6 +154,14 @@ class LaporanKematian extends Model
         return $this->hasOne(DokumenResmi::class, 'id_laporan', 'id_laporan');
     }
 
+    /**
+     * Riwayat analisis dokumen berbantuan AI untuk laporan ini.
+     */
+    public function analisisAi(): HasMany
+    {
+        return $this->hasMany(AnalisisAi::class, 'id_laporan', 'id_laporan');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Pembantu
@@ -155,6 +174,14 @@ class LaporanKematian extends Model
     public function adalahDraf(): bool
     {
         return $this->status_pengajuan === self::STATUS_DRAF;
+    }
+
+    /**
+     * Apakah pengajuan masih boleh diperbaiki dan dikirim ulang oleh pemohon.
+     */
+    public function bolehDiubah(): bool
+    {
+        return in_array($this->status_pengajuan, self::DAFTAR_STATUS_BOLEH_DIUBAH, true);
     }
 
     /**
@@ -171,5 +198,33 @@ class LaporanKematian extends Model
     public function selesai(): bool
     {
         return $this->status_pengajuan === self::STATUS_SELESAI;
+    }
+
+    /**
+     * Nama almarhum untuk ditampilkan pada daftar pengajuan.
+     */
+    public function labelNamaAlmarhum(): string
+    {
+        if ($this->adalahDraf() && blank($this->nama_almarhum)) {
+            return 'Draf belum diisi';
+        }
+
+        return $this->nama_almarhum ?: '—';
+    }
+
+    /**
+     * Tanggal pengajuan untuk ditampilkan pada daftar pengajuan.
+     */
+    public function labelTanggalPengajuan(): string
+    {
+        if ($this->tanggal_pengajuan !== null) {
+            return $this->tanggal_pengajuan->translatedFormat('j F Y');
+        }
+
+        if ($this->adalahDraf() && $this->dibuat_pada !== null) {
+            return 'Dibuat '.$this->dibuat_pada->translatedFormat('j F Y');
+        }
+
+        return '—';
     }
 }

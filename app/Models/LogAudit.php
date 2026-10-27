@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Jejak audit append-only (NFR-06).
  *
  * Tabel `log_audit` tidak memiliki kolom `diperbarui_pada`; pembaruan dan penghapusan
- * baris log harus dicegah di tingkat aplikasi (lihat aturan AGENTS.md).
+ * baris log harus dicegah di tingkat aplikasi.
  *
  * Sumber: docs/DATABASE.md tabel `log_audit`.
  */
@@ -28,6 +28,8 @@ class LogAudit extends Model
     public const LAYANAN_TTE = 'TTE';
 
     public const LAYANAN_NOTIFIKASI = 'Notifikasi';
+
+    public const LAYANAN_AI = 'AI';
 
     /**
      * Hasil pemanggilan layanan eksternal.
