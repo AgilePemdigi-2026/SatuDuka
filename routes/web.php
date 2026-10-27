@@ -6,19 +6,11 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\RegistrasiController;
-<<<<<<< HEAD
 use App\Http\Controllers\StatusPengajuanController;
 use App\Http\Controllers\VerifikasiController;
-=======
 use App\Http\Controllers\LaporanKematianController;
->>>>>>> 288a7cc110b88f9b9c33e8fa296ed4f16965f243
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Rute SATUDUKA
-|--------------------------------------------------------------------------
-*/
 
 // Halaman awal: pengguna yang sudah login ke dashboard,
 // sedangkan tamu diarahkan ke halaman masuk.
@@ -81,7 +73,6 @@ Route::post('/keluar', [
     'keluar',
 ])->middleware('auth')->name('keluar');
 
-<<<<<<< HEAD
 // Dashboard sesuai peran (kerangka).
 Route::get('/dashboard', [DashboardController::class, 'tampilkan'])
     ->middleware('auth')
@@ -126,27 +117,4 @@ Route::middleware(['auth', 'peran:verifikator'])->group(function () {
         ->name('verifikasi.ringkasan_ai');
     Route::get('/verifikasi/{laporan}', [VerifikasiController::class, 'detail'])->name('verifikasi.detail');
 });
-=======
-// Dashboard pengguna yang sudah login.
-Route::get('/dashboard', [
-    DashboardController::class,
-    'tampilkan',
-])->middleware('auth')->name('dashboard');
-
-// Pengajuan laporan kematian.
-Route::middleware('auth')->group(function () {
-
-    // Menampilkan form pengajuan.
-    Route::get('/pengajuan-laporan', [
-        LaporanKematianController::class,
-        'create',
-    ])->name('laporan.create');
-
-    // Mengirim form pengajuan.
-    Route::post('/pengajuan-laporan', [
-        LaporanKematianController::class,
-        'store',
-    ])->name('laporan.store');
-
-});
->>>>>>> 288a7cc110b88f9b9c33e8fa296ed4f16965f243
+Route::redirect('/pengajuan-laporan', '/laporan/baru');
