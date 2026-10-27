@@ -44,6 +44,10 @@
             "npm install --ignore-scripts",
             "npm run build"
         ],
+        "db:sqlite": [
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "@php artisan migrate:fresh --seed --database=sqlite"
+        ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
             "@php artisan dev"

@@ -36,7 +36,7 @@ it('mencatat hasil pemanggilan layanan eksternal', function () {
     $log = LayananAudit::catatLayanan(
         layanan: LogAudit::LAYANAN_SIAK,
         hasil: LogAudit::HASIL_GAGAL,
-        detail: ['nik' => '9999990101900101'],
+        detail: ['nik' => '3471031203559001'],
     );
 
     expect($log->layanan_eksternal)->toBe('SIAK')
@@ -101,4 +101,23 @@ it('membuat nomor pengajuan yang unik saat disimpan', function () {
 
     expect($pertama->no_pengajuan)->not->toBe($kedua->no_pengajuan)
         ->and(LaporanKematian::count())->toBe(2);
+});
+
+it('mengulang penomoran saat nomor bentrok pada sqlite', function () {
+    $percobaan = 0;
+
+    $hasil = LayananNomorPengajuan::buat(function (string $nomor) use (&$percobaan) {
+        $percobaan++;
+
+        if ($percobaan === 1) {
+            // Simulasi penulis lain yang menyimpan nomor yang sama lebih dulu.
+            LaporanKematian::factory()->create(['no_pengajuan' => $nomor]);
+        }
+
+        return LaporanKematian::factory()->create(['no_pengajuan' => $nomor]);
+    });
+
+    expect($percobaan)->toBe(2)
+        ->and($hasil->no_pengajuan)->toMatch('/^SD-\d{8}-\d{4}$/')
+        ->and(LaporanKematian::count())->toBe(1);
 });

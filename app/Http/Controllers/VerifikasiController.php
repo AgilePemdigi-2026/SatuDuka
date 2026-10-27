@@ -13,53 +13,30 @@ use Illuminate\Support\Facades\Storage;
 /**
  * Verifikasi berkas versi baca saja.
  *
- * Halaman ini hanya menampilkan data, pratinjau berkas, skor kecurigaan, dan
- * hasil bantuan AI. Tidak ada tombol menyetujui atau menolak pada tahap ini.
+ * Halaman ini hanya menampilkan data, pratinjau berkas, dan hasil bantuan AI.
+ * Tidak ada tombol menyetujui atau menolak pada tahap ini.
  */
 class VerifikasiController extends Controller
 {
     /**
-     * Daftar pengajuan yang menunggu verifikasi, diurutkan berdasarkan prioritas.
+     * Daftar pengajuan yang menunggu verifikasi, diurutkan berdasarkan tanggal.
      */
-    public function daftar(Request $request, LayananAnalisisAi $layanan)
+    public function daftar(Request $request)
     {
-        $urut = (string) $request->query('urut', 'prioritas');
-        $prioritas = (string) $request->query('prioritas', 'semua');
+        $urut = (string) $request->query('urut', 'terbaru');
 
-        if (! in_array($urut, ['prioritas', 'terbaru', 'terlama'], true)) {
-            $urut = 'prioritas';
+        if (! in_array($urut, ['terbaru', 'terlama'], true)) {
+            $urut = 'terbaru';
         }
 
-        if (! in_array($prioritas, ['semua', 'tinggi', 'sedang', 'rendah'], true)) {
-            $prioritas = 'semua';
-        }
-
-        $semua = LaporanKematian::query()
+        $baris = LaporanKematian::query()
             ->where('status_pengajuan', LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
-            ->with(['analisisAi', 'berkasPendukung'])
-            ->get();
-
-        $baris = $semua->map(function (LaporanKematian $laporan) use ($layanan): array {
-            return [
-                'laporan' => $laporan,
-                'skor' => $layanan->skor($laporan, $this->perbandinganTerakhir($laporan)),
-            ];
-        });
-
-        if ($prioritas !== 'semua') {
-            $baris = $baris
-                ->filter(fn (array $item): bool => $item['skor']['kategori'] === $prioritas)
-                ->values();
-        }
-
-        $baris = $baris->sort(function (array $kiri, array $kanan) use ($urut): int {
-            return match ($urut) {
-                'terbaru' => $this->bandingkanTanggal($kanan['laporan'], $kiri['laporan']),
-                'terlama' => $this->bandingkanTanggal($kiri['laporan'], $kanan['laporan']),
-                default => ($kanan['skor']['skor'] <=> $kiri['skor']['skor'])
-                    ?: $this->bandingkanTanggal($kanan['laporan'], $kiri['laporan']),
-            };
-        })->values();
+            ->get()
+            ->sort(function (LaporanKematian $kiri, LaporanKematian $kanan) use ($urut): int {
+                return $urut === 'terbaru'
+                    ? $this->bandingkanTanggal($kanan, $kiri)
+                    : $this->bandingkanTanggal($kiri, $kanan);
+            })->values();
 
         $halaman = max(1, (int) $request->query('page', 1));
         $ukuran = 10;
@@ -67,7 +44,7 @@ class VerifikasiController extends Controller
         $potongan = $baris->slice(($halaman - 1) * $ukuran, $ukuran)->values();
 
         $daftar = new LengthAwarePaginator(
-            $potongan->pluck('laporan')->values(),
+            $potongan,
             $total,
             $ukuran,
             $halaman,
@@ -77,30 +54,24 @@ class VerifikasiController extends Controller
         return view('verifikasi.daftar', [
             'pengguna' => $request->user(),
             'daftar' => $daftar,
-            'skorPerLaporan' => $potongan->mapWithKeys(
-                fn (array $item): array => [$item['laporan']->id_laporan => $item['skor']],
-            ),
             'urut' => $urut,
-            'prioritas' => $prioritas,
         ]);
     }
 
     /**
-     * Detail satu pengajuan beserta skor, daftar berkas, dan panel AI.
+     * Detail satu pengajuan beserta daftar berkas dan panel AI.
      */
-    public function detail(Request $request, LaporanKematian $laporan, LayananAnalisisAi $layanan)
+    public function detail(Request $request, LaporanKematian $laporan)
     {
         $this->pastikanMenungguVerifikasi($laporan);
 
         $laporan->load(['berkasPendukung', 'analisisAi']);
-        $perbandingan = $this->perbandinganTerakhir($laporan);
         $ringkasan = $this->ringkasanTerakhir($laporan);
 
         return view('verifikasi.detail', [
             'pengguna' => $request->user(),
             'laporan' => $laporan,
             'analisis' => session('analisis_ai'),
-            'skor' => $layanan->skor($laporan, $perbandingan),
             'ringkasan' => $ringkasan?->hasil,
             'ringkasanBerhasil' => $ringkasan?->status === AnalisisAi::STATUS_BERHASIL,
         ]);
@@ -151,8 +122,6 @@ class VerifikasiController extends Controller
                 ->with('galat', $hasil['pesan']);
         }
 
-        $layanan->skor($laporan, $hasil['perbandingan']);
-
         return redirect()
             ->route('verifikasi.detail', $laporan)
             ->with('analisis_ai', $hasil)
@@ -163,7 +132,7 @@ class VerifikasiController extends Controller
      * Membuat ringkasan ketidaksesuaian dengan bantuan AI.
      *
      * Bila belum ada hasil perbandingan, dokumen dibaca terlebih dahulu.
-     * Bila AI gagal, skor aturan tetap tersedia dan kegagalan dicatat.
+     * Bila AI gagal, kegagalan dicatat dan verifikator melanjutkan manual.
      */
     public function ringkasanAi(Request $request, LaporanKematian $laporan, LayananAnalisisAi $layanan)
     {
@@ -185,8 +154,6 @@ class VerifikasiController extends Controller
             $perbandingan = $analisis['perbandingan'];
 
             if (! $analisis['berhasil'] || ! is_array($perbandingan)) {
-                $layanan->skor($laporan, null);
-
                 return redirect()
                     ->route('verifikasi.detail', $laporan)
                     ->with('galat', $analisis['pesan'] ?? 'Analisis AI tidak tersedia, lanjutkan secara manual');
@@ -194,7 +161,6 @@ class VerifikasiController extends Controller
         }
 
         $hasil = $layanan->ringkas($laporan, $perbandingan, $request->user(), 'verifikator_ringkasan');
-        $layanan->skor($laporan, $perbandingan);
 
         if (! $hasil['berhasil']) {
             return redirect()

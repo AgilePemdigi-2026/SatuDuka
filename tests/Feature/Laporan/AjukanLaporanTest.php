@@ -21,7 +21,7 @@ function dataPengajuanLengkap(array $timpa = []): array
         'nama_pelapor' => 'Pemohon Demo',
         'hubungan_pelapor' => 'Anak Kandung',
         'nama_almarhum' => 'Budi Santoso',
-        'nik_almarhum' => '9999990101900101',
+        'nik_almarhum' => '3471031203559001',
         'tanggal_kematian' => now()->subDay()->toDateString(),
         'tempat_kematian' => 'RSUD Kota Yogyakarta',
         'sebab_kematian' => 'Sakit',
@@ -38,6 +38,7 @@ function buatDrafLaporan(Pengguna $pemohon): LaporanKematian
         'status_pengajuan' => LaporanKematian::STATUS_DRAF,
         'no_pengajuan' => null,
         'tanggal_pengajuan' => null,
+        'tanggal_kematian' => now()->subDay()->toDateString(),
     ]);
 }
 
@@ -52,6 +53,19 @@ function unggahBerkasLaporan(object $test, LaporanKematian $laporan, string $jen
         'jenis_dokumen' => $jenis,
         LaporanController::INPUT_BERKAS[$jenis] => $berkas,
     ]);
+}
+
+/**
+ * Unggah satu bukti kematian dan seluruh berkas wajib lainnya.
+ */
+function unggahBerkasWajibLaporan(object $test, LaporanKematian $laporan, ?string $buktiKematian = null): void
+{
+    $buktiKematian ??= config('verifikasi.berkas_wajib.bukti_kematian.jenis')[0];
+
+    foreach (array_merge([$buktiKematian], config('verifikasi.berkas_wajib.lainnya')) as $jenis) {
+        unggahBerkasLaporan($test, $laporan, $jenis)
+            ->assertRedirect(route('laporan.ubah', $laporan).'?langkah=3');
+    }
 }
 
 it('berhasil mengajukan laporan kematian dengan data lengkap', function () {
@@ -70,10 +84,7 @@ it('berhasil mengajukan laporan kematian dengan data lengkap', function () {
 
     $laporan = LaporanKematian::firstOrFail();
 
-    foreach (BerkasPendukung::DAFTAR_JENIS as $jenis) {
-        unggahBerkasLaporan($this, $laporan, $jenis)
-            ->assertRedirect(route('laporan.ubah', $laporan).'?langkah=3');
-    }
+    unggahBerkasWajibLaporan($this, $laporan);
 
     expect($laporan->berkasPendukung()->count())->toBe(4);
 
@@ -117,9 +128,7 @@ it('menolak pengajuan dengan data tidak lengkap atau tidak valid', function () {
 
     $this->actingAs($pemohon);
 
-    foreach (BerkasPendukung::DAFTAR_JENIS as $jenis) {
-        unggahBerkasLaporan($this, $laporan, $jenis);
-    }
+    unggahBerkasWajibLaporan($this, $laporan);
 
     $this->post(route('laporan.kirim', $laporan), dataPengajuanLengkap([
         'nama_almarhum' => '',
@@ -151,10 +160,88 @@ it('menolak pengiriman bila berkas pendukung belum lengkap', function () {
 
     unggahBerkasLaporan($this, $laporan, BerkasPendukung::JENIS_KTP_PELAPOR);
 
-    $this->post(route('laporan.kirim', $laporan), dataPengajuanLengkap(['pernyataan' => '1']))
+    $respons = $this->post(route('laporan.kirim', $laporan), dataPengajuanLengkap(['pernyataan' => '1']))
         ->assertSessionHasErrors('berkas');
 
-    expect($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_DRAF);
+    expect($respons->getSession()->get('errors')->first('berkas'))->toContain('Berkas wajib belum lengkap')
+        ->and($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_DRAF);
+});
+
+it('menerima Surat Keterangan Kelurahan sebagai bukti kematian tanpa Surat Keterangan Kematian', function () {
+    Storage::fake('local');
+    [$pemohon] = buatAkunDemo();
+    $laporan = buatDrafLaporan($pemohon);
+
+    $this->actingAs($pemohon);
+
+    unggahBerkasWajibLaporan($this, $laporan, BerkasPendukung::JENIS_SURAT_KETERANGAN_KELURAHAN);
+
+    $this->post(route('laporan.kirim', $laporan), dataPengajuanLengkap(['pernyataan' => '1']))
+        ->assertRedirect(route('laporan.lihat', $laporan));
+
+    expect($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
+        ->and($laporan->berkasPendukung()->where('jenis_dokumen', BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN)->exists())->toBeFalse();
+});
+
+it('menerima SPTJM saja sebagai bukti kematian', function () {
+    Storage::fake('local');
+    [$pemohon] = buatAkunDemo();
+    $laporan = buatDrafLaporan($pemohon);
+
+    $this->actingAs($pemohon);
+
+    unggahBerkasWajibLaporan($this, $laporan, BerkasPendukung::JENIS_SPTJM_KEBENARAN_DATA_KEMATIAN);
+
+    $this->post(route('laporan.kirim', $laporan), dataPengajuanLengkap(['pernyataan' => '1']))
+        ->assertRedirect(route('laporan.lihat', $laporan));
+
+    expect($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
+        ->and($laporan->berkasPendukung()->where('jenis_dokumen', BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN)->exists())->toBeFalse();
+});
+
+it('menolak pengiriman bila tidak ada satu pun bukti kematian', function () {
+    Storage::fake('local');
+    [$pemohon] = buatAkunDemo();
+    $laporan = buatDrafLaporan($pemohon);
+
+    $this->actingAs($pemohon);
+
+    foreach (config('verifikasi.berkas_wajib.lainnya') as $jenis) {
+        unggahBerkasLaporan($this, $laporan, $jenis)
+            ->assertRedirect(route('laporan.ubah', $laporan).'?langkah=3');
+    }
+
+    $respons = $this->post(route('laporan.kirim', $laporan), dataPengajuanLengkap(['pernyataan' => '1']))
+        ->assertSessionHasErrors('berkas');
+
+    expect($respons->getSession()->get('errors')->first('berkas'))
+        ->toContain('Berkas wajib belum lengkap')
+        ->toContain('Bukti kematian')
+        ->toContain(BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN)
+        ->and($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_DRAF);
+});
+
+it('menolak pengiriman terlambat lebih dari 30 hari tanpa SPTJM keterlambatan', function () {
+    Storage::fake('local');
+    [$pemohon] = buatAkunDemo();
+    $laporan = buatDrafLaporan($pemohon);
+    $tanggalKematian = now()->subDays(31)->toDateString();
+
+    $laporan->update(['tanggal_kematian' => $tanggalKematian]);
+
+    $this->actingAs($pemohon);
+
+    unggahBerkasWajibLaporan($this, $laporan, BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN);
+
+    $respons = $this->post(route('laporan.kirim', $laporan), dataPengajuanLengkap([
+        'tanggal_kematian' => $tanggalKematian,
+        'pernyataan' => '1',
+    ]))->assertSessionHasErrors('berkas');
+
+    expect($respons->getSession()->get('errors')->first('berkas'))
+        ->toContain('Berkas wajib belum lengkap')
+        ->toContain(BerkasPendukung::JENIS_SPTJM_KEBENARAN_DATA_KEMATIAN)
+        ->and($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_DRAF);
 });
 
 it('menyimpan pengajuan sebagai draf dan dapat dilanjutkan', function () {
@@ -325,7 +412,7 @@ it('menyimpan draf otomatis saat menekan Lanjut dan membuka langkah berikutnya',
     $this->post(route('laporan.draf.ubah', $laporan), dataPengajuanLengkap(['langkah' => 3]))
         ->assertRedirect(route('laporan.ubah', $laporan).'?langkah=3');
 
-    expect($laporan->fresh()->nik_almarhum)->toBe('9999990101900101');
+    expect($laporan->fresh()->nik_almarhum)->toBe('3471031203559001');
 });
 
 it('mengembalikan pengguna ke langkah yang tepat setelah galat validasi', function () {
@@ -335,9 +422,7 @@ it('mengembalikan pengguna ke langkah yang tepat setelah galat validasi', functi
 
     $this->actingAs($pemohon);
 
-    foreach (BerkasPendukung::DAFTAR_JENIS as $jenis) {
-        unggahBerkasLaporan($this, $laporan, $jenis);
-    }
+    unggahBerkasWajibLaporan($this, $laporan);
 
     $this->from(route('laporan.ubah', $laporan).'?langkah=4')
         ->post(route('laporan.kirim', $laporan), dataPengajuanLengkap([
@@ -366,7 +451,8 @@ it('menyediakan formulir multipart untuk unggah berkas', function () {
 
     $respons = $this->get(route('laporan.ubah', $laporan).'?langkah=3')->assertOk();
 
-    expect(substr_count($respons->getContent(), 'enctype="multipart/form-data"'))->toBe(4);
+    expect(substr_count($respons->getContent(), 'enctype="multipart/form-data"'))
+        ->toBe(count($respons->viewData('daftarJenis')));
 });
 
 it('menolak pengiriman ganda pada pengajuan yang sama', function () {
@@ -376,9 +462,7 @@ it('menolak pengiriman ganda pada pengajuan yang sama', function () {
 
     $this->actingAs($pemohon);
 
-    foreach (BerkasPendukung::DAFTAR_JENIS as $jenis) {
-        unggahBerkasLaporan($this, $laporan, $jenis);
-    }
+    unggahBerkasWajibLaporan($this, $laporan);
 
     $this->post(route('laporan.kirim', $laporan), dataPengajuanLengkap(['pernyataan' => '1']))
         ->assertRedirect(route('laporan.lihat', $laporan));

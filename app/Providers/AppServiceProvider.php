@@ -2,10 +2,15 @@
 
 namespace App\Providers;
 
+use App\Models\AnalisisAi;
+use App\Models\BerkasPendukung;
+use App\Models\LaporanKematian;
 use App\Services\Ai\AIService;
 use App\Services\Ai\MockAIService;
 use App\Services\Ai\OpenAiService;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\View\View as Tampilan;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,6 +38,47 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        View::composer('verifikasi.show', function (Tampilan $view): void {
+            $laporan = $view->getData()['laporan'] ?? null;
+
+            if (! $laporan instanceof LaporanKematian) {
+                return;
+            }
+
+            $laporan->loadMissing(['berkasPendukung', 'analisisAi']);
+
+            $analisis = session('analisis_ai');
+
+            if (! is_array($analisis)) {
+                $perbandingan = $laporan->analisisAi
+                    ->where('jenis', AnalisisAi::JENIS_PERBANDINGAN)
+                    ->sortByDesc('id_analisis')
+                    ->first();
+
+                if ($perbandingan !== null) {
+                    $analisis = [
+                        'berhasil' => $perbandingan->status === AnalisisAi::STATUS_BERHASIL,
+                        'perbandingan' => $perbandingan->hasil,
+                        'model' => $perbandingan->model,
+                        'pesan' => null,
+                    ];
+                }
+            }
+
+            $ringkasan = $laporan->analisisAi
+                ->where('jenis', AnalisisAi::JENIS_RINGKASAN)
+                ->sortByDesc('id_analisis')
+                ->first();
+
+            $view->with([
+                'analisis' => $analisis,
+                'ringkasan' => $ringkasan?->hasil,
+                'ringkasanBerhasil' => $ringkasan?->status === AnalisisAi::STATUS_BERHASIL,
+                'suratKeterangan' => $laporan->berkasPendukung->firstWhere(
+                    'jenis_dokumen',
+                    BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN,
+                ),
+            ]);
+        });
     }
 }

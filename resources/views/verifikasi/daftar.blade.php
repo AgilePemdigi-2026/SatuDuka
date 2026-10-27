@@ -3,127 +3,164 @@
 @section('judul', 'Verifikasi Berkas')
 
 @section('navigasi')
-    <a href="{{ route('dashboard') }}" class="text-sm text-gray-600 hover:underline">Dashboard</a>
+    <a href="{{ route('dashboard') }}" class="text-sm font-semibold text-ink-soft hover:text-brand">Dashboard</a>
     @include('komponen.menu_avatar', ['pengguna' => $pengguna])
 @endsection
 
 @section('konten')
-    <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
-        <h1 class="text-xl font-bold text-slate-800 sm:text-2xl">Menunggu Verifikasi</h1>
-        <p class="mt-1 text-sm text-gray-500">
-            Daftar pengajuan yang menunggu pemeriksaan berkas. Skor kecurigaan hanya alat bantu
-            prioritas dan tidak mengubah status pengajuan.
-        </p>
+    <x-ui.page-header title="Menunggu Verifikasi"
+        subtitle="Daftar pengajuan yang menunggu pemeriksaan berkas." />
 
-        <form method="GET" action="{{ route('verifikasi.daftar') }}"
-              class="mt-4 flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
-            <div>
-                <label for="prioritas" class="block text-xs font-medium text-gray-600">Prioritas</label>
-                <select id="prioritas" name="prioritas"
-                        class="mt-1 rounded-md border-gray-300 text-sm focus:border-slate-500 focus:ring-slate-500">
-                    @foreach (['semua' => 'Semua', 'tinggi' => 'Tinggi (60-100)', 'sedang' => 'Sedang (30-59)', 'rendah' => 'Rendah (0-29)'] as $nilai => $label)
-                        <option value="{{ $nilai }}" @selected($prioritas === $nilai)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
+    @php
+        $jumlahAntrean = $daftar->total();
+        $kelasPilihan = 'block h-[46px] w-full appearance-none rounded-xl border border-line-strong bg-surface px-3.5 pr-10 text-sm text-ink outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30';
+    @endphp
 
-            <div>
-                <label for="urut" class="block text-xs font-medium text-gray-600">Urutkan</label>
-                <select id="urut" name="urut"
-                        class="mt-1 rounded-md border-gray-300 text-sm focus:border-slate-500 focus:ring-slate-500">
-                    @foreach (['prioritas' => 'Skor tertinggi', 'terbaru' => 'Terbaru', 'terlama' => 'Terlama'] as $nilai => $label)
-                        <option value="{{ $nilai }}" @selected($urut === $nilai)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <button type="submit"
-                    class="rounded-md bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
-                Terapkan
-            </button>
-        </form>
-
-        @if ($daftar->isEmpty())
-            <p class="mt-6 rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
-                @if ($prioritas === 'semua')
-                    Belum ada pengajuan yang menunggu verifikasi.
-                @else
-                    Tidak ada pengajuan dengan prioritas {{ $prioritas }}.
-                @endif
-            </p>
-        @else
-            <div class="mt-6 hidden overflow-hidden rounded-lg border border-gray-200 sm:block">
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-50">
-                        <tr class="text-left text-xs uppercase tracking-wide text-gray-500">
-                            <th class="px-4 py-3 font-medium">Nomor Pengajuan</th>
-                            <th class="px-4 py-3 font-medium">Almarhum/Almarhumah</th>
-                            <th class="px-4 py-3 font-medium">Tanggal Pengajuan</th>
-                            <th class="px-4 py-3 font-medium">Skor</th>
-                            <th class="px-4 py-3 font-medium">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @foreach ($daftar as $laporan)
-                            @php
-                                $skor = $skorPerLaporan[$laporan->id_laporan] ?? ['skor' => 0, 'kategori' => 'rendah'];
-                                $warnaSkor = match ($skor['kategori']) {
-                                    'tinggi' => 'bg-rose-100 text-rose-800',
-                                    'sedang' => 'bg-amber-100 text-amber-800',
-                                    default => 'bg-green-100 text-green-800',
-                                };
-                            @endphp
-                            <tr>
-                                <td class="px-4 py-3 font-mono text-xs text-slate-700">{{ $laporan->no_pengajuan }}</td>
-                                <td class="px-4 py-3 text-slate-800">{{ $laporan->nama_almarhum }}</td>
-                                <td class="px-4 py-3 text-slate-700">{{ $laporan->labelTanggalPengajuan() }}</td>
-                                <td class="px-4 py-3">
-                                    <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold {{ $warnaSkor }}">
-                                        {{ $skor['skor'] }}/100 · {{ $skor['kategori'] }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <a href="{{ route('verifikasi.detail', $laporan) }}"
-                                       class="inline-flex rounded-md bg-slate-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-900">
-                                        Periksa
-                                    </a>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="mt-6 space-y-3 sm:hidden">
-                @foreach ($daftar as $laporan)
-                    @php
-                        $skor = $skorPerLaporan[$laporan->id_laporan] ?? ['skor' => 0, 'kategori' => 'rendah'];
-                        $warnaSkor = match ($skor['kategori']) {
-                            'tinggi' => 'bg-rose-100 text-rose-800',
-                            'sedang' => 'bg-amber-100 text-amber-800',
-                            default => 'bg-green-100 text-green-800',
-                        };
-                    @endphp
-                    <div class="rounded-lg border border-gray-200 p-4">
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <span class="font-mono text-xs text-slate-600">{{ $laporan->no_pengajuan }}</span>
-                            <span class="text-xs text-gray-500">{{ $laporan->labelTanggalPengajuan() }}</span>
-                        </div>
-                        <p class="mt-2 font-medium text-slate-800">{{ $laporan->nama_almarhum }}</p>
-                        <span class="mt-2 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold {{ $warnaSkor }}">
-                            Skor {{ $skor['skor'] }}/100 · {{ $skor['kategori'] }}
-                        </span>
-                        <div>
-                            <a href="{{ route('verifikasi.detail', $laporan) }}"
-                               class="mt-3 inline-flex rounded-md bg-slate-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-900">
-                                Periksa
-                            </a>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-
-            <div class="mt-4">{{ $daftar->links() }}</div>
-        @endif
+    <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <x-ui.stat label="Menunggu Verifikasi" :value="$jumlahAntrean" variant="warning" />
     </div>
+
+    <x-ui.card padding="p-4" class="mt-6">
+        <form method="GET" action="{{ route('verifikasi.daftar') }}"
+            class="flex flex-wrap items-end justify-end gap-3">
+            <div class="w-full sm:w-auto">
+                <label for="urut" class="mb-1.5 block text-sm font-semibold text-ink-soft">Urutkan</label>
+                <div class="relative">
+                    <select id="urut" name="urut" class="{{ $kelasPilihan }}">
+                        @foreach (['terbaru' => 'Terbaru', 'terlama' => 'Terlama'] as $nilai => $label)
+                            <option value="{{ $nilai }}" @selected($urut === $nilai)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <x-icon.chevron-down class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" />
+                </div>
+            </div>
+
+            <x-ui.button type="submit" size="sm">Terapkan</x-ui.button>
+        </form>
+    </x-ui.card>
+
+    @if ($daftar->isEmpty())
+        <div class="mt-6 rounded-2xl border border-dashed border-line-strong bg-surface p-6 text-center text-sm text-muted">
+            Belum ada pengajuan yang menunggu verifikasi.
+        </div>
+    @else
+        <x-ui.table class="mt-6 hidden sm:block">
+            <x-slot:head>
+                <th class="w-12 text-center">No</th>
+                <th>No. Pengajuan</th>
+                <th>NIK</th>
+                <th>Nama</th>
+                <th>Waktu</th>
+                <th>Status</th>
+                <th class="text-right">Aksi</th>
+            </x-slot:head>
+
+            @foreach ($daftar as $laporan)
+                <tr>
+                    <td class="text-center text-xs font-semibold text-muted tabular-nums">
+                        {{ $daftar->firstItem() + $loop->index }}
+                    </td>
+                    <td class="font-mono text-[13px] font-semibold text-ink tabular-nums">
+                        {{ $laporan->no_pengajuan }}
+                    </td>
+                    <td class="font-mono text-xs text-ink-soft tabular-nums">
+                        {{ \App\Support\MaskerNik::masker($laporan->nik_almarhum) ?? '-' }}
+                    </td>
+                    <td class="font-medium text-ink">{{ $laporan->nama_almarhum }}</td>
+                    <td>
+                        @if ($laporan->tanggal_pengajuan)
+                            <div class="text-xs font-semibold text-ink">
+                                {{ $laporan->tanggal_pengajuan->translatedFormat('j M Y') }}
+                            </div>
+                            <div class="text-[11px] text-faint">{{ $laporan->tanggal_pengajuan->format('H:i') }} WIB</div>
+                        @else
+                            <span class="text-xs text-muted">-</span>
+                        @endif
+                    </td>
+                    <td>
+                        @include('komponen.badge_status', ['status' => $laporan->status_pengajuan])
+                    </td>
+                    <td class="text-right">
+                        <x-ui.button :href="route('verifikasi.detail', $laporan)" size="sm">Lihat</x-ui.button>
+                    </td>
+                </tr>
+            @endforeach
+        </x-ui.table>
+
+        <div class="mt-6 space-y-3 sm:hidden">
+            @foreach ($daftar as $laporan)
+                <x-ui.card padding="p-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <span class="font-mono text-xs font-semibold text-ink-soft tabular-nums">
+                            {{ $laporan->no_pengajuan }}
+                        </span>
+                        @if ($laporan->tanggal_pengajuan)
+                            <span class="text-xs text-faint">{{ $laporan->labelTanggalPengajuan() }}</span>
+                        @endif
+                    </div>
+                    <p class="mt-2 font-semibold text-ink">{{ $laporan->nama_almarhum }}</p>
+                    <p class="mt-1 font-mono text-xs text-muted">
+                        NIK: {{ \App\Support\MaskerNik::masker($laporan->nik_almarhum) ?? '-' }}
+                    </p>
+                    <div class="mt-2 flex flex-wrap items-center gap-2">
+                        @include('komponen.badge_status', ['status' => $laporan->status_pengajuan])
+                    </div>
+                    <div class="mt-3">
+                        <x-ui.button :href="route('verifikasi.detail', $laporan)" size="sm">Lihat</x-ui.button>
+                    </div>
+                </x-ui.card>
+            @endforeach
+        </div>
+
+        <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p class="text-xs text-muted">
+                Menampilkan {{ $daftar->firstItem() }}&ndash;{{ $daftar->lastItem() }} dari
+                {{ $daftar->total() }} pembaruan
+            </p>
+
+            @if ($daftar->hasPages())
+                @php
+                    $kelasHalaman = 'inline-flex h-8 min-w-8 items-center justify-center rounded-lg border px-2 text-xs font-semibold transition-colors';
+                @endphp
+                <nav class="flex flex-wrap items-center gap-1" aria-label="Navigasi halaman">
+                    @if ($daftar->onFirstPage())
+                        <span class="{{ $kelasHalaman }} cursor-not-allowed border-line bg-canvas text-faint">
+                            <x-icon.chevron-left class="h-4 w-4" />
+                        </span>
+                    @else
+                        <a href="{{ $daftar->previousPageUrl() }}"
+                            class="{{ $kelasHalaman }} border-line-strong bg-surface text-ink-soft hover:bg-canvas"
+                            aria-label="Halaman sebelumnya">
+                            <x-icon.chevron-left class="h-4 w-4" />
+                        </a>
+                    @endif
+
+                    @foreach ($daftar->getUrlRange(max(1, $daftar->currentPage() - 2), min($daftar->lastPage(), $daftar->currentPage() + 2)) as $halaman => $tautan)
+                        @if ($halaman === $daftar->currentPage())
+                            <span aria-current="page" class="{{ $kelasHalaman }} border-brand bg-brand text-white">
+                                {{ $halaman }}
+                            </span>
+                        @else
+                            <a href="{{ $tautan }}"
+                                class="{{ $kelasHalaman }} border-line-strong bg-surface text-ink-soft hover:bg-canvas">
+                                {{ $halaman }}
+                            </a>
+                        @endif
+                    @endforeach
+
+                    @if ($daftar->hasMorePages())
+                        <a href="{{ $daftar->nextPageUrl() }}"
+                            class="{{ $kelasHalaman }} border-line-strong bg-surface text-ink-soft hover:bg-canvas"
+                            aria-label="Halaman berikutnya">
+                            <x-icon.chevron-right class="h-4 w-4" />
+                        </a>
+                    @else
+                        <span class="{{ $kelasHalaman }} cursor-not-allowed border-line bg-canvas text-faint">
+                            <x-icon.chevron-right class="h-4 w-4" />
+                        </span>
+                    @endif
+                </nav>
+            @endif
+        </div>
+    @endif
 @endsection

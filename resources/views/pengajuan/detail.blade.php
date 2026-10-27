@@ -3,110 +3,130 @@
 @section('judul', 'Detail Status Pengajuan')
 
 @section('navigasi')
-    <a href="{{ route('dashboard') }}" class="text-sm text-gray-600 hover:underline">Dashboard</a>
+    <a href="{{ route('dashboard') }}" class="text-sm font-semibold text-ink-soft hover:text-brand">Dashboard</a>
     @include('komponen.menu_avatar', ['pengguna' => $pengguna])
 @endsection
 
 @section('konten')
-    <div class="space-y-4">
-        <a href="{{ route('pengajuan.status') }}" class="inline-block text-sm text-slate-700 underline">
-            &larr; Kembali ke Status Pengajuan
-        </a>
-
-        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h1 class="text-xl font-bold text-slate-800 sm:text-2xl">Detail Pengajuan</h1>
-                    <p class="mt-1 text-sm text-gray-500">Nomor pengajuan</p>
-                    <p class="font-mono text-sm font-semibold text-slate-800">{{ $laporan->no_pengajuan ?? '—' }}</p>
-                </div>
-                @include('komponen.badge_status', ['status' => $laporan->status_pengajuan])
-            </div>
-
-            <dl class="mt-6 grid gap-4 sm:grid-cols-2">
-                <div>
-                    <dt class="text-sm text-gray-500">Nama Almarhum/Almarhumah</dt>
-                    <dd class="font-medium text-slate-800">{{ $laporan->nama_almarhum ?: '—' }}</dd>
-                </div>
-                <div>
-                    <dt class="text-sm text-gray-500">Tanggal Pengajuan</dt>
-                    <dd class="font-medium text-slate-800">
-                        {{ $laporan->tanggal_pengajuan?->translatedFormat('j F Y, H:i') ?? '—' }}
-                    </dd>
-                </div>
-            </dl>
+    <div class="space-y-6">
+        <div class="flex items-center justify-between gap-4 rounded-2xl border border-line bg-surface px-4 py-3">
+            <a href="{{ route('pengajuan.status') }}"
+                class="inline-flex items-center gap-2 text-sm font-semibold text-ink-soft hover:text-brand">
+                <x-icon.arrow-left class="h-4 w-4" />
+                Kembali ke Status Pengajuan
+            </a>
+            <span class="text-xs text-faint">Detail Dokumen</span>
         </div>
 
-        @if ($laporan->catatan_revisi && $laporan->bolehDiubah())
-            <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                <p class="font-semibold">Catatan Revisi</p>
-                <p class="mt-1">{{ $laporan->catatan_revisi }}</p>
+        <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+                <h1 class="text-3xl font-bold tracking-tight text-ink">
+                    {{ $laporan->nama_almarhum ?: 'Detail Pengajuan' }}
+                </h1>
+                <p class="mt-1 text-sm text-muted">
+                    Nomor Dokumen:
+                    <span class="font-mono text-ink">{{ $laporan->no_pengajuan ?? 'Belum diterbitkan' }}</span>
+                </p>
             </div>
-        @endif
 
-        @if ($laporan->dokumenResmi?->alasan_pengembalian)
-            <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                <p class="font-semibold">Alasan Pengembalian Dokumen</p>
-                <p class="mt-1">{{ $laporan->dokumenResmi->alasan_pengembalian }}</p>
-            </div>
-        @endif
-
-        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
-            <h2 class="text-lg font-semibold text-slate-800">Lini Masa Pengajuan</h2>
-
-            <ol class="relative mt-5 ml-3 border-l border-gray-200">
-                @foreach ($liniMasa as $indeks => $tahap)
-                    <li class="mb-6 ml-6 last:mb-0">
-                        <span class="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold
-                            {{ $tahap['selesai'] ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-500' }}">
-                            @if ($tahap['selesai'])
-                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l3 3 7-7" />
-                                </svg>
-                            @else
-                                {{ $indeks + 1 }}
-                            @endif
-                        </span>
-
-                        <p class="text-sm font-medium {{ $tahap['selesai'] ? 'text-slate-800' : 'text-gray-400' }}">
-                            {{ $tahap['judul'] }}
-                        </p>
-
-                        @if ($tahap['tanggal'] !== null)
-                            <p class="mt-0.5 text-xs text-gray-500">
-                                {{ $tahap['tanggal']->translatedFormat('j F Y, H:i') }} WIB
-                            </p>
-                        @elseif (! $tahap['selesai'])
-                            <p class="mt-0.5 text-xs text-gray-400">Menunggu</p>
-                        @endif
-                    </li>
-                @endforeach
-            </ol>
+            @include('komponen.badge_status', ['status' => $laporan->status_pengajuan])
         </div>
 
-        <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <p class="text-sm text-gray-500">Dokumen akta dapat diunduh setelah pengajuan berstatus Selesai.</p>
-
-            <div class="flex flex-wrap items-center gap-2">
-                @if ($laporan->bolehDiubah())
-                    <a href="{{ route('laporan.ubah', $laporan) }}"
-                       class="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700">
-                        Perbaiki dan Kirim Ulang
-                    </a>
+        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <div class="space-y-6">
+                @if ($laporan->catatan_revisi && $laporan->bolehDiubah())
+                    <x-ui.alert variant="warning">
+                        <p class="font-semibold">Catatan Revisi</p>
+                        <p class="mt-1 font-normal">{{ $laporan->catatan_revisi }}</p>
+                    </x-ui.alert>
                 @endif
 
-                @if ($laporan->selesai())
-                    <a href="{{ route('pengajuan.unduh', $laporan) }}"
-                       class="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-900">
-                        Unduh Dokumen
-                    </a>
-                @else
-                    <button type="button" disabled
-                            class="cursor-not-allowed rounded-md bg-gray-300 px-4 py-2 text-sm font-medium text-gray-500">
-                        Unduh Dokumen
-                    </button>
+                @if ($laporan->dokumenResmi?->alasan_pengembalian)
+                    <x-ui.alert variant="warning">
+                        <p class="font-semibold">Alasan Pengembalian Dokumen</p>
+                        <p class="mt-1 font-normal">{{ $laporan->dokumenResmi->alasan_pengembalian }}</p>
+                    </x-ui.alert>
                 @endif
+
+                <x-ui.card title="Lini Masa Pengajuan">
+                    <x-ui.stepper :steps="$liniMasa" />
+                </x-ui.card>
             </div>
+
+            <aside class="space-y-4">
+                <x-ui.card title="Informasi Dokumen" padding="p-5">
+                    <dl class="divide-y divide-line">
+                        <div class="flex items-start justify-between gap-4 py-3 first:pt-0">
+                            <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Nomor Pengajuan</dt>
+                            <dd class="text-right font-mono text-sm font-semibold text-ink">
+                                {{ $laporan->no_pengajuan ?? '-' }}
+                            </dd>
+                        </div>
+                        <div class="flex items-start justify-between gap-4 py-3">
+                            <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Nama Almarhum/Almarhumah</dt>
+                            <dd class="text-right text-sm font-semibold text-ink">{{ $laporan->nama_almarhum ?: '-' }}</dd>
+                        </div>
+                        <div class="flex items-start justify-between gap-4 py-3">
+                            <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Tanggal Pengajuan</dt>
+                            <dd class="text-right text-sm font-semibold text-ink">
+                                {{ $laporan->tanggal_pengajuan?->translatedFormat('j F Y, H:i') ?? '-' }}
+                            </dd>
+                        </div>
+                        <div class="flex items-start justify-between gap-4 py-3">
+                            <dt class="text-xs font-semibold uppercase tracking-wide text-muted">NIK</dt>
+                            <dd class="text-right font-mono text-sm font-semibold text-ink">
+                                {{ \App\Support\MaskerNik::masker($laporan->nik_almarhum) ?? '-' }}
+                            </dd>
+                        </div>
+                        <div class="flex items-start justify-between gap-4 py-3 last:pb-0">
+                            <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Status</dt>
+                            <dd class="text-right">
+                                @include('komponen.badge_status', ['status' => $laporan->status_pengajuan])
+                            </dd>
+                        </div>
+                    </dl>
+                </x-ui.card>
+
+                <x-ui.notice icon="shield-check">
+                    <p class="font-semibold text-ink">Panel Verifikasi</p>
+                    <p class="mt-1">
+                        Pengajuan diperiksa oleh verifikator. Dokumen akta dapat diunduh setelah pengajuan
+                        berstatus Selesai.
+                    </p>
+                </x-ui.notice>
+
+                <div class="flex flex-col gap-2">
+                    @if ($laporan->bolehDiubah())
+                        <x-ui.button :href="route('laporan.ubah', $laporan)" class="w-full">
+                            Perbaiki dan Kirim Ulang
+                        </x-ui.button>
+                    @endif
+
+                    @if ($laporan->selesai())
+                        <x-ui.button :href="route('pengajuan.unduh', $laporan)" class="w-full">
+                            <x-icon.arrow-down-tray class="h-4 w-4" />
+                            Unduh Dokumen (PDF)
+                        </x-ui.button>
+                    @else
+                        <x-ui.button type="button" disabled class="w-full">
+                            <x-icon.arrow-down-tray class="h-4 w-4" />
+                            Unduh Dokumen (PDF)
+                        </x-ui.button>
+                    @endif
+
+                    <x-ui.button type="button" variant="secondary" onclick="window.print()" class="w-full">
+                        <x-icon.printer class="h-4 w-4" />
+                        Cetak Dokumen
+                    </x-ui.button>
+                </div>
+
+                <p class="text-xs text-faint">*Aktif setelah status "Selesai"</p>
+
+                <p class="text-xs leading-relaxed text-muted">
+                    Dokumen ini diterbitkan secara elektronik dan sah menurut Undang-Undang Informasi dan
+                    Transaksi Elektronik.
+                </p>
+            </aside>
         </div>
     </div>
 @endsection

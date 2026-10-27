@@ -314,16 +314,20 @@ it('mengalihkan sesi kedaluwarsa ke halaman masuk dengan pesan', function () {
         ->assertSessionHas('galat', 'Sesi Anda telah berakhir. Silakan login kembali.');
 });
 
-it('menampilkan tautan kelola profil pada dashboard setiap peran', function () {
+it('menampilkan tautan kelola profil pada dashboard pemohon dan pejabat serta mengalihkan verifikator', function () {
     [$pemohon, $verifikator, $pejabat] = buatAkunDemo();
 
-    foreach ([$pemohon, $verifikator, $pejabat] as $pengguna) {
+    foreach ([$pemohon, $pejabat] as $pengguna) {
         $this->actingAs($pengguna)
             ->get(route('dashboard'))
             ->assertOk()
             ->assertSee('Kelola Profil')
             ->assertSee(route('profil.tampilkan'));
     }
+
+    $this->actingAs($verifikator)
+        ->get(route('dashboard'))
+        ->assertRedirect(route('verifikasi.index'));
 
     expect(Pengguna::count())->toBe(3);
 });

@@ -7,15 +7,14 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\RegistrasiController;
 use App\Http\Controllers\StatusPengajuanController;
-use App\Http\Controllers\VerifikasiController;
-use App\Http\Controllers\LaporanKematianController;
 use App\Http\Controllers\VerifikasiBerkasController;
+use App\Http\Controllers\VerifikasiController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-
 
 // Halaman awal.
 Route::get('/', function () {
-    return \Illuminate\Support\Facades\Auth::check()
+    return Auth::check()
         ? redirect()->route('dashboard')
         : redirect()->route('masuk');
 })->name('beranda');

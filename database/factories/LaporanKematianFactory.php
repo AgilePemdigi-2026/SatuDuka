@@ -40,6 +40,7 @@ class LaporanKematianFactory extends Factory
             'nama_almarhum' => $dataSIAK['nama_lengkap'] ?? fake()->name(),
             'nik_almarhum' => $dataSIAK['nik'] ?? NikDummy::berikutnya(),
             'tanggal_kematian' => fake()->dateTimeBetween('-2 years', '-1 day')->format('Y-m-d'),
+            'jenis_kasus' => LaporanKematian::JENIS_KASUS_NORMAL,
             'tempat_kematian' => fake()->randomElement([
                 'RS Sardjito Yogyakarta',
                 'RS Bethesda Yogyakarta',

@@ -23,7 +23,7 @@ function buatLaporanVerifikasi(Pengguna $pemohon, array $timpa = []): LaporanKem
         'nama_pelapor' => 'Pemohon Demo',
         'hubungan_pelapor' => 'Anak Kandung',
         'nama_almarhum' => 'Suharto Wiryo',
-        'nik_almarhum' => '9999990101900101',
+        'nik_almarhum' => '3471031203559001',
         'tanggal_kematian' => '2026-10-01',
         'tempat_kematian' => 'RSUD Kota Yogyakarta',
         'sebab_kematian' => 'Sakit',
@@ -52,17 +52,7 @@ function lampirkanBerkasVerifikasi(
 }
 
 /**
- * Melampirkan seluruh jenis berkas wajib pada laporan verifikasi.
- */
-function lengkapiBerkasVerifikasi(LaporanKematian $laporan): void
-{
-    foreach (BerkasPendukung::DAFTAR_JENIS as $urutan => $jenis) {
-        lampirkanBerkasVerifikasi($laporan, $jenis, 'lengkap-'.$urutan.'.pdf');
-    }
-}
-
-/**
- * Menyimpan catatan perbandingan hasil analisis untuk pengujian skor.
+ * Menyimpan catatan perbandingan hasil analisis.
  *
  * @param  array<string, string>  $status
  */
@@ -108,7 +98,6 @@ function simpanPerbandinganVerifikasi(LaporanKematian $laporan, array $status = 
             'skor' => 0.9,
         ],
         'skor' => 0.9,
-        'skor_kecurigaan' => null,
         'model' => 'mock-ai-v1',
         'status' => AnalisisAi::STATUS_BERHASIL,
         'hash_berkas' => null,
@@ -256,10 +245,6 @@ it('menjalankan analisis ai untuk verifikator', function () {
             ->where('id_laporan', $laporan->id_laporan)
             ->where('jenis', AnalisisAi::JENIS_PERBANDINGAN)
             ->count())->toBe(1)
-        ->and(AnalisisAi::query()
-            ->where('id_laporan', $laporan->id_laporan)
-            ->where('jenis', AnalisisAi::JENIS_SKOR)
-            ->count())->toBe(1)
         ->and($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI);
 
     $audit = LogAudit::query()->where('aksi', 'menganalisis_dokumen_ai')->firstOrFail();
@@ -306,81 +291,23 @@ it('menolak analisis ai untuk pemohon', function () {
         ->assertForbidden();
 });
 
-it('menampilkan skor kecurigaan pada daftar verifikasi', function () {
-    Storage::fake('local');
+it('mengurutkan daftar verifikasi berdasarkan tanggal terbaru', function () {
     [$pemohon, $verifikator] = buatAkunDemo();
-    $laporan = buatLaporanVerifikasi($pemohon);
-    lengkapiBerkasVerifikasi($laporan);
-    simpanPerbandinganVerifikasi($laporan, ['nik' => 'beda']);
+
+    $terlama = buatLaporanVerifikasi($pemohon, ['tanggal_pengajuan' => now()->subDay()]);
+    $terbaru = buatLaporanVerifikasi($pemohon, ['tanggal_pengajuan' => now()]);
 
     $respons = $this->actingAs($verifikator)
-        ->get(route('verifikasi.daftar'))
-        ->assertOk()
-        ->assertSee('Skor')
-        ->assertSee('/100');
-
-    $skor = $respons->viewData('skorPerLaporan')[$laporan->id_laporan];
-
-    expect($skor['skor'])->toBe(30)
-        ->and($skor['kategori'])->toBe('sedang')
-        ->and(AnalisisAi::query()
-            ->where('id_laporan', $laporan->id_laporan)
-            ->where('jenis', AnalisisAi::JENIS_SKOR)
-            ->count())->toBe(1);
-});
-
-it('memfilter daftar verifikasi berdasarkan prioritas tinggi', function () {
-    Storage::fake('local');
-    [$pemohon, $verifikator] = buatAkunDemo();
-
-    $tinggi = buatLaporanVerifikasi($pemohon);
-    lengkapiBerkasVerifikasi($tinggi);
-    simpanPerbandinganVerifikasi($tinggi, [
-        'nik' => 'beda',
-        'nama_almarhum' => 'beda',
-        'tanggal_kematian' => 'beda',
-        'tempat_kematian' => 'beda',
-    ]);
-
-    $rendah = buatLaporanVerifikasi($pemohon);
-    lengkapiBerkasVerifikasi($rendah);
-    simpanPerbandinganVerifikasi($rendah);
-
-    $this->actingAs($verifikator)
-        ->get(route('verifikasi.daftar', ['prioritas' => 'tinggi']))
-        ->assertOk()
-        ->assertSee($tinggi->no_pengajuan)
-        ->assertDontSee($rendah->no_pengajuan);
-});
-
-it('mengurutkan daftar verifikasi berdasarkan skor tertinggi', function () {
-    Storage::fake('local');
-    [$pemohon, $verifikator] = buatAkunDemo();
-
-    $rendah = buatLaporanVerifikasi($pemohon, ['tanggal_pengajuan' => now()->subDay()]);
-    lengkapiBerkasVerifikasi($rendah);
-    simpanPerbandinganVerifikasi($rendah);
-
-    $tinggi = buatLaporanVerifikasi($pemohon, ['tanggal_pengajuan' => now()]);
-    lengkapiBerkasVerifikasi($tinggi);
-    simpanPerbandinganVerifikasi($tinggi, [
-        'nik' => 'beda',
-        'nama_almarhum' => 'beda',
-        'tanggal_kematian' => 'beda',
-        'tempat_kematian' => 'beda',
-    ]);
-
-    $respons = $this->actingAs($verifikator)
-        ->get(route('verifikasi.daftar', ['urut' => 'prioritas']))
+        ->get(route('verifikasi.daftar', ['urut' => 'terbaru']))
         ->assertOk();
 
     $items = $respons->viewData('daftar')->items();
 
-    expect($items[0]->id_laporan)->toBe($tinggi->id_laporan)
-        ->and($items[1]->id_laporan)->toBe($rendah->id_laporan);
+    expect($items[0]->id_laporan)->toBe($terbaru->id_laporan)
+        ->and($items[1]->id_laporan)->toBe($terlama->id_laporan);
 });
 
-it('menampilkan skor dan tombol ringkasan ai pada detail verifikasi', function () {
+it('menampilkan tombol ringkasan ai pada detail verifikasi', function () {
     Storage::fake('local');
     [$pemohon, $verifikator] = buatAkunDemo();
     $laporan = buatLaporanVerifikasi($pemohon);
@@ -390,16 +317,12 @@ it('menampilkan skor dan tombol ringkasan ai pada detail verifikasi', function (
         'surat-cocok.pdf',
     );
 
-    $respons = $this->actingAs($verifikator)
+    $this->actingAs($verifikator)
         ->get(route('verifikasi.detail', $laporan))
         ->assertOk()
-        ->assertSee('Skor Kecurigaan')
         ->assertSee('Buat ringkasan AI');
 
-    expect($respons->viewData('skor')['skor'])->toBeInt()
-        ->and($respons->viewData('skor')['skor'])->toBeGreaterThanOrEqual(0)
-        ->and($respons->viewData('skor')['skor'])->toBeLessThanOrEqual(100)
-        ->and($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI);
+    expect($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI);
 });
 
 it('membuat ringkasan ai untuk verifikator tanpa mengubah status', function () {
@@ -435,7 +358,7 @@ it('membuat ringkasan ai untuk verifikator tanpa mengubah status', function () {
         ->and($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI);
 });
 
-it('menampilkan skor aturan saat ringkasan ai gagal', function () {
+it('mencatat kegagalan ringkasan ai', function () {
     Storage::fake('local');
     [$pemohon, $verifikator] = buatAkunDemo();
     $laporan = buatLaporanVerifikasi($pemohon);
@@ -459,7 +382,6 @@ it('menampilkan skor aturan saat ringkasan ai gagal', function () {
     $this->actingAs($verifikator)
         ->get(route('verifikasi.detail', $laporan))
         ->assertOk()
-        ->assertSee('Skor Kecurigaan')
         ->assertSee('Analisis AI tidak tersedia, lanjutkan secara manual');
 
     expect(AnalisisAi::query()

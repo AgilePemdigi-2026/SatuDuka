@@ -3,7 +3,7 @@
 /**
  * Pengujian fitur Masuk (Login).
  *
- * Sumber skenario: features/login.feature (SRS Bab VI Tabel 6.1).
+ * Sumber skenario: SRS Bab VI Tabel 6.1.
  * Setiap blok pengujian memetakan satu skenario Gherkin.
  */
 
@@ -54,9 +54,7 @@ it('mengarahkan verifikator ke dashboard verifikator saat masuk dengan nip', fun
     $this->assertAuthenticatedAs($verifikator);
 
     $this->get(route('dashboard'))
-        ->assertOk()
-        ->assertSee('Dashboard Verifikator')
-        ->assertSee('Anda masuk sebagai Verifikator');
+        ->assertRedirect(route('verifikasi.index'));
 });
 
 // Skenario: Berhasil masuk dengan kredensial Pejabat yang valid (NIP 18 digit).
@@ -136,7 +134,7 @@ it('menampilkan pesan kolom kosong dan menandai kolom tersebut', function () {
     ]))
         ->assertOk()
         ->assertSee('Harap isi semua field yang diperlukan')
-        ->assertSee('border-red-500');
+        ->assertSee('aria-invalid="true"', false);
 
     $this->assertGuest();
 });
@@ -237,16 +235,19 @@ it('mengalihkan pengguna yang sudah masuk dari halaman masuk ke dashboard', func
         ->assertSessionHas('info', 'Anda sudah masuk sebagai Pemohon Demo (Pemohon). Keluar terlebih dahulu untuk berganti akun.');
 });
 
-it('memberi tahu akun verifikator yang masih aktif saat membuka halaman masuk', function () {
+it('mengalihkan akun verifikator yang masih aktif dari halaman masuk', function () {
     [, $verifikator] = buatAkunDemo();
 
     $this->actingAs($verifikator)
-        ->followingRedirects()
         ->get(route('masuk'))
-        ->assertOk()
-        ->assertSee('Anda sudah masuk sebagai Verifikator Demo (Verifikator).')
-        ->assertSee('Keluar terlebih dahulu untuk berganti akun.')
-        ->assertSee('Dashboard Verifikator');
+        ->assertRedirect(route('dashboard'))
+        ->assertSessionHas(
+            'info',
+            'Anda sudah masuk sebagai Verifikator Demo (Verifikator). Keluar terlebih dahulu untuk berganti akun.',
+        );
+
+    $this->get(route('dashboard'))
+        ->assertRedirect(route('verifikasi.index'));
 });
 
 it('memberi tahu akun pejabat yang masih aktif saat membuka halaman registrasi', function () {

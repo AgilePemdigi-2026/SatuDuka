@@ -25,7 +25,7 @@ function buatLaporanRingkasan(Pengguna $pemohon, array $timpa = []): LaporanKema
         'nama_pelapor' => 'Pemohon Demo',
         'hubungan_pelapor' => 'Anak Kandung',
         'nama_almarhum' => 'Suharto Wiryo',
-        'nik_almarhum' => '9999990101900101',
+        'nik_almarhum' => '3471031203559001',
         'tanggal_kematian' => now()->subDays(2)->toDateString(),
         'tempat_kematian' => 'RSUD Kota Yogyakarta',
         'sebab_kematian' => 'Sakit',
@@ -73,9 +73,9 @@ function susunPerbandinganRingkasan(array $status = []): array
             'siak' => 'Suharto Wiryo',
         ],
         'nik' => [
-            'pemohon' => '9999990101900101',
-            'ekstraksi' => '9999990101900101',
-            'siak' => '9999990101900101',
+            'pemohon' => '3471031203559001',
+            'ekstraksi' => '3471031203559001',
+            'siak' => '3471031203559001',
         ],
         'tanggal_kematian' => [
             'pemohon' => '2026-10-01',
@@ -134,7 +134,6 @@ function simpanPerbandinganRingkasan(LaporanKematian $laporan, array $status = [
         'jenis' => AnalisisAi::JENIS_PERBANDINGAN,
         'hasil' => $hasil,
         'skor' => 0.9,
-        'skor_kecurigaan' => null,
         'model' => 'mock-ai-v1',
         'status' => AnalisisAi::STATUS_BERHASIL,
         'hash_berkas' => null,
@@ -206,8 +205,8 @@ it('memasker nik pada permintaan penyedia ringkasan', function () {
     Http::assertSent(function (Request $request): bool {
         $body = $request->body();
 
-        return str_contains($body, '999999010190****')
-            && ! str_contains($body, '9999990101900101');
+        return str_contains($body, '347103120355****')
+            && ! str_contains($body, '3471031203559001');
     });
 });
 
@@ -239,7 +238,7 @@ it('membuat ringkasan ai untuk verifikator', function () {
         ->and($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI);
 });
 
-it('menampilkan skor aturan dan mencatat kegagalan ringkasan ai', function () {
+it('mencatat kegagalan ringkasan ai', function () {
     [$pemohon, $verifikator] = buatAkunDemo();
     $laporan = buatLaporanRingkasan($pemohon);
     lampirkanSuratRingkasan($laporan);
@@ -258,22 +257,13 @@ it('menampilkan skor aturan dan mencatat kegagalan ringkasan ai', function () {
     $this->actingAs($verifikator)
         ->get(route('verifikasi.detail', $laporan))
         ->assertOk()
-        ->assertSee('Skor Kecurigaan')
         ->assertSee('Analisis AI tidak tersedia, lanjutkan secara manual');
 
-    $skor = AnalisisAi::query()
+    expect(AnalisisAi::query()
         ->where('id_laporan', $laporan->id_laporan)
-        ->where('jenis', AnalisisAi::JENIS_SKOR)
-        ->latest('id_analisis')
-        ->first();
-
-    expect($skor)->not->toBeNull()
-        ->and((int) $skor->skor_kecurigaan)->toBe(40)
-        ->and(AnalisisAi::query()
-            ->where('id_laporan', $laporan->id_laporan)
-            ->where('jenis', AnalisisAi::JENIS_RINGKASAN)
-            ->where('status', AnalisisAi::STATUS_GAGAL)
-            ->count())->toBe(1)
+        ->where('jenis', AnalisisAi::JENIS_RINGKASAN)
+        ->where('status', AnalisisAi::STATUS_GAGAL)
+        ->count())->toBe(1)
         ->and(LogAudit::query()
             ->where('aksi', 'membuat_ringkasan_ai')
             ->where('hasil', 'Gagal')

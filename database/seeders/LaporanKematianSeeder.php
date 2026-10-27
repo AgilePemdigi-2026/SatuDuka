@@ -32,6 +32,24 @@ class LaporanKematianSeeder extends Seeder
         LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE,
     ];
 
+    /**
+     * Sebaran jenis kasus untuk 10 laporan.
+     *
+     * @var list<string>
+     */
+    private const SEBARAN_JENIS_KASUS = [
+        LaporanKematian::JENIS_KASUS_NORMAL,
+        LaporanKematian::JENIS_KASUS_NORMAL,
+        LaporanKematian::JENIS_KASUS_NORMAL,
+        LaporanKematian::JENIS_KASUS_NORMAL,
+        LaporanKematian::JENIS_KASUS_NORMAL,
+        LaporanKematian::JENIS_KASUS_NORMAL,
+        LaporanKematian::JENIS_KASUS_NORMAL,
+        LaporanKematian::JENIS_KASUS_NORMAL,
+        LaporanKematian::JENIS_KASUS_TIDAK_DIKENAL,
+        LaporanKematian::JENIS_KASUS_TIDAK_DITEMUKAN,
+    ];
+
     public function run(): void
     {
         $pemohonDemo = Pengguna::where('email', 'pemohon@demo.satuduka.id')->firstOrFail();
@@ -53,7 +71,10 @@ class LaporanKematianSeeder extends Seeder
                 ? $pemohonDemo
                 : $pemohonLain[($index - 6) % max($pemohonLain->count(), 1)];
 
-            $atribut = ['id_pengguna' => $pemohon->id_pengguna];
+            $atribut = [
+                'id_pengguna' => $pemohon->id_pengguna,
+                'jenis_kasus' => self::SEBARAN_JENIS_KASUS[$index],
+            ];
 
             if (isset($dataSiak[$index])) {
                 $atribut['nama_almarhum'] = $dataSiak[$index]['nama_lengkap'];

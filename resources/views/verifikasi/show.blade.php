@@ -1,4 +1,3 @@
-```blade
 @extends('tata_letak.verifikator')
 
 @section('judul', 'Detail Verifikasi Berkas')
@@ -159,6 +158,59 @@
             @else
                 <div class="alert alert-warn">
                     Data tidak ditemukan pada SIAK dummy. Lakukan pemeriksaan manual.
+                </div>
+            @endif
+        </div>
+    </section>
+
+    <!-- Pemeriksaan Dokumen Berbantuan AI -->
+    <section class="card">
+        <div class="card-head">
+            <h2 class="card-title">Pemeriksaan Dokumen (AI)</h2>
+        </div>
+
+        <div class="card-body">
+            <p class="hint">
+                Hasil bantuan AI, hanya saran. AI tidak menyetujui, menolak, atau mengubah status pengajuan.
+            </p>
+
+            @if ($suratKeterangan !== null)
+                <div class="toolbar" style="margin-top: 14px;">
+                    <form method="POST" action="{{ route('verifikasi.analisis_ai', $laporan) }}">
+                        @csrf
+                        <input type="hidden" name="id_berkas" value="{{ $suratKeterangan->id_berkas }}">
+                        <button type="submit" class="btn btn-brand btn-sm">Baca dokumen (AI)</button>
+                    </form>
+
+                    <form method="POST" action="{{ route('verifikasi.ringkasan_ai', $laporan) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-outline btn-sm">Buat ringkasan AI</button>
+                    </form>
+                </div>
+            @else
+                <div class="alert alert-warn" style="margin-top: 14px;">
+                    Surat Keterangan Kematian belum diunggah.
+                </div>
+            @endif
+
+            @if ($analisis !== null)
+                @include('laporan.panel_analisis_ai', ['analisis' => $analisis])
+            @else
+                <p class="hint" style="margin-top: 14px;">Belum ada hasil pemeriksaan dokumen.</p>
+            @endif
+
+            @if ($ringkasan !== null)
+                <div class="alert {{ $ringkasanBerhasil ? 'alert-ok' : 'alert-warn' }}" style="margin-top: 14px;">
+                    <strong>Ringkasan Ketidaksesuaian (AI)</strong>
+                    <p style="margin-top: 6px;">{{ $ringkasan['ringkasan'] ?? '-' }}</p>
+
+                    @if (! empty($ringkasan['saran']))
+                        <ul style="margin: 10px 0 0 18px;">
+                            @foreach ($ringkasan['saran'] as $saran)
+                                <li>{{ $saran }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </div>
             @endif
         </div>
@@ -398,4 +450,3 @@
     })();
 </script>
 @endsection
-```

@@ -40,6 +40,24 @@ class LaporanKematian extends Model
 
     public const STATUS_MENUNGGU_PERBAIKAN = 'Pending - Menunggu Perbaikan Berkas Pelapor';
 
+    /* Jenis kasus kematian. */
+    public const JENIS_KASUS_NORMAL = 'Normal';
+
+    public const JENIS_KASUS_TIDAK_DIKENAL = 'Jenazah Tidak Dikenal';
+
+    public const JENIS_KASUS_TIDAK_DITEMUKAN = 'Jenazah Tidak Ditemukan';
+
+    /**
+     * Pilihan jenis kasus yang sah.
+     *
+     * @var list<string>
+     */
+    public const DAFTAR_JENIS_KASUS = [
+        self::JENIS_KASUS_NORMAL,
+        self::JENIS_KASUS_TIDAK_DIKENAL,
+        self::JENIS_KASUS_TIDAK_DITEMUKAN,
+    ];
+
     /**
      * Seluruh status pengajuan yang sah.
      *
@@ -83,24 +101,25 @@ class LaporanKematian extends Model
     /**
      * @var list<string>
      */
-   protected $fillable = [
-    'id_pengguna',
-    'no_pengajuan',
-    'nama_pelapor',
-    'hubungan_pelapor',
-    'nama_almarhum',
-    'nik_almarhum',
-    'tanggal_kematian',
-    'jenis_kelamin',
-    'waktu_kematian',
-    'jenis_tempat',
-    'tempat_kematian',
-    'sebab_kematian',
-    'status_pengajuan',
-    'tanggal_pengajuan',
-    'catatan_revisi',
-    'perlu_verifikasi_manual',
-];
+    protected $fillable = [
+        'id_pengguna',
+        'no_pengajuan',
+        'nama_pelapor',
+        'hubungan_pelapor',
+        'nama_almarhum',
+        'nik_almarhum',
+        'tanggal_kematian',
+        'jenis_kelamin',
+        'waktu_kematian',
+        'jenis_tempat',
+        'jenis_kasus',
+        'tempat_kematian',
+        'sebab_kematian',
+        'status_pengajuan',
+        'tanggal_pengajuan',
+        'catatan_revisi',
+        'perlu_verifikasi_manual',
+    ];
 
     /**
      * @return array<string, string>

@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" role="img"
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img"
     aria-label="Inisial {{ $inisial }}">
-    <rect width="96" height="96" rx="48" fill="#1e293b" />
-    <text x="48" y="48" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="36" font-weight="600"
+    <rect width="64" height="64" rx="32" fill="#e2e8f0" />
+    <text x="32" y="32" fill="#0f172a" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700"
         text-anchor="middle" dominant-baseline="central">{{ $inisial }}</text>
 </svg>

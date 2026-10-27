@@ -3,7 +3,7 @@
 /**
  * Pengujian fitur Registrasi.
  *
- * Sumber skenario: features/register.feature (SRS Bab VI Tabel 6.2).
+ * Sumber skenario: SRS Bab VI Tabel 6.2.
  * Setiap blok pengujian memetakan satu skenario Gherkin.
  */
 
@@ -24,7 +24,7 @@ it('menampilkan halaman registrasi dengan tautan ke halaman masuk', function () 
 
 // Skenario: Berhasil registrasi dengan NIK yang terdapat pada data kependudukan.
 it('menyimpan akun pemohon baru dan mengarahkan ke halaman masuk', function () {
-    $nik = '9999990101900115';
+    $nik = '3471031907459015';
 
     $this->post(route('registrasi.simpan'), [
         'nik' => $nik,
@@ -50,7 +50,7 @@ it('menyimpan akun pemohon baru dan mengarahkan ke halaman masuk', function () {
 // Skenario: Registrasi gagal karena kata sandi lemah.
 it('menolak kata sandi yang tidak memenuhi nfr-01', function () {
     $this->post(route('registrasi.simpan'), [
-        'nik' => '9999990101900114',
+        'nik' => '3404016511599014',
         'email' => 'pemohon.baru@demo.satuduka.id',
         'kata_sandi' => 'abc123',
         'konfirmasi_kata_sandi' => 'abc123',
@@ -66,7 +66,7 @@ it('menolak kata sandi yang tidak memenuhi nfr-01', function () {
 // Skenario: Registrasi gagal karena konfirmasi kata sandi tidak cocok.
 it('menolak konfirmasi kata sandi yang tidak cocok', function () {
     $this->post(route('registrasi.simpan'), [
-        'nik' => '9999990101900114',
+        'nik' => '3404016511599014',
         'email' => 'pemohon.baru@demo.satuduka.id',
         'kata_sandi' => 'Baru12345',
         'konfirmasi_kata_sandi' => 'Baru12346',
@@ -130,7 +130,7 @@ it('menolak surel yang sudah terdaftar', function () {
     ]);
 
     $this->post(route('registrasi.simpan'), [
-        'nik' => '9999990101900114',
+        'nik' => '3404016511599014',
         'email' => 'pemohon@demo.satuduka.id',
         'kata_sandi' => 'Baru12345',
         'konfirmasi_kata_sandi' => 'Baru12345',
@@ -145,14 +145,14 @@ it('menampilkan pesan kolom kosong dan menandai kolom tersebut', function () {
     $this->get(route('registrasi'));
 
     $this->followRedirects($this->post(route('registrasi.simpan'), [
-        'nik' => '9999990101900114',
+        'nik' => '3404016511599014',
         'email' => 'pemohon.baru@demo.satuduka.id',
         'kata_sandi' => '',
         'konfirmasi_kata_sandi' => '',
     ]))
         ->assertOk()
         ->assertSee('Harap isi semua field yang diperlukan')
-        ->assertSee('border-red-500');
+        ->assertSee('aria-invalid="true"', false);
 
     expect(Pengguna::count())->toBe(0);
 });

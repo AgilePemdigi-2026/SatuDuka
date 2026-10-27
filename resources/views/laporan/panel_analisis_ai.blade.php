@@ -2,53 +2,65 @@
     $berhasil = $analisis['berhasil'] ?? false;
     $perbandingan = $analisis['perbandingan'] ?? null;
     $pesan = $analisis['pesan'] ?? null;
-    $warnaStatus = fn (string $status) => match ($status) {
-        'cocok' => 'bg-green-100 text-green-800',
-        'beda' => 'bg-rose-100 text-rose-800',
-        default => 'bg-gray-100 text-gray-700',
+    $keyakinanPersen = (int) round(((float) ($perbandingan['skor'] ?? 0)) * 100);
+    $varianKeyakinan = $keyakinanPersen >= 80 ? 'success' : ($keyakinanPersen >= 60 ? 'warning' : 'danger');
+    $varianStatus = fn (string $status) => match ($status) {
+        'cocok' => 'success',
+        'beda' => 'danger',
+        default => 'neutral',
     };
 @endphp
 
-<div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
-    <p class="text-sm font-semibold text-amber-900">Hasil bantuan AI, hanya saran</p>
-    <p class="mt-1 text-xs text-amber-800">
-        AI tidak menyetujui, menolak, atau mengubah status pengajuan. Periksa kembali data dan dokumen asli.
-    </p>
+<x-ui.notice class="mt-4 [&>div]:flex-1" icon="shield-check">
+    <div class="flex flex-wrap items-start justify-between gap-2">
+        <div>
+            <p class="text-sm font-semibold text-ink">Hasil bantuan AI, hanya saran</p>
+            <p class="mt-1 text-xs text-ink-soft">
+                AI tidak menyetujui, menolak, atau mengubah status pengajuan. Periksa kembali data dan dokumen asli.
+            </p>
+        </div>
+
+        @if ($berhasil && $perbandingan !== null)
+            <x-ui.badge :variant="$varianKeyakinan">Keyakinan {{ $keyakinanPersen }}%</x-ui.badge>
+        @endif
+    </div>
 
     @if (! $berhasil)
-        <p class="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+        <x-ui.alert variant="danger" class="mt-3">
             Analisis AI tidak tersedia, lanjutkan secara manual
-        </p>
+        </x-ui.alert>
     @elseif ($pesan)
-        <p class="mt-3 rounded-md border border-gray-200 bg-white p-3 text-sm text-gray-700">{{ $pesan }}</p>
+        <p class="mt-3 rounded-xl border border-line bg-surface p-3 text-sm text-ink-soft">{{ $pesan }}</p>
     @endif
 
     @if ($berhasil && $perbandingan !== null)
-        <div class="mt-4 overflow-x-auto rounded-lg border border-gray-200 bg-white">
-            <table class="min-w-full divide-y divide-gray-200 text-sm">
-                <thead class="bg-gray-50">
-                    <tr class="text-left text-xs uppercase tracking-wide text-gray-500">
-                        <th class="px-3 py-2 font-medium">Kolom</th>
-                        <th class="px-3 py-2 font-medium">Isian Pemohon</th>
-                        <th class="px-3 py-2 font-medium">Hasil Ekstraksi AI</th>
-                        <th class="px-3 py-2 font-medium">Data SIAK</th>
-                        <th class="px-3 py-2 font-medium">Status</th>
-                        <th class="px-3 py-2 font-medium">Keyakinan</th>
+        <div class="mt-4 overflow-x-auto rounded-xl border border-line bg-surface">
+            <table class="min-w-full divide-y divide-line text-sm">
+                <thead class="bg-canvas">
+                    <tr class="text-left text-xs uppercase tracking-wide text-muted">
+                        <th class="px-3 py-2 font-semibold">Kolom</th>
+                        <th class="px-3 py-2 font-semibold">Isian Pemohon</th>
+                        <th class="px-3 py-2 font-semibold">Hasil Ekstraksi AI</th>
+                        <th class="px-3 py-2 font-semibold">Data SIAK</th>
+                        <th class="px-3 py-2 font-semibold">Status</th>
+                        <th class="px-3 py-2 font-semibold">Keyakinan</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody class="divide-y divide-line">
                     @foreach ($perbandingan['kolom'] as $kolom)
                         <tr>
-                            <td class="px-3 py-2 font-medium text-slate-700">{{ $kolom['label'] }}</td>
-                            <td class="px-3 py-2 text-slate-700">{{ $kolom['nilai_pemohon'] ?? '—' }}</td>
-                            <td class="px-3 py-2 text-slate-700">{{ $kolom['nilai_ekstraksi'] ?? '—' }}</td>
-                            <td class="px-3 py-2 text-slate-700">{{ $kolom['nilai_siak'] ?? '—' }}</td>
+                            <td class="px-3 py-2 font-semibold text-ink-soft">{{ $kolom['label'] }}</td>
+                            <td class="px-3 py-2 text-ink-soft">{{ $kolom['nilai_pemohon'] ?? '—' }}</td>
+                            <td class="px-3 py-2 text-ink-soft">{{ $kolom['nilai_ekstraksi'] ?? '—' }}</td>
+                            <td class="px-3 py-2 text-ink-soft">{{ $kolom['nilai_siak'] ?? '—' }}</td>
                             <td class="px-3 py-2">
-                                <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold {{ $warnaStatus($kolom['status']) }}">
+                                <x-ui.badge :variant="$varianStatus($kolom['status'])">
                                     {{ $kolom['status'] }}
-                                </span>
+                                </x-ui.badge>
                             </td>
-                            <td class="px-3 py-2 text-slate-700">{{ number_format(((float) $kolom['keyakinan']) * 100, 0) }}%</td>
+                            <td class="px-3 py-2 text-ink-soft">
+                                {{ number_format(((float) $kolom['keyakinan']) * 100, 0) }}%
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -56,8 +68,8 @@
         </div>
 
         @if ($perbandingan['ada_beda'])
-            <div class="mt-3 rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
-                <p class="font-semibold">Ada kolom yang perlu diperiksa:</p>
+            <x-ui.alert variant="danger" class="mt-3">
+                <p class="font-semibold">Ada kolom yang perlu diperiksa</p>
                 <ul class="mt-1 list-disc pl-5">
                     @foreach ($perbandingan['kolom'] as $kolom)
                         @if ($kolom['status'] === 'beda')
@@ -70,11 +82,11 @@
                         @endif
                     @endforeach
                 </ul>
-            </div>
+            </x-ui.alert>
         @endif
 
-        <p class="mt-2 text-xs text-gray-500">
-            Model: {{ $analisis['model'] ?? '-' }} · Skor keseluruhan: {{ number_format(((float) ($perbandingan['skor'] ?? 0)) * 100, 0) }}%
+        <p class="mt-2 text-xs text-muted">
+            Model: {{ $analisis['model'] ?? '-' }} &middot; Keyakinan ekstraksi: {{ $keyakinanPersen }}%
         </p>
     @endif
-</div>
+</x-ui.notice>

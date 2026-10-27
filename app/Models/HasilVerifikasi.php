@@ -60,6 +60,8 @@ class HasilVerifikasi extends Model
         'id_pengguna',
         'status_verifikasi',
         'catatan',
+        'deteksi_otomatis',
+        'alasan_override',
         'tanggal_verifikasi',
     ];
 
@@ -70,6 +72,7 @@ class HasilVerifikasi extends Model
     {
         return [
             'tanggal_verifikasi' => 'datetime',
+            'deteksi_otomatis' => 'array',
             'dibuat_pada' => 'datetime',
             'diperbarui_pada' => 'datetime',
         ];

@@ -3,7 +3,7 @@
 @section('judul', 'Detail Verifikasi')
 
 @section('navigasi')
-    <a href="{{ route('dashboard') }}" class="text-sm text-gray-600 hover:underline">Dashboard</a>
+    <a href="{{ route('dashboard') }}" class="text-sm font-semibold text-ink-soft hover:text-brand">Dashboard</a>
     @include('komponen.menu_avatar', ['pengguna' => $pengguna])
 @endsection
 
@@ -15,195 +15,231 @@
         );
     @endphp
 
-    <div class="space-y-4">
-        <a href="{{ route('verifikasi.daftar') }}" class="inline-block text-sm text-slate-700 underline">
-            &larr; Kembali ke Menunggu Verifikasi
-        </a>
+    <div class="space-y-6">
+        <div class="flex items-center justify-between gap-4 rounded-2xl border border-line bg-surface px-4 py-3">
+            <a href="{{ route('verifikasi.daftar') }}"
+                class="inline-flex items-center gap-2 text-sm font-semibold text-ink-soft hover:text-brand">
+                <x-icon.arrow-left class="h-4 w-4" />
+                Kembali ke Menunggu Verifikasi
+            </a>
+            <span class="text-xs text-faint">Detail Verifikasi</span>
+        </div>
 
-        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h1 class="text-xl font-bold text-slate-800 sm:text-2xl">{{ $laporan->nama_almarhum }}</h1>
-                    <p class="mt-1 font-mono text-sm text-gray-500">{{ $laporan->no_pengajuan }}</p>
-                </div>
-                <span class="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
-                    {{ $laporan->status_pengajuan }}
-                </span>
+        <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+                <h1 class="text-3xl font-bold tracking-tight text-ink">{{ $laporan->nama_almarhum }}</h1>
+                <p class="mt-1 text-sm text-muted">
+                    Nomor Dokumen:
+                    <span class="font-mono text-ink">{{ $laporan->no_pengajuan }}</span>
+                </p>
             </div>
 
-            @php
-                $warnaKategori = match ($skor['kategori']) {
-                    'tinggi' => 'bg-rose-100 text-rose-800',
-                    'sedang' => 'bg-amber-100 text-amber-800',
-                    default => 'bg-green-100 text-green-800',
-                };
-            @endphp
-            <div class="mt-5 rounded-lg border border-gray-200 p-4">
-                <div class="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                        <h2 class="font-semibold text-slate-800">Skor Kecurigaan</h2>
-                        <p class="mt-1 max-w-2xl text-sm text-gray-500">
-                            Skor aturan deterministik 0-100 untuk memprioritaskan pemeriksaan.
-                            Skor tidak mengubah status pengajuan dan bukan keputusan verifikasi.
+            @include('komponen.badge_status', ['status' => $laporan->status_pengajuan])
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <div class="space-y-6">
+                <div class="rounded-2xl bg-[#d9dcde] p-6">
+                    <div class="mx-auto max-w-2xl rounded-xl bg-surface p-8 shadow-[0_1px_2px_rgb(15_23_42_/_0.04)]">
+                        <p class="text-center font-serif text-lg font-bold uppercase tracking-[0.2em] text-gold">
+                            Data Pengajuan
                         </p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-3xl font-bold text-slate-800">
-                            {{ $skor['skor'] }}<span class="text-sm font-normal text-gray-500">/100</span>
-                        </p>
-                        <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold {{ $warnaKategori }}">
-                            {{ $skor['kategori'] }}
-                        </span>
+                        <div class="mt-3 h-px bg-line"></div>
+
+                        <section class="mt-6">
+                            <h2 class="text-sm font-bold uppercase tracking-wide text-ink-soft">
+                                Data Almarhum/Almarhumah
+                            </h2>
+                            <dl class="mt-3 divide-y divide-line">
+                                <div class="flex items-start justify-between gap-4 py-2.5">
+                                    <dt class="text-xs text-muted">Nama</dt>
+                                    <dd class="text-right text-sm font-semibold text-ink">{{ $laporan->nama_almarhum }}</dd>
+                                </div>
+                                <div class="flex items-start justify-between gap-4 py-2.5">
+                                    <dt class="text-xs text-muted">NIK</dt>
+                                    <dd class="text-right font-mono text-sm font-semibold text-ink">
+                                        {{ \App\Support\MaskerNik::masker($laporan->nik_almarhum) ?? '-' }}
+                                    </dd>
+                                </div>
+                                <div class="flex items-start justify-between gap-4 py-2.5">
+                                    <dt class="text-xs text-muted">Tanggal kematian</dt>
+                                    <dd class="text-right text-sm font-semibold text-ink">
+                                        {{ $laporan->tanggal_kematian?->translatedFormat('j F Y') ?? '-' }}
+                                    </dd>
+                                </div>
+                                <div class="flex items-start justify-between gap-4 py-2.5">
+                                    <dt class="text-xs text-muted">Tempat kematian</dt>
+                                    <dd class="text-right text-sm font-semibold text-ink">{{ $laporan->tempat_kematian ?? '-' }}</dd>
+                                </div>
+                                <div class="flex items-start justify-between gap-4 py-2.5">
+                                    <dt class="text-xs text-muted">Sebab kematian</dt>
+                                    <dd class="text-right text-sm font-semibold text-ink">{{ $laporan->sebab_kematian ?? '-' }}</dd>
+                                </div>
+                            </dl>
+                        </section>
+
+                        <section class="mt-6">
+                            <h2 class="text-sm font-bold uppercase tracking-wide text-ink-soft">Data Pelapor</h2>
+                            <dl class="mt-3 divide-y divide-line">
+                                <div class="flex items-start justify-between gap-4 py-2.5">
+                                    <dt class="text-xs text-muted">Nama</dt>
+                                    <dd class="text-right text-sm font-semibold text-ink">{{ $laporan->nama_pelapor }}</dd>
+                                </div>
+                                <div class="flex items-start justify-between gap-4 py-2.5">
+                                    <dt class="text-xs text-muted">Hubungan</dt>
+                                    <dd class="text-right text-sm font-semibold text-ink">{{ $laporan->hubungan_pelapor }}</dd>
+                                </div>
+                                <div class="flex items-start justify-between gap-4 py-2.5">
+                                    <dt class="text-xs text-muted">Tanggal pengajuan</dt>
+                                    <dd class="text-right text-sm font-semibold text-ink">{{ $laporan->labelTanggalPengajuan() }}</dd>
+                                </div>
+                            </dl>
+                        </section>
                     </div>
                 </div>
 
-                @if ($skor['alasan'] === [])
-                    <p class="mt-3 text-sm text-green-700">
-                        Tidak ada alasan kecurigaan dari aturan yang tersedia.
+                <x-ui.card title="Berkas Pendukung">
+                    @if ($laporan->berkasPendukung->isEmpty())
+                        <p class="text-sm text-muted">Belum ada berkas pendukung.</p>
+                    @else
+                        <ul class="divide-y divide-line">
+                            @foreach ($laporan->berkasPendukung as $berkas)
+                                <li class="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                                    <span class="text-sm font-medium text-ink-soft">{{ $berkas->jenis_dokumen }}</span>
+                                    <span class="flex items-center gap-3">
+                                        <a href="{{ route('verifikasi.berkas', [$laporan, $berkas]) }}" target="_blank"
+                                            class="text-xs font-semibold text-brand hover:text-brand-hover">
+                                            {{ $berkas->nama_file }}
+                                        </a>
+                                        <x-ui.badge
+                                            :variant="$berkas->status_unggahan === \App\Models\BerkasPendukung::STATUS_BERHASIL ? 'success' : 'warning'">
+                                            {{ $berkas->status_unggahan }}
+                                        </x-ui.badge>
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </x-ui.card>
+
+                <x-ui.card title="Pemeriksaan Dokumen (AI)">
+                    <p class="text-sm text-muted">
+                        Hasil bantuan AI, hanya saran. Tidak ada keputusan verifikasi yang diambil otomatis.
                     </p>
-                @else
-                    <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                        @foreach ($skor['alasan'] as $alasan)
-                            <li>
-                                {{ $alasan['keterangan'] }}
-                                <span class="text-gray-500">(+{{ $alasan['bobot'] }})</span>
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
+
+                    @if ($analisis !== null)
+                        @include('laporan.panel_analisis_ai', ['analisis' => $analisis])
+                    @else
+                        <p class="mt-3 text-sm text-muted">Belum ada hasil pemeriksaan dokumen.</p>
+                    @endif
+                </x-ui.card>
+
+                <x-ui.card title="Ringkasan Ketidaksesuaian (AI)">
+                    <p class="text-sm text-muted">
+                        Ringkasan dan saran tindakan untuk verifikator. Hasil bantuan AI, hanya saran;
+                        verifikator dapat mengabaikannya.
+                    </p>
+
+                    @if ($ringkasan !== null)
+                        @if ($ringkasanBerhasil)
+                            <div class="mt-4 rounded-2xl border border-[#f59e0b] bg-[#fef3c7] p-4">
+                                <p class="text-sm font-semibold text-[#b45309]">Hasil bantuan AI, hanya saran</p>
+                                <p class="mt-2 text-sm text-ink">{{ $ringkasan['ringkasan'] ?? '-' }}</p>
+
+                                @if (! empty($ringkasan['saran']))
+                                    <p class="mt-3 text-sm font-semibold text-[#b45309]">Saran tindakan</p>
+                                    <ul class="mt-1 list-disc space-y-1 pl-5 text-sm text-ink-soft">
+                                        @foreach ($ringkasan['saran'] as $saran)
+                                            <li>{{ $saran }}</li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            </div>
+                        @else
+                            <x-ui.alert variant="danger" class="mt-4">
+                                Analisis AI tidak tersedia, lanjutkan secara manual
+                            </x-ui.alert>
+                        @endif
+                    @else
+                        <p class="mt-3 text-sm text-muted">Belum ada ringkasan AI.</p>
+                    @endif
+                </x-ui.card>
             </div>
 
-            <div class="mt-5 grid gap-4 sm:grid-cols-2">
-                <div class="rounded-lg border border-gray-200 p-4">
-                    <h2 class="font-semibold text-slate-800">Data Almarhum/Almarhumah</h2>
-                    <dl class="mt-2 space-y-1 text-sm">
-                        <div class="flex justify-between gap-3">
-                            <dt class="text-gray-500">Nama</dt>
-                            <dd class="text-right font-medium text-slate-800">{{ $laporan->nama_almarhum }}</dd>
+            <aside class="space-y-4">
+                <x-ui.card title="Informasi Dokumen" padding="p-5">
+                    <dl class="divide-y divide-line">
+                        <div class="flex items-start justify-between gap-4 py-3 first:pt-0">
+                            <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Nomor Pengajuan</dt>
+                            <dd class="text-right font-mono text-sm font-semibold text-ink">{{ $laporan->no_pengajuan }}</dd>
                         </div>
-                        <div class="flex justify-between gap-3">
-                            <dt class="text-gray-500">NIK</dt>
-                            <dd class="text-right font-medium text-slate-800">{{ $laporan->nik_almarhum }}</dd>
+                        <div class="flex items-start justify-between gap-4 py-3">
+                            <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Nama Almarhum/Almarhumah</dt>
+                            <dd class="text-right text-sm font-semibold text-ink">{{ $laporan->nama_almarhum }}</dd>
                         </div>
-                        <div class="flex justify-between gap-3">
-                            <dt class="text-gray-500">Tanggal kematian</dt>
-                            <dd class="text-right font-medium text-slate-800">
-                                {{ $laporan->tanggal_kematian?->translatedFormat('j F Y') ?? '—' }}
+                        <div class="flex items-start justify-between gap-4 py-3">
+                            <dt class="text-xs font-semibold uppercase tracking-wide text-muted">NIK</dt>
+                            <dd class="text-right font-mono text-sm font-semibold text-ink">
+                                {{ \App\Support\MaskerNik::masker($laporan->nik_almarhum) ?? '-' }}
                             </dd>
                         </div>
-                        <div class="flex justify-between gap-3">
-                            <dt class="text-gray-500">Tempat kematian</dt>
-                            <dd class="text-right font-medium text-slate-800">{{ $laporan->tempat_kematian ?? '—' }}</dd>
-                        </div>
-                        <div class="flex justify-between gap-3">
-                            <dt class="text-gray-500">Sebab kematian</dt>
-                            <dd class="text-right font-medium text-slate-800">{{ $laporan->sebab_kematian ?? '—' }}</dd>
+                        <div class="flex items-start justify-between gap-4 py-3 last:pb-0">
+                            <dt class="text-xs font-semibold uppercase tracking-wide text-muted">Status</dt>
+                            <dd class="text-right">
+                                @include('komponen.badge_status', ['status' => $laporan->status_pengajuan])
+                            </dd>
                         </div>
                     </dl>
-                </div>
+                </x-ui.card>
 
-                <div class="rounded-lg border border-gray-200 p-4">
-                    <h2 class="font-semibold text-slate-800">Data Pelapor</h2>
-                    <dl class="mt-2 space-y-1 text-sm">
-                        <div class="flex justify-between gap-3">
-                            <dt class="text-gray-500">Nama</dt>
-                            <dd class="text-right font-medium text-slate-800">{{ $laporan->nama_pelapor }}</dd>
-                        </div>
-                        <div class="flex justify-between gap-3">
-                            <dt class="text-gray-500">Hubungan</dt>
-                            <dd class="text-right font-medium text-slate-800">{{ $laporan->hubungan_pelapor }}</dd>
-                        </div>
-                        <div class="flex justify-between gap-3">
-                            <dt class="text-gray-500">Tanggal pengajuan</dt>
-                            <dd class="text-right font-medium text-slate-800">{{ $laporan->labelTanggalPengajuan() }}</dd>
-                        </div>
-                    </dl>
-                </div>
-            </div>
+                <x-ui.notice icon="shield-check">
+                    <p class="font-semibold text-ink">Panel Verifikasi</p>
+                    <p class="mt-1">
+                        Halaman ini hanya untuk pemeriksaan berkas. Hasil AI adalah saran; keputusan
+                        verifikasi tidak diambil otomatis.
+                    </p>
+                </x-ui.notice>
 
-            <div class="mt-5">
-                <h2 class="font-semibold text-slate-800">Berkas Pendukung</h2>
-                <ul class="mt-2 divide-y divide-gray-100 rounded-lg border border-gray-200">
-                    @foreach ($laporan->berkasPendukung as $berkas)
-                        <li class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
-                            <span class="font-medium text-slate-700">{{ $berkas->jenis_dokumen }}</span>
-                            <span class="flex flex-wrap items-center gap-3">
-                                <a href="{{ route('verifikasi.berkas', [$laporan, $berkas]) }}" target="_blank"
-                                   class="text-slate-700 underline">{{ $berkas->nama_file }}</a>
-                                <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
-                                    {{ $berkas->status_unggahan }}
-                                </span>
-                            </span>
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
+                <x-ui.card title="Tindakan Verifikasi" padding="p-5">
+                    @if ($suratKeterangan !== null)
+                        <form method="POST" action="{{ route('verifikasi.analisis_ai', $laporan) }}">
+                            @csrf
+                            <input type="hidden" name="id_berkas" value="{{ $suratKeterangan->id_berkas }}">
+                            <x-ui.button type="submit" class="w-full">Baca dokumen (AI)</x-ui.button>
+                        </form>
 
-            <div class="mt-5 rounded-lg border border-gray-200 p-4">
-                <h2 class="font-semibold text-slate-800">Pemeriksaan Dokumen (AI)</h2>
-                <p class="mt-1 text-sm text-gray-500">
-                    Hasil bantuan AI, hanya saran. Tidak ada keputusan verifikasi yang diambil otomatis.
-                </p>
-
-                @if ($suratKeterangan !== null)
-                    <form method="POST" action="{{ route('verifikasi.analisis_ai', $laporan) }}" class="mt-3">
-                        @csrf
-                        <input type="hidden" name="id_berkas" value="{{ $suratKeterangan->id_berkas }}">
-                        <button type="submit"
-                                class="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-900">
-                            Baca dokumen (AI)
-                        </button>
-                    </form>
-                @else
-                    <p class="mt-3 text-sm text-amber-700">Surat Keterangan Kematian belum diunggah.</p>
-                @endif
-
-                @if ($analisis !== null)
-                    @include('laporan.panel_analisis_ai', ['analisis' => $analisis])
-                @endif
-            </div>
-
-            <div class="mt-5 rounded-lg border border-gray-200 p-4">
-                <h2 class="font-semibold text-slate-800">Ringkasan Ketidaksesuaian (AI)</h2>
-                <p class="mt-1 text-sm text-gray-500">
-                    Ringkasan dan saran tindakan untuk verifikator. Hasil bantuan AI, hanya saran;
-                    verifikator dapat mengabaikannya.
-                </p>
-
-                @if ($suratKeterangan !== null)
-                    <form method="POST" action="{{ route('verifikasi.ringkasan_ai', $laporan) }}" class="mt-3">
-                        @csrf
-                        <button type="submit"
-                                class="rounded-md bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-900">
-                            Buat ringkasan AI
-                        </button>
-                    </form>
-                @else
-                    <p class="mt-3 text-sm text-amber-700">Surat Keterangan Kematian belum diunggah.</p>
-                @endif
-
-                @if ($ringkasan !== null)
-                    @if ($ringkasanBerhasil)
-                        <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
-                            <p class="text-sm font-semibold text-amber-900">Hasil bantuan AI, hanya saran</p>
-                            <p class="mt-2 text-sm text-slate-800">{{ $ringkasan['ringkasan'] ?? '—' }}</p>
-
-                            @if (! empty($ringkasan['saran']))
-                                <p class="mt-3 text-sm font-semibold text-amber-900">Saran tindakan</p>
-                                <ul class="mt-1 list-disc space-y-1 pl-5 text-sm text-slate-800">
-                                    @foreach ($ringkasan['saran'] as $saran)
-                                        <li>{{ $saran }}</li>
-                                    @endforeach
-                                </ul>
-                            @endif
-                        </div>
+                        <form method="POST" action="{{ route('verifikasi.ringkasan_ai', $laporan) }}" class="mt-2">
+                            @csrf
+                            <x-ui.button type="submit" variant="secondary" class="w-full">
+                                Buat ringkasan AI
+                            </x-ui.button>
+                        </form>
                     @else
-                        <p class="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                            Analisis AI tidak tersedia, lanjutkan secara manual
-                        </p>
+                        <x-ui.alert variant="warning">
+                            Surat Keterangan Kematian belum diunggah.
+                        </x-ui.alert>
                     @endif
-                @endif
-            </div>
+                </x-ui.card>
+
+                <div class="flex flex-col gap-2">
+                    <x-ui.button type="button" disabled class="w-full">
+                        <x-icon.arrow-down-tray class="h-4 w-4" />
+                        Unduh Dokumen (PDF)
+                    </x-ui.button>
+
+                    <x-ui.button type="button" variant="secondary" onclick="window.print()" class="w-full">
+                        <x-icon.printer class="h-4 w-4" />
+                        Cetak Dokumen
+                    </x-ui.button>
+                </div>
+
+                <p class="text-xs text-faint">*Aktif setelah status "Selesai"</p>
+
+                <p class="text-xs leading-relaxed text-muted">
+                    Dokumen ini diterbitkan secara elektronik dan sah menurut Undang-Undang Informasi dan
+                    Transaksi Elektronik.
+                </p>
+            </aside>
         </div>
     </div>
 @endsection
