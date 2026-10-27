@@ -15,6 +15,7 @@ class DashboardController extends Controller
 {
     /**
      * Menampilkan dashboard sesuai peran pengguna yang masuk.
+     * Verifikator langsung diarahkan ke halaman verifikasi berkas.
      */
     public function tampilkan(Request $request)
     {
@@ -40,7 +41,7 @@ class DashboardController extends Controller
                     ->filter(fn ($jumlah) => (int) $jumlah > 0)
                     ->sortBy(fn ($jumlah, string $status) => array_search($status, LaporanKematian::DAFTAR_STATUS, true)),
             ]),
-            $pengguna->adalahVerifikator() => view('dashboard.verifikator', ['pengguna' => $pengguna]),
+            $pengguna->adalahVerifikator() => redirect()->route('verifikasi.index'),
             default => view('dashboard.pejabat', ['pengguna' => $pengguna]),
         };
     }

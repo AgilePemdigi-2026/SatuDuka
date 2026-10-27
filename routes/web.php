@@ -9,43 +9,34 @@ use App\Http\Controllers\RegistrasiController;
 use App\Http\Controllers\StatusPengajuanController;
 use App\Http\Controllers\VerifikasiController;
 use App\Http\Controllers\LaporanKematianController;
+use App\Http\Controllers\VerifikasiBerkasController;
 use Illuminate\Support\Facades\Route;
 
 
-// Halaman awal: pengguna yang sudah login ke dashboard,
-// sedangkan tamu diarahkan ke halaman masuk.
+// Halaman awal.
 Route::get('/', function () {
-    return auth()->check()
+    return \Illuminate\Support\Facades\Auth::check()
         ? redirect()->route('dashboard')
         : redirect()->route('masuk');
 })->name('beranda');
 
-// Halaman untuk tamu (belum login).
+// Halaman untuk tamu yang belum login.
 Route::middleware('guest')->group(function () {
+    // Registrasi akun pemohon.
+    Route::get('/registrasi', [RegistrasiController::class, 'tampilkan'])
+        ->name('registrasi');
 
-    // Registrasi akun Pemohon.
-    Route::get('/registrasi', [
-        RegistrasiController::class,
-        'tampilkan',
-    ])->name('registrasi');
+    Route::post('/registrasi', [RegistrasiController::class, 'daftar'])
+        ->name('registrasi.simpan');
 
-    Route::post('/registrasi', [
-        RegistrasiController::class,
-        'daftar',
-    ])->name('registrasi.simpan');
+    // Login.
+    Route::get('/masuk', [LoginController::class, 'tampilkan'])
+        ->name('masuk');
 
-    // Login menggunakan NIK/NIP.
-    Route::get('/masuk', [
-        LoginController::class,
-        'tampilkan',
-    ])->name('masuk');
+    Route::post('/masuk', [LoginController::class, 'masuk'])
+        ->name('masuk.coba');
 
-    Route::post('/masuk', [
-        LoginController::class,
-        'masuk',
-    ])->name('masuk.coba');
-
-    // Pengaturan ulang kata sandi.
+    // Permintaan pengaturan ulang kata sandi.
     Route::get('/lupa-kata-sandi', [
         AturUlangKataSandiController::class,
         'tampilkanLupa',
@@ -56,6 +47,7 @@ Route::middleware('guest')->group(function () {
         'kirimTautan',
     ])->name('lupa_kata_sandi.kirim');
 
+    // Form pengaturan ulang kata sandi.
     Route::get('/atur-ulang-kata-sandi/{token}', [
         AturUlangKataSandiController::class,
         'tampilkanAturUlang',
@@ -68,12 +60,11 @@ Route::middleware('guest')->group(function () {
 });
 
 // Keluar dari sistem.
-Route::post('/keluar', [
-    LoginController::class,
-    'keluar',
-])->middleware('auth')->name('keluar');
+Route::post('/keluar', [LoginController::class, 'keluar'])
+    ->middleware('auth')
+    ->name('keluar');
 
-// Dashboard sesuai peran (kerangka).
+// Dashboard sesuai peran.
 Route::get('/dashboard', [DashboardController::class, 'tampilkan'])
     ->middleware('auth')
     ->name('dashboard');
@@ -117,4 +108,19 @@ Route::middleware(['auth', 'peran:verifikator'])->group(function () {
         ->name('verifikasi.ringkasan_ai');
     Route::get('/verifikasi/{laporan}', [VerifikasiController::class, 'detail'])->name('verifikasi.detail');
 });
+
+// Fitur verifikasi berkas dengan persetujuan, revisi, dan anomali (branch verifikasi-berkas-pengajuan).
+Route::middleware(['auth', 'peran:verifikator'])
+    ->prefix('verifikasi-berkas')
+    ->name('verifikasi.')
+    ->group(function () {
+        Route::get('/', [VerifikasiBerkasController::class, 'index'])->name('index');
+        Route::get('/{laporan}', [VerifikasiBerkasController::class, 'show'])->name('show');
+        Route::get('/{laporan}/berkas/{berkas}', [VerifikasiBerkasController::class, 'pratinjau'])->name('pratinjau');
+        Route::get('/{laporan}/berkas/{berkas}/unduh', [VerifikasiBerkasController::class, 'unduh'])->name('unduh');
+        Route::post('/{laporan}/setujui', [VerifikasiBerkasController::class, 'setujui'])->name('setujui');
+        Route::post('/{laporan}/revisi', [VerifikasiBerkasController::class, 'mintaRevisi'])->name('revisi');
+        Route::post('/{laporan}/anomali', [VerifikasiBerkasController::class, 'tandaiAnomali'])->name('anomali');
+    });
+
 Route::redirect('/pengajuan-laporan', '/laporan/baru');
