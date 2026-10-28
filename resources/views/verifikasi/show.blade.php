@@ -248,6 +248,29 @@
                     <button type="submit" class="btn btn-green btn-block">Setujui Berkas</button>
                 </form>
 
+                <form method="POST" action="{{ route('verifikasi.revisi', $laporan) }}" class="decision-box">
+                    @csrf
+
+                    <div>
+                        <h3>Minta Revisi</h3>
+                        <p class="hint">Gunakan jika ada dokumen yang perlu diperbaiki oleh pemohon.</p>
+
+                        <label for="catatan_revisi" class="field-label">Catatan Revisi (Wajib)</label>
+                        <textarea
+                            id="catatan_revisi"
+                            name="catatan"
+                            rows="3"
+                            required
+                            minlength="5"
+                            maxlength="2000"
+                            class="field"
+                            placeholder="Jelaskan berkas yang perlu diperbaiki..."
+                        ></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline btn-block">Minta Revisi</button>
+                </form>
+
                 <form method="POST" action="{{ route('verifikasi.anomali', $laporan) }}" class="decision-box">
                     @csrf
 
@@ -260,9 +283,11 @@
                                 <label for="jenis_anomali" class="field-label">Jenis Anomali</label>
                                 <select id="jenis_anomali" name="jenis_anomali" required class="field">
                                     <option value="">Pilih Jenis Anomali</option>
-                                    <option value="Perbedaan Identitas">Perbedaan Identitas</option>
-                                    <option value="NIK Ganda">NIK Ganda</option>
-                                    <option value="Dokumen Tidak Terbaca">Dokumen Tidak Terbaca</option>
+                                    <option value="{{ \App\Models\AnomaliDokumen::JENIS_PERBEDAAN_IDENTITAS }}">Perbedaan Identitas</option>
+                                    <option value="{{ \App\Models\AnomaliDokumen::JENIS_NIK_GANDA }}">NIK Ganda</option>
+                                    <option value="{{ \App\Models\AnomaliDokumen::JENIS_TANGGAL_KEMATIAN }}">Perbedaan Tanggal Kematian</option>
+                                    <option value="{{ \App\Models\AnomaliDokumen::JENIS_TEMPAT_KEMATIAN }}">Perbedaan Tempat Kematian</option>
+                                    <option value="{{ \App\Models\AnomaliDokumen::JENIS_DOKUMEN_TIDAK_TERBACA }}">Dokumen Tidak Terbaca</option>
                                 </select>
                             </div>
 

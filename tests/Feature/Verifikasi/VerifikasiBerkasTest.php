@@ -217,9 +217,14 @@ it('meminta revisi dengan catatan dan menyimpan hasil verifikasi', function () {
     $laporan = buatLaporanAntreanVerifikasi($pemohon);
 
     $this->actingAs($verifikator)
-        ->post(route('verifikasi.revisi', $laporan), [
-            'catatan' => 'Kartu Keluarga kurang jelas, mohon unggah ulang.',
-        ])
+        ->get(route('verifikasi.show', $laporan))
+        ->assertOk()
+        ->assertSee('Minta Revisi')
+        ->assertSee(route('verifikasi.revisi', $laporan));
+
+    $this->post(route('verifikasi.revisi', $laporan), [
+        'catatan' => 'Kartu Keluarga kurang jelas, mohon unggah ulang.',
+    ])
         ->assertRedirect(route('verifikasi.index'))
         ->assertSessionHas('sukses');
 
@@ -268,6 +273,39 @@ it('menandai anomali dan menyimpan hasil verifikasi', function () {
         ->and($anomali->status_rekonsiliasi)->toBe(AnomaliDokumen::STATUS_TERBUKA);
 
     expect(LogAudit::where('aksi', 'menandai_anomali_berkas')->count())->toBe(1);
+});
+
+it('menerima kelima jenis anomali dari halaman baru', function () {
+    Storage::fake('local');
+
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $jenisAnomali = [
+        AnomaliDokumen::JENIS_PERBEDAAN_IDENTITAS,
+        AnomaliDokumen::JENIS_NIK_GANDA,
+        AnomaliDokumen::JENIS_TANGGAL_KEMATIAN,
+        AnomaliDokumen::JENIS_TEMPAT_KEMATIAN,
+        AnomaliDokumen::JENIS_DOKUMEN_TIDAK_TERBACA,
+    ];
+
+    $this->actingAs($verifikator);
+
+    foreach ($jenisAnomali as $jenis) {
+        $laporan = buatLaporanAntreanVerifikasi($pemohon);
+
+        $this->get(route('verifikasi.show', $laporan))
+            ->assertOk()
+            ->assertSee($jenis);
+
+        $this->post(route('verifikasi.anomali', $laporan), [
+            'jenis_anomali' => $jenis,
+            'deskripsi' => 'Anomali '.$jenis.' ditemukan.',
+        ])->assertRedirect(route('verifikasi.index'));
+
+        $hasil = HasilVerifikasi::where('id_laporan', $laporan->id_laporan)->firstOrFail();
+
+        expect(AnomaliDokumen::where('id_verifikasi', $hasil->id_verifikasi)
+            ->value('jenis_anomali'))->toBe($jenis);
+    }
 });
 
 it('menolak laporan di luar status yang boleh diverifikasi', function () {
