@@ -305,6 +305,68 @@ it('mengarahkan aksi ai ke halaman baru saat asal baru', function () {
     expect($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI);
 });
 
+it('menolak asal aksi ai yang tidak sah tanpa mengubah status', function () {
+    Storage::fake('local');
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporan = buatLaporanVerifikasi($pemohon);
+    $berkas = lampirkanBerkasVerifikasi(
+        $laporan,
+        BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN,
+        'surat-cocok.pdf',
+    );
+
+    $this->from(route('verifikasi.show', $laporan))
+        ->actingAs($verifikator)
+        ->post(route('verifikasi.analisis_ai', $laporan), [
+            'id_berkas' => $berkas->id_berkas,
+            'asal' => 'tidak-sah',
+        ])
+        ->assertRedirect(route('verifikasi.show', $laporan))
+        ->assertSessionHasErrors('asal');
+
+    $this->from(route('verifikasi.show', $laporan))
+        ->actingAs($verifikator)
+        ->post(route('verifikasi.ringkasan_ai', $laporan), ['asal' => 'tidak-sah'])
+        ->assertRedirect(route('verifikasi.show', $laporan))
+        ->assertSessionHasErrors('asal');
+
+    expect(AnalisisAi::query()->count())->toBe(0)
+        ->and($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI);
+});
+
+it('mengarahkan kegagalan analisis ai ke halaman baru', function () {
+    Storage::fake('local');
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporan = buatLaporanVerifikasi($pemohon);
+    $berkas = lampirkanBerkasVerifikasi(
+        $laporan,
+        BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN,
+        'surat-gagal.pdf',
+    );
+
+    Storage::disk('local')->put($berkas->path_file, '%PDF-1.4 GAGAL-'.Str::random(12));
+
+    aktifkanDriverOpenAiVerifikasi();
+    Http::fake([
+        'https://api.openai.test/v1/responses' => Http::response(['error' => ['message' => 'gagal']], 500),
+    ]);
+
+    $this->actingAs($verifikator)
+        ->post(route('verifikasi.analisis_ai', $laporan), [
+            'id_berkas' => $berkas->id_berkas,
+            'asal' => 'baru',
+        ])
+        ->assertRedirect(route('verifikasi.show', $laporan))
+        ->assertSessionHas('galat', 'Analisis AI tidak tersedia, lanjutkan secara manual');
+
+    expect(AnalisisAi::query()
+        ->where('id_laporan', $laporan->id_laporan)
+        ->where('jenis', AnalisisAi::JENIS_EKSTRAKSI)
+        ->where('status', AnalisisAi::STATUS_GAGAL)
+        ->count())->toBe(1)
+        ->and($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI);
+});
+
 it('menolak analisis ai verifikator untuk berkas di luar laporan', function () {
     Storage::fake('local');
     [$pemohon, $verifikator] = buatAkunDemo();
@@ -324,9 +386,9 @@ it('menolak analisis ai verifikator untuk berkas di luar laporan', function () {
     expect(AnalisisAi::query()->count())->toBe(0);
 });
 
-it('menolak analisis ai untuk pemohon', function () {
+it('menolak analisis ai untuk pemohon dan pejabat', function () {
     Storage::fake('local');
-    [$pemohon] = buatAkunDemo();
+    [$pemohon, , $pejabat] = buatAkunDemo();
     $laporan = buatLaporanVerifikasi($pemohon);
     $berkas = lampirkanBerkasVerifikasi(
         $laporan,
@@ -337,6 +399,12 @@ it('menolak analisis ai untuk pemohon', function () {
     $this->actingAs($pemohon)
         ->post(route('verifikasi.analisis_ai', $laporan), ['id_berkas' => $berkas->id_berkas])
         ->assertForbidden();
+
+    $this->actingAs($pejabat)
+        ->post(route('verifikasi.analisis_ai', $laporan), ['id_berkas' => $berkas->id_berkas])
+        ->assertForbidden();
+
+    expect(AnalisisAi::query()->count())->toBe(0);
 });
 
 it('mengurutkan daftar verifikasi berdasarkan tanggal terbaru', function () {
