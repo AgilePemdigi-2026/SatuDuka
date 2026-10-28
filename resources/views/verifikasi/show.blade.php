@@ -5,16 +5,6 @@
 @section('tanpa_error_global', '1')
 
 @section('konten')
-@php
-    $jumlahWajib = count($dokumenWajib);
-    $jumlahTersedia = collect($dokumenWajib)->filter(fn ($jenis) =>
-        $laporan->berkasPendukung->contains(fn ($item) =>
-            $item->jenis_dokumen === $jenis
-            && $item->status_unggahan === \App\Models\BerkasPendukung::STATUS_BERHASIL
-        )
-    )->count();
-@endphp
-
 <div class="stack page-narrow">
 
     <div class="toolbar">
@@ -78,19 +68,26 @@
         </div>
 
         <div class="card-body">
+            <p class="hint" style="margin-bottom: 14px;">
+                Bukti kematian dapat berupa salah satu dari {{ implode(', ', $jenisBuktiKematian) }}.
+            </p>
+
             <div class="doc-list">
-                @foreach ($dokumenWajib as $jenis)
+                @foreach ($dokumenTampil as $jenis)
                     @php
                         $berkas = $laporan->berkasPendukung->first(fn ($item) =>
                             $item->jenis_dokumen === $jenis
                             && $item->status_unggahan === \App\Models\BerkasPendukung::STATUS_BERHASIL
                         );
+                        $wajib = in_array($jenis, $jenisWajibTunggal, true);
+                        $alternatif = in_array($jenis, $jenisBuktiKematian, true);
+                        $statusKurang = $wajib || ($alternatif && ! $adaBuktiKematian);
                     @endphp
 
                     <div class="doc-item">
                         <div class="doc-left">
-                            <span class="doc-ic {{ $berkas ? 'ok' : 'bad' }}">
-                                {{ $berkas ? '✓' : '!' }}
+                            <span class="doc-ic {{ $berkas ? 'ok' : ($statusKurang ? 'bad' : '') }}">
+                                {{ $berkas ? '✓' : ($statusKurang ? '!' : '–') }}
                             </span>
 
                             <div style="min-width: 0;">
@@ -116,15 +113,19 @@
                                         data-unduh="{{ route('verifikasi.unduh', [$laporan, $berkas]) }}"
                                     >{{ $berkas->nama_file }}</button>
                                 @else
-                                    <p class="doc-file">Tidak ditemukan</p>
+                                    <p class="doc-file">Belum diunggah</p>
                                 @endif
                             </div>
                         </div>
 
                         @if ($berkas)
                             <span class="badge badge-ok">Tersedia</span>
-                        @else
+                        @elseif ($statusKurang)
                             <span class="badge badge-bad">Belum Lengkap</span>
+                        @elseif ($alternatif)
+                            <span class="badge badge-brand">Alternatif</span>
+                        @else
+                            <span class="badge badge-brand">Opsional</span>
                         @endif
                     </div>
                 @endforeach

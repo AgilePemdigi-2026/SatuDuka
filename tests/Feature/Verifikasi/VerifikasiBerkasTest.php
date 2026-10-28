@@ -58,11 +58,13 @@ function lampirkanBerkasVerifikasiBerkas(LaporanKematian $laporan, string $jenis
 }
 
 /**
- * Melengkapi seluruh jenis berkas yang diperlukan untuk persetujuan.
+ * Melengkapi berkas wajib minimal sesuai konfigurasi, tanpa saksi.
  */
 function lengkapiBerkasVerifikasiBerkas(LaporanKematian $laporan): void
 {
-    foreach (BerkasPendukung::DAFTAR_JENIS as $jenis) {
+    $buktiKematian = config('verifikasi.berkas_wajib.bukti_kematian.jenis')[0];
+
+    foreach (array_merge([$buktiKematian], config('verifikasi.berkas_wajib.lainnya')) as $jenis) {
         lampirkanBerkasVerifikasiBerkas($laporan, $jenis);
     }
 }
@@ -163,6 +165,49 @@ it('menyetujui berkas dan menyimpan hasil verifikasi', function () {
         ->and($hasil->catatan)->toBe('Data dan dokumen sesuai.');
 
     expect(LogAudit::where('aksi', 'menyetujui_berkas_pengajuan')->count())->toBe(1);
+});
+
+it('menghitung kelengkapan sesuai aturan wajib konfigurasi', function () {
+    Storage::fake('local');
+
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporan = buatLaporanAntreanVerifikasi($pemohon);
+    lengkapiBerkasVerifikasiBerkas($laporan);
+
+    $this->actingAs($verifikator)
+        ->get(route('verifikasi.show', $laporan))
+        ->assertOk()
+        ->assertSee('4 / 4 lengkap')
+        ->assertDontSee('4 / 9 lengkap')
+        ->assertSee(BerkasPendukung::JENIS_KTP_SAKSI_1)
+        ->assertSee('Opsional');
+});
+
+it('menolak persetujuan bila satu dokumen wajib kurang', function () {
+    Storage::fake('local');
+
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporan = buatLaporanAntreanVerifikasi($pemohon);
+
+    $wajib = array_merge(
+        [config('verifikasi.berkas_wajib.bukti_kematian.jenis')[0]],
+        config('verifikasi.berkas_wajib.lainnya'),
+    );
+    $kurang = array_pop($wajib);
+
+    foreach ($wajib as $jenis) {
+        lampirkanBerkasVerifikasiBerkas($laporan, $jenis);
+    }
+
+    $this->from(route('verifikasi.show', $laporan))
+        ->actingAs($verifikator)
+        ->post(route('verifikasi.setujui', $laporan), ['catatan' => 'Coba setujui'])
+        ->assertRedirect(route('verifikasi.show', $laporan))
+        ->assertSessionHasErrors('dokumen');
+
+    expect($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
+        ->and(HasilVerifikasi::where('id_laporan', $laporan->id_laporan)->count())->toBe(0)
+        ->and($kurang)->toBe(BerkasPendukung::JENIS_KTP_PELAPOR);
 });
 
 it('meminta revisi dengan catatan dan menyimpan hasil verifikasi', function () {

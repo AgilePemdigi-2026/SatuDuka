@@ -71,10 +71,7 @@ class VerifikasiBerkasController extends Controller
         ]);
 
         $dataSIAK = DataSIAK::cariNik($laporan->nik_almarhum);
-        $dokumenWajib = BerkasPendukung::DAFTAR_JENIS;
-
-        // Gunakan helper method dokumenKurang() agar konsisten
-        $dokumenKurang = $this->dokumenKurang($laporan);
+        $kelengkapan = $this->kelengkapanDokumen($laporan);
 
         $hasilPencocokan = [
             'ditemukan_di_siak' => $dataSIAK !== null,
@@ -83,15 +80,20 @@ class VerifikasiBerkasController extends Controller
             'nama_sesuai' => $dataSIAK !== null
                 && mb_strtolower(trim($dataSIAK['nama_lengkap'] ?? ''))
                     === mb_strtolower(trim($laporan->nama_almarhum)),
-            'dokumen_kurang' => $dokumenKurang,
+            'dokumen_kurang' => $kelengkapan['kurang'],
         ];
 
-        return view('verifikasi.show', compact(
-            'laporan',
-            'dataSIAK',
-            'hasilPencocokan',
-            'dokumenWajib'
-        ));
+        return view('verifikasi.show', [
+            'laporan' => $laporan,
+            'dataSIAK' => $dataSIAK,
+            'hasilPencocokan' => $hasilPencocokan,
+            'dokumenTampil' => $kelengkapan['dokumen_tampil'],
+            'jenisWajibTunggal' => $kelengkapan['jenis_wajib_tunggal'],
+            'jenisBuktiKematian' => $kelengkapan['jenis_bukti_kematian'],
+            'adaBuktiKematian' => $kelengkapan['ada_bukti_kematian'],
+            'jumlahWajib' => $kelengkapan['jumlah_wajib'],
+            'jumlahTersedia' => $kelengkapan['jumlah_tersedia'],
+        ]);
     }
 
     /**
@@ -380,19 +382,100 @@ class VerifikasiBerkasController extends Controller
     }
 
     /**
+     * @return array{
+     *     kurang: list<string>,
+     *     dokumen_tampil: list<string>,
+     *     jenis_wajib_tunggal: list<string>,
+     *     jenis_bukti_kematian: list<string>,
+     *     ada_bukti_kematian: bool,
+     *     jumlah_wajib: int,
+     *     jumlah_tersedia: int
+     * }
+     */
+    private function kelengkapanDokumen(LaporanKematian $laporan): array
+    {
+        $terunggah = $this->jenisBerkasBerhasil($laporan);
+
+        $terlambat = $this->terlambat($laporan);
+        $jenisKasus = $laporan->jenis_kasus ?? LaporanKematian::JENIS_KASUS_NORMAL;
+
+        $buktiKematian = array_values((array) config('verifikasi.berkas_wajib.bukti_kematian.jenis', []));
+        $lainnya = array_values((array) config('verifikasi.berkas_wajib.lainnya', []));
+        $keterlambatan = $terlambat
+            ? array_values((array) config('verifikasi.berkas_bersyarat.keterlambatan', []))
+            : [];
+        $kasusKhusus = $jenisKasus !== LaporanKematian::JENIS_KASUS_NORMAL
+            ? array_values((array) config('verifikasi.berkas_bersyarat.jenis_kasus_khusus', []))
+            : [];
+        $opsional = array_values((array) config('verifikasi.berkas_opsional', []));
+
+        $kurang = BerkasPendukung::jenisYangKurang($terunggah, $terlambat, $jenisKasus);
+
+        $jenisWajibTunggal = array_values(array_unique(array_merge(
+            $lainnya,
+            $keterlambatan,
+            $kasusKhusus,
+        )));
+
+        $dokumenTampil = array_values(array_unique(array_merge(
+            $buktiKematian,
+            $jenisWajibTunggal,
+            $opsional,
+        )));
+
+        $jumlahWajib = ($buktiKematian === [] ? 0 : 1)
+            + count($lainnya)
+            + count($keterlambatan)
+            + count($kasusKhusus);
+
+        return [
+            'kurang' => $kurang,
+            'dokumen_tampil' => $dokumenTampil,
+            'jenis_wajib_tunggal' => $jenisWajibTunggal,
+            'jenis_bukti_kematian' => $buktiKematian,
+            'ada_bukti_kematian' => array_intersect($buktiKematian, $terunggah) !== [],
+            'jumlah_wajib' => $jumlahWajib,
+            'jumlah_tersedia' => $jumlahWajib - count($kurang),
+        ];
+    }
+
+    /**
      * @return list<string>
      */
     private function dokumenKurang(LaporanKematian $laporan): array
     {
-        $tersedia = $laporan->berkasPendukung
+        return BerkasPendukung::jenisYangKurang(
+            $this->jenisBerkasBerhasil($laporan),
+            $this->terlambat($laporan),
+            $laporan->jenis_kasus ?? LaporanKematian::JENIS_KASUS_NORMAL,
+        );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function jenisBerkasBerhasil(LaporanKematian $laporan): array
+    {
+        return $laporan->berkasPendukung
             ->where('status_unggahan', BerkasPendukung::STATUS_BERHASIL)
             ->pluck('jenis_dokumen')
             ->unique()
+            ->values()
             ->all();
+    }
 
-        return array_values(array_diff(
-            BerkasPendukung::DAFTAR_JENIS,
-            $tersedia
-        ));
+    private function terlambat(LaporanKematian $laporan): bool
+    {
+        $tanggalKematian = $laporan->tanggal_kematian;
+
+        if ($tanggalKematian === null) {
+            return false;
+        }
+
+        $tanggalAcuan = $laporan->tanggal_pengajuan ?? now();
+
+        return $tanggalKematian->copy()->startOfDay()
+            ->diffInDays($tanggalAcuan->copy()->startOfDay(), false)
+            > (int) config('verifikasi.batas_hari_pelaporan', 30);
     }
 }
