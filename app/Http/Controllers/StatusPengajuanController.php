@@ -118,6 +118,10 @@ class StatusPengajuanController extends Controller
         return Storage::disk('local')->download(
             $dokumen->file_dokumen,
             'Akta_Kematian_'.$laporan->no_pengajuan.'.pdf',
+            [
+                'X-Content-Type-Options' => 'nosniff',
+                'Cache-Control' => 'private, no-store',
+            ],
         );
     }
 

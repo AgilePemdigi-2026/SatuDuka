@@ -178,7 +178,26 @@ it('menampilkan detail baca saja beserta pratinjau berkas', function () {
 
     $this->actingAs($verifikator)
         ->get(route('verifikasi.berkas', [$laporan, $berkas]))
-        ->assertOk();
+        ->assertOk()
+        ->assertHeader('Cache-Control', 'no-store, private')
+        ->assertHeader('X-Content-Type-Options', 'nosniff');
+});
+
+it('menolak pratinjau berkas verifikator yang belum berhasil diunggah', function () {
+    Storage::fake('local');
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporan = buatLaporanVerifikasi($pemohon);
+    $berkas = lampirkanBerkasVerifikasi(
+        $laporan,
+        BerkasPendukung::JENIS_KTP_PELAPOR,
+        'ktp-pelapor.pdf',
+    );
+
+    $berkas->update(['status_unggahan' => BerkasPendukung::STATUS_GAGAL]);
+
+    $this->actingAs($verifikator)
+        ->get(route('verifikasi.berkas', [$laporan, $berkas]))
+        ->assertNotFound();
 });
 
 it('menolak detail laporan yang bukan menunggu verifikasi', function () {

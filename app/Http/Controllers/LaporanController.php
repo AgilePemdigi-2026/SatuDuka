@@ -313,7 +313,10 @@ class LaporanController extends Controller
         abort_unless((int) $berkas->id_laporan === (int) $laporan->id_laporan, 404);
         abort_unless($berkas->path_file !== '' && Storage::disk('local')->exists($berkas->path_file), 404);
 
-        return Storage::disk('local')->response($berkas->path_file, $berkas->nama_file);
+        return Storage::disk('local')->response($berkas->path_file, $berkas->nama_file, [
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     /**

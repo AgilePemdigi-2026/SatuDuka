@@ -197,7 +197,9 @@ it('hanya mengizinkan unduh dokumen setelah pengajuan selesai', function () {
 
     $this->get(route('pengajuan.unduh', $selesai))
         ->assertOk()
-        ->assertDownload('Akta_Kematian_SD-20261020-0002.pdf');
+        ->assertDownload('Akta_Kematian_SD-20261020-0002.pdf')
+        ->assertHeader('Cache-Control', 'no-store, private')
+        ->assertHeader('X-Content-Type-Options', 'nosniff');
 
     expect(LogAudit::query()->where('aksi', 'mengunduh_dokumen')->count())->toBe(1);
 });

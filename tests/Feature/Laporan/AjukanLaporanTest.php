@@ -327,7 +327,10 @@ it('menolak berkas dengan format atau ukuran tidak sesuai', function () {
         ->assertSee('Terunggah')
         ->assertSee($berkas->nama_file);
 
-    $this->get(route('laporan.berkas', [$laporan, $berkas]))->assertOk();
+    $this->get(route('laporan.berkas', [$laporan, $berkas]))
+        ->assertOk()
+        ->assertHeader('Cache-Control', 'no-store, private')
+        ->assertHeader('X-Content-Type-Options', 'nosniff');
 
     expect(LogAudit::query()->where('aksi', 'mengunggah_berkas')->count())->toBe(1);
 });
