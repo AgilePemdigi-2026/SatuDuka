@@ -227,7 +227,10 @@ it('menjalankan analisis ai untuk verifikator', function () {
     );
 
     $this->actingAs($verifikator)
-        ->post(route('verifikasi.analisis_ai', $laporan), ['id_berkas' => $berkas->id_berkas])
+        ->post(route('verifikasi.analisis_ai', $laporan), [
+            'id_berkas' => $berkas->id_berkas,
+            'asal' => 'lama',
+        ])
         ->assertRedirect(route('verifikasi.detail', $laporan))
         ->assertSessionHas('analisis_ai');
 
@@ -255,6 +258,32 @@ it('menjalankan analisis ai untuk verifikator', function () {
             'model' => 'mock-ai-v1',
             'pemicu' => 'verifikator_detail',
         ]);
+});
+
+it('mengarahkan aksi ai ke halaman baru saat asal baru', function () {
+    Storage::fake('local');
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporan = buatLaporanVerifikasi($pemohon);
+    $berkas = lampirkanBerkasVerifikasi(
+        $laporan,
+        BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN,
+        'surat-cocok.pdf',
+    );
+
+    $this->actingAs($verifikator)
+        ->post(route('verifikasi.analisis_ai', $laporan), [
+            'id_berkas' => $berkas->id_berkas,
+            'asal' => 'baru',
+        ])
+        ->assertRedirect(route('verifikasi.show', $laporan))
+        ->assertSessionHas('analisis_ai');
+
+    $this->actingAs($verifikator)
+        ->post(route('verifikasi.ringkasan_ai', $laporan), ['asal' => 'baru'])
+        ->assertRedirect(route('verifikasi.show', $laporan))
+        ->assertSessionHas('sukses');
+
+    expect($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI);
 });
 
 it('menolak analisis ai verifikator untuk berkas di luar laporan', function () {
@@ -336,7 +365,7 @@ it('membuat ringkasan ai untuk verifikator tanpa mengubah status', function () {
     );
 
     $this->actingAs($verifikator)
-        ->post(route('verifikasi.ringkasan_ai', $laporan))
+        ->post(route('verifikasi.ringkasan_ai', $laporan), ['asal' => 'lama'])
         ->assertRedirect(route('verifikasi.detail', $laporan))
         ->assertSessionHas('sukses');
 

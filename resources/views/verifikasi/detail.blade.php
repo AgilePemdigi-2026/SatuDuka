@@ -204,12 +204,14 @@
                     @if ($suratKeterangan !== null)
                         <form method="POST" action="{{ route('verifikasi.analisis_ai', $laporan) }}">
                             @csrf
+                            <input type="hidden" name="asal" value="lama">
                             <input type="hidden" name="id_berkas" value="{{ $suratKeterangan->id_berkas }}">
                             <x-ui.button type="submit" class="w-full">Baca dokumen (AI)</x-ui.button>
                         </form>
 
                         <form method="POST" action="{{ route('verifikasi.ringkasan_ai', $laporan) }}" class="mt-2">
                             @csrf
+                            <input type="hidden" name="asal" value="lama">
                             <x-ui.button type="submit" variant="secondary" class="w-full">
                                 Buat ringkasan AI
                             </x-ui.button>

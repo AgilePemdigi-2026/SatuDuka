@@ -9,6 +9,7 @@ use App\Services\Ai\LayananAnalisisAi;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 /**
  * Verifikasi berkas versi baca saja.
@@ -99,9 +100,13 @@ class VerifikasiController extends Controller
 
         $data = $request->validate([
             'id_berkas' => ['required', 'integer'],
+            'asal' => ['nullable', Rule::in(['baru', 'lama'])],
         ], [
             'id_berkas.required' => 'Pilih dokumen yang akan dibaca.',
+            'asal.in' => 'Asal halaman verifikasi tidak valid.',
         ]);
+
+        $tujuan = $this->tujuanAsal($data['asal'] ?? null);
 
         $berkas = $laporan->berkasPendukung()
             ->whereKey($data['id_berkas'])
@@ -110,7 +115,7 @@ class VerifikasiController extends Controller
 
         if ($berkas === null) {
             return redirect()
-                ->route('verifikasi.detail', $laporan)
+                ->route($tujuan, $laporan)
                 ->with('galat', 'Surat Keterangan Kematian tidak ditemukan.');
         }
 
@@ -118,12 +123,12 @@ class VerifikasiController extends Controller
 
         if (! $hasil['berhasil']) {
             return redirect()
-                ->route('verifikasi.detail', $laporan)
+                ->route($tujuan, $laporan)
                 ->with('galat', $hasil['pesan']);
         }
 
         return redirect()
-            ->route('verifikasi.detail', $laporan)
+            ->route($tujuan, $laporan)
             ->with('analisis_ai', $hasil)
             ->with('sukses', 'Analisis AI selesai. Hasil bantuan AI, hanya saran.');
     }
@@ -138,11 +143,19 @@ class VerifikasiController extends Controller
     {
         $this->pastikanMenungguVerifikasi($laporan);
 
+        $data = $request->validate([
+            'asal' => ['nullable', Rule::in(['baru', 'lama'])],
+        ], [
+            'asal.in' => 'Asal halaman verifikasi tidak valid.',
+        ]);
+
+        $tujuan = $this->tujuanAsal($data['asal'] ?? null);
+
         $berkas = $this->suratKeterangan($laporan);
 
         if ($berkas === null) {
             return redirect()
-                ->route('verifikasi.detail', $laporan)
+                ->route($tujuan, $laporan)
                 ->with('galat', 'Surat Keterangan Kematian tidak ditemukan.');
         }
 
@@ -155,7 +168,7 @@ class VerifikasiController extends Controller
 
             if (! $analisis['berhasil'] || ! is_array($perbandingan)) {
                 return redirect()
-                    ->route('verifikasi.detail', $laporan)
+                    ->route($tujuan, $laporan)
                     ->with('galat', $analisis['pesan'] ?? 'Analisis AI tidak tersedia, lanjutkan secara manual');
             }
         }
@@ -164,13 +177,18 @@ class VerifikasiController extends Controller
 
         if (! $hasil['berhasil']) {
             return redirect()
-                ->route('verifikasi.detail', $laporan)
+                ->route($tujuan, $laporan)
                 ->with('galat', $hasil['pesan']);
         }
 
         return redirect()
-            ->route('verifikasi.detail', $laporan)
+            ->route($tujuan, $laporan)
             ->with('sukses', 'Ringkasan AI dibuat. Hasil bantuan AI, hanya saran.');
+    }
+
+    private function tujuanAsal(?string $asal): string
+    {
+        return $asal === 'baru' ? 'verifikasi.show' : 'verifikasi.detail';
     }
 
     private function pastikanMenungguVerifikasi(LaporanKematian $laporan): void

@@ -178,12 +178,14 @@
                 <div class="toolbar" style="margin-top: 14px;">
                     <form method="POST" action="{{ route('verifikasi.analisis_ai', $laporan) }}">
                         @csrf
+                        <input type="hidden" name="asal" value="baru">
                         <input type="hidden" name="id_berkas" value="{{ $suratKeterangan->id_berkas }}">
                         <button type="submit" class="btn btn-brand btn-sm">Baca dokumen (AI)</button>
                     </form>
 
                     <form method="POST" action="{{ route('verifikasi.ringkasan_ai', $laporan) }}">
                         @csrf
+                        <input type="hidden" name="asal" value="baru">
                         <button type="submit" class="btn btn-outline btn-sm">Buat ringkasan AI</button>
                     </form>
                 </div>
