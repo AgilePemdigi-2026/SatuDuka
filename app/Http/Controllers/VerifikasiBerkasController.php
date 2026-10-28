@@ -33,15 +33,19 @@ class VerifikasiBerkasController extends Controller
             ->orderBy('tanggal_pengajuan');
 
         if ($request->filled('cari')) {
-            $cari = trim((string) $request->input('cari'));
-            // Escape karakter khusus SQL (% dan _)
-            $escapedCari = addcslashes($cari, '%_');
+            $cari = mb_strtolower(trim((string) $request->input('cari')));
+            $escapedCari = str_replace(
+                ['\\', '%', '_'],
+                ['\\\\', '\\%', '\\_'],
+                $cari
+            );
+            $pola = '%'.$escapedCari.'%';
 
-            $query->where(function ($subquery) use ($escapedCari) {
+            $query->where(function ($subquery) use ($pola) {
                 $subquery
-                    ->where('no_pengajuan', 'ilike', "%{$escapedCari}%")
-                    ->orWhere('nama_almarhum', 'ilike', "%{$escapedCari}%")
-                    ->orWhere('nik_almarhum', 'ilike', "%{$escapedCari}%");
+                    ->whereRaw('LOWER(no_pengajuan) LIKE ? ESCAPE ?', [$pola, '\\'])
+                    ->orWhereRaw('LOWER(nama_almarhum) LIKE ? ESCAPE ?', [$pola, '\\'])
+                    ->orWhereRaw('LOWER(nik_almarhum) LIKE ? ESCAPE ?', [$pola, '\\']);
             });
         }
 
@@ -68,7 +72,7 @@ class VerifikasiBerkasController extends Controller
 
         $dataSIAK = DataSIAK::cariNik($laporan->nik_almarhum);
         $dokumenWajib = BerkasPendukung::DAFTAR_JENIS;
-        
+
         // Gunakan helper method dokumenKurang() agar konsisten
         $dokumenKurang = $this->dokumenKurang($laporan);
 
@@ -109,7 +113,7 @@ class VerifikasiBerkasController extends Controller
             return back()
                 ->withErrors([
                     'dokumen' => 'Pengajuan belum dapat disetujui. Dokumen kurang: '
-                        . implode(', ', $dokumenKurang),
+                        .implode(', ', $dokumenKurang),
                 ])
                 ->withInput();
         }
@@ -317,8 +321,8 @@ class VerifikasiBerkasController extends Controller
 
         return Storage::disk('local')->response($path, $berkas->nama_file, [
             'Content-Type' => $mime,
-            'Content-Disposition' => 'inline; filename="' .
-                addcslashes(basename($berkas->nama_file), '"\\') . '"',
+            'Content-Disposition' => 'inline; filename="'.
+                addcslashes(basename($berkas->nama_file), '"\\').'"',
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'private, no-store',
         ]);

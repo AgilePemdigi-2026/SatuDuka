@@ -313,6 +313,97 @@ it('tidak dapat menjalankan aksi verifikasi dua kali pada laporan yang sama', fu
         ->and(HasilVerifikasi::where('id_laporan', $laporanAnomali->id_laporan)->count())->toBe(1);
 });
 
+it('mencari antrean tanpa membedakan huruf besar kecil', function () {
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $cocok = buatLaporanAntreanVerifikasi($pemohon, [
+        'nama_almarhum' => 'Siti Aminah',
+        'nik_almarhum' => '3471031203559001',
+        'no_pengajuan' => 'SD-20261028-0001',
+    ]);
+    $lain = buatLaporanAntreanVerifikasi($pemohon, [
+        'nama_almarhum' => 'Budi Santoso',
+        'nik_almarhum' => '3471031203559002',
+        'no_pengajuan' => 'SD-20261028-0002',
+    ]);
+
+    $this->actingAs($verifikator)
+        ->get(route('verifikasi.index', ['cari' => 'sItI']))
+        ->assertOk()
+        ->assertSee($cocok->nama_almarhum)
+        ->assertDontSee($lain->nama_almarhum);
+});
+
+it('memperlakukan wildcard dan backslash pencarian sebagai karakter literal', function () {
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $persen = buatLaporanAntreanVerifikasi($pemohon, [
+        'nama_almarhum' => 'Budi % Santoso',
+        'nik_almarhum' => '3471031203559001',
+        'no_pengajuan' => 'SD-20261028-0001',
+    ]);
+    $tanpaPersen = buatLaporanAntreanVerifikasi($pemohon, [
+        'nama_almarhum' => 'Budi Tanpa Persen',
+        'nik_almarhum' => '3471031203559002',
+        'no_pengajuan' => 'SD-20261028-0002',
+    ]);
+    $garisBawah = buatLaporanAntreanVerifikasi($pemohon, [
+        'nama_almarhum' => 'Nama_Underscore',
+        'nik_almarhum' => '3471031203559003',
+        'no_pengajuan' => 'SD-20261028-0003',
+    ]);
+    $tanpaGarisBawah = buatLaporanAntreanVerifikasi($pemohon, [
+        'nama_almarhum' => 'NamaXUnderscore',
+        'nik_almarhum' => '3471031203559004',
+        'no_pengajuan' => 'SD-20261028-0004',
+    ]);
+    $backslash = buatLaporanAntreanVerifikasi($pemohon, [
+        'nama_almarhum' => 'Budi \\ Santoso',
+        'nik_almarhum' => '3471031203559005',
+        'no_pengajuan' => 'SD-20261028-0005',
+    ]);
+    $tanpaBackslash = buatLaporanAntreanVerifikasi($pemohon, [
+        'nama_almarhum' => 'Budi X Santoso',
+        'nik_almarhum' => '3471031203559006',
+        'no_pengajuan' => 'SD-20261028-0006',
+    ]);
+
+    $this->actingAs($verifikator);
+
+    $this->get(route('verifikasi.index', ['cari' => '%']))
+        ->assertOk()
+        ->assertSee($persen->nama_almarhum)
+        ->assertDontSee($tanpaPersen->nama_almarhum);
+
+    $this->get(route('verifikasi.index', ['cari' => '_']))
+        ->assertOk()
+        ->assertSee($garisBawah->nama_almarhum)
+        ->assertDontSee($tanpaGarisBawah->nama_almarhum);
+
+    $this->get(route('verifikasi.index', ['cari' => '\\']))
+        ->assertOk()
+        ->assertSee($backslash->nama_almarhum)
+        ->assertDontSee($tanpaBackslash->nama_almarhum);
+});
+
+it('menampilkan seluruh antrean saat kata kunci pencarian kosong', function () {
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $pertama = buatLaporanAntreanVerifikasi($pemohon, [
+        'nama_almarhum' => 'Siti Aminah',
+        'nik_almarhum' => '3471031203559001',
+        'no_pengajuan' => 'SD-20261028-0001',
+    ]);
+    $kedua = buatLaporanAntreanVerifikasi($pemohon, [
+        'nama_almarhum' => 'Budi Santoso',
+        'nik_almarhum' => '3471031203559002',
+        'no_pengajuan' => 'SD-20261028-0002',
+    ]);
+
+    $this->actingAs($verifikator)
+        ->get(route('verifikasi.index', ['cari' => '']))
+        ->assertOk()
+        ->assertSee($pertama->nama_almarhum)
+        ->assertSee($kedua->nama_almarhum);
+});
+
 it('menampilkan panel analisis AI pada detail verifikasi tanpa mengubah status', function () {
     Storage::fake('local');
 
