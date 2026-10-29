@@ -7,7 +7,6 @@ use App\Models\BerkasPendukung;
 use App\Models\HasilVerifikasi;
 use App\Models\LaporanKematian;
 use App\Services\LayananAudit;
-use App\Support\DataSIAK;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -34,7 +33,8 @@ class VerifikasiBerkasController extends Controller
 
         if ($request->filled('cari')) {
             $cari = trim((string) $request->input('cari'));
-            // Escape karakter khusus SQL (% dan _)
+
+            // Escape karakter khusus SQL (% dan _).
             $escapedCari = addcslashes($cari, '%_');
 
             $query->where(function ($subquery) use ($escapedCari) {
@@ -51,7 +51,10 @@ class VerifikasiBerkasController extends Controller
     }
 
     /**
-     * Detail berkas dan pencocokan data SIAK.
+     * Detail berkas pengajuan untuk diperiksa verifikator.
+     *
+     * Data pengajuan dan berkas diambil dari database aplikasi.
+     * Pencocokan data dengan SIAK tidak dilakukan.
      */
     public function show(LaporanKematian $laporan): View
     {
@@ -66,35 +69,23 @@ class VerifikasiBerkasController extends Controller
             'hasilVerifikasi.verifikator',
         ]);
 
-        $dataSIAK = DataSIAK::cariNik($laporan->nik_almarhum);
         $dokumenWajib = BerkasPendukung::DAFTAR_JENIS;
-        
-        // Gunakan helper method dokumenKurang() agar konsisten
         $dokumenKurang = $this->dokumenKurang($laporan);
-
-        $hasilPencocokan = [
-            'ditemukan_di_siak' => $dataSIAK !== null,
-            'nik_sesuai' => $dataSIAK !== null
-                && ($dataSIAK['nik'] ?? null) === $laporan->nik_almarhum,
-            'nama_sesuai' => $dataSIAK !== null
-                && mb_strtolower(trim($dataSIAK['nama_lengkap'] ?? ''))
-                    === mb_strtolower(trim($laporan->nama_almarhum)),
-            'dokumen_kurang' => $dokumenKurang,
-        ];
 
         return view('verifikasi.show', compact(
             'laporan',
-            'dataSIAK',
-            'hasilPencocokan',
-            'dokumenWajib'
+            'dokumenWajib',
+            'dokumenKurang'
         ));
     }
 
     /**
-     * Menyetujui pengajuan yang lolos pemeriksaan.
+     * Menyetujui pengajuan yang dokumen wajibnya lengkap.
      */
-    public function setujui(Request $request, LaporanKematian $laporan): RedirectResponse
-    {
+    public function setujui(
+        Request $request,
+        LaporanKematian $laporan
+    ): RedirectResponse {
         $this->pastikanMenunggu($laporan);
 
         $data = $request->validate([
@@ -114,27 +105,12 @@ class VerifikasiBerkasController extends Controller
                 ->withInput();
         }
 
-        $dataSIAK = DataSIAK::cariNik($laporan->nik_almarhum);
-
-        if ($dataSIAK === null) {
-            return back()->withErrors([
-                'siak' => 'Data SIAK tidak ditemukan. Lakukan pemeriksaan manual sebelum mengambil keputusan.',
-            ])->withInput();
-        }
-
-        $nikSesuai = ($dataSIAK['nik'] ?? null) === $laporan->nik_almarhum;
-        $namaSesuai = mb_strtolower(trim($dataSIAK['nama_lengkap'] ?? ''))
-            === mb_strtolower(trim($laporan->nama_almarhum));
-
-        if (! $nikSesuai || ! $namaSesuai) {
-            return back()->withErrors([
-                'siak' => 'Data identitas tidak cocok. Tandai sebagai anomali atau lakukan pemeriksaan sesuai prosedur.',
-            ])->withInput();
-        }
-
         DB::transaction(function () use ($request, $laporan, $data) {
-            // Kunci record laporan untuk menghindari race condition
-            $laporanTerkunci = LaporanKematian::where('id_laporan', $laporan->id_laporan)
+            // Kunci record laporan untuk menghindari race condition.
+            $laporanTerkunci = LaporanKematian::where(
+                'id_laporan',
+                $laporan->id_laporan
+            )
                 ->lockForUpdate()
                 ->first();
 
@@ -149,7 +125,8 @@ class VerifikasiBerkasController extends Controller
                 'id_laporan' => $laporanTerkunci->id_laporan,
                 'id_pengguna' => $request->user()->id_pengguna,
                 'status_verifikasi' => HasilVerifikasi::STATUS_DITERIMA,
-                'catatan' => $data['catatan'] ?? 'Berkas lengkap dan identitas sesuai.',
+                'catatan' => $data['catatan']
+                    ?? 'Berkas wajib lengkap dan telah diperiksa verifikator.',
                 'tanggal_verifikasi' => now(),
             ]);
 
@@ -157,7 +134,9 @@ class VerifikasiBerkasController extends Controller
                 aksi: 'menyetujui_berkas_pengajuan',
                 objek: 'laporan_kematian',
                 idObjek: $laporanTerkunci->id_laporan,
-                detail: ['no_pengajuan' => $laporanTerkunci->no_pengajuan],
+                detail: [
+                    'no_pengajuan' => $laporanTerkunci->no_pengajuan,
+                ],
                 pengguna: $request->user(),
                 hasil: 'Sukses',
             );
@@ -165,7 +144,10 @@ class VerifikasiBerkasController extends Controller
 
         return redirect()
             ->route('verifikasi.index')
-            ->with('sukses', 'Berkas berhasil disetujui dan masuk tahap menunggu TTE.');
+            ->with(
+                'sukses',
+                'Berkas berhasil disetujui dan masuk tahap menunggu TTE.'
+            );
     }
 
     /**
@@ -182,7 +164,10 @@ class VerifikasiBerkasController extends Controller
         ]);
 
         DB::transaction(function () use ($request, $laporan, $data) {
-            $laporanTerkunci = LaporanKematian::where('id_laporan', $laporan->id_laporan)
+            $laporanTerkunci = LaporanKematian::where(
+                'id_laporan',
+                $laporan->id_laporan
+            )
                 ->lockForUpdate()
                 ->first();
 
@@ -244,7 +229,10 @@ class VerifikasiBerkasController extends Controller
         ]);
 
         DB::transaction(function () use ($request, $laporan, $data) {
-            $laporanTerkunci = LaporanKematian::where('id_laporan', $laporan->id_laporan)
+            $laporanTerkunci = LaporanKematian::where(
+                'id_laporan',
+                $laporan->id_laporan
+            )
                 ->lockForUpdate()
                 ->first();
 
@@ -284,7 +272,10 @@ class VerifikasiBerkasController extends Controller
 
         return redirect()
             ->route('verifikasi.index')
-            ->with('sukses', 'Berkas dialihkan ke proses rekonsiliasi anomali.');
+            ->with(
+                'sukses',
+                'Berkas dialihkan ke proses rekonsiliasi anomali.'
+            );
     }
 
     /**
@@ -315,13 +306,18 @@ class VerifikasiBerkasController extends Controller
             'Jenis berkas ini tidak bisa dipratinjau. Silakan unduh.'
         );
 
-        return Storage::disk('local')->response($path, $berkas->nama_file, [
-            'Content-Type' => $mime,
-            'Content-Disposition' => 'inline; filename="' .
-                addcslashes(basename($berkas->nama_file), '"\\') . '"',
-            'X-Content-Type-Options' => 'nosniff',
-            'Cache-Control' => 'private, no-store',
-        ]);
+        return Storage::disk('local')->response(
+            $path,
+            $berkas->nama_file,
+            [
+                'Content-Type' => $mime,
+                'Content-Disposition' => 'inline; filename="'
+                    . addcslashes(basename($berkas->nama_file), '"\\')
+                    . '"',
+                'X-Content-Type-Options' => 'nosniff',
+                'Cache-Control' => 'private, no-store',
+            ]
+        );
     }
 
     /**
@@ -333,9 +329,13 @@ class VerifikasiBerkasController extends Controller
     ): StreamedResponse {
         $path = $this->jalurBerkas($laporan, $berkas);
 
-        return Storage::disk('local')->download($path, $berkas->nama_file, [
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+        return Storage::disk('local')->download(
+            $path,
+            $berkas->nama_file,
+            [
+                'X-Content-Type-Options' => 'nosniff',
+            ]
+        );
     }
 
     /**
@@ -349,33 +349,43 @@ class VerifikasiBerkasController extends Controller
             $laporan->status_pengajuan === LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
             404
         );
+
         abort_unless(
             (int) $berkas->id_laporan === (int) $laporan->id_laporan,
             404
         );
+
         abort_unless(
             $berkas->status_unggahan === BerkasPendukung::STATUS_BERHASIL,
             404
         );
+
         abort_unless(
-            $berkas->path_file !== '' &&
-                Storage::disk('local')->exists($berkas->path_file),
+            $berkas->path_file !== ''
+                && Storage::disk('local')->exists($berkas->path_file),
             404
         );
 
         return $berkas->path_file;
     }
 
+    /**
+     * Memastikan pengajuan masih berada dalam antrean verifikasi.
+     */
     private function pastikanMenunggu(?LaporanKematian $laporan): void
     {
         abort_unless(
-            $laporan && $laporan->status_pengajuan === LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+            $laporan
+                && $laporan->status_pengajuan
+                    === LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
             409,
             'Pengajuan ini sudah tidak berada dalam antrean verifikasi.'
         );
     }
 
     /**
+     * Mengembalikan daftar jenis dokumen wajib yang belum tersedia.
+     *
      * @return list<string>
      */
     private function dokumenKurang(LaporanKematian $laporan): array

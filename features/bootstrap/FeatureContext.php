@@ -1,7 +1,9 @@
 
 <?php
 
+use App\Models\AnomaliDokumen;
 use App\Models\BerkasPendukung;
+use App\Models\HasilVerifikasi;
 use App\Models\LaporanKematian;
 use App\Models\Pengguna;
 use App\Notifications\TautanAturUlangKataSandi;
@@ -148,6 +150,14 @@ class FeatureContext implements Context
 
     private bool $kirimDenganAutentikasi = false;
 
+    private ?Pengguna $akunVerifikator = null;
+
+private ?Pengguna $akunPemohonBDD = null;
+
+private string $statusPengajuanAwal = '';
+
+private string $pesanValidasiVerifikasi = '';
+
     public function __construct()
     {
         putenv('APP_ENV=testing');
@@ -219,6 +229,10 @@ class FeatureContext implements Context
         $this->urlTerakhir = '';
         $this->tokenAturUlang = null;
         $this->kirimDenganAutentikasi = false;
+        $this->akunVerifikator = null;
+        $this->akunPemohonBDD = null;
+        $this->statusPengajuanAwal = '';
+        $this->pesanValidasiVerifikasi = '';
     }
 
     /*
@@ -340,6 +354,24 @@ class FeatureContext implements Context
         }
 
         return $this->app['session.store']->get('errors');
+    }
+
+    private function bagGalatMemilikiKolom(string $kolom): bool
+    {
+        $bag = $this->bagGalat();
+
+        if (is_object($bag) && method_exists($bag, 'getBag')) {
+            return $bag->getBag('default')->has($kolom);
+        }
+
+        if (! is_array($bag)) {
+            return false;
+        }
+
+        $bagDefault = $bag['default'] ?? $bag;
+        $messages = is_array($bagDefault) ? ($bagDefault['messages'] ?? null) : null;
+
+        return is_array($messages) && array_key_exists($kolom, $messages);
     }
 
     private function pesanGalat(): string
@@ -1354,5 +1386,380 @@ class FeatureContext implements Context
         Assert::assertNotNull($this->penggunaLain);
         Assert::assertSame('Pemohon Lain BDD', $this->penggunaLain->fresh()->nama_lengkap);
         Assert::assertSame('pemohon-lain@example.test', $this->penggunaLain->fresh()->email);
+    }
+
+        /*
+    |--------------------------------------------------------------------------
+    | Verifikasi berkas pengajuan
+    |--------------------------------------------------------------------------
+    */
+
+    private function siapkanDataVerifikasi(bool $berkasLengkap = false): void
+    {
+        if ($this->akunVerifikator === null || $this->akunPemohonBDD === null) {
+            [$pemohon, $verifikator] = $this->buatAkunDemo();
+
+            $this->akunPemohonBDD = $pemohon;
+            $this->akunVerifikator = $verifikator;
+        }
+
+        if ($this->laporan === null) {
+            $this->pemohon = $this->akunPemohonBDD;
+
+            $this->laporan = $this->buatLaporan([
+                'status_pengajuan' => LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+            ]);
+        }
+
+        if ($berkasLengkap) {
+            foreach (BerkasPendukung::DAFTAR_JENIS as $jenis) {
+                $sudahAda = BerkasPendukung::query()
+                    ->where('id_laporan', $this->laporan->getKey())
+                    ->where('jenis_dokumen', $jenis)
+                    ->exists();
+
+                if (! $sudahAda) {
+                    $this->buatBerkas($this->laporan, $jenis);
+                }
+            }
+
+            $this->berkasLengkap = true;
+        }
+    }
+
+    private function loginSebagaiVerifikatorBDD(): void
+    {
+        $this->siapkanDataVerifikasi();
+
+        $this->pemohon = $this->akunVerifikator;
+        $this->kirimDenganAutentikasi = true;
+
+        Auth::login($this->pemohon);
+    }
+
+    private function kirimAksiVerifikasi(string $aksi, array $data = []): void
+    {
+        Assert::assertNotNull($this->laporan, 'Pengajuan untuk diverifikasi belum tersedia.');
+
+        $url = match ($aksi) {
+            'setujui' => route('verifikasi.setujui', $this->laporan->getKey()),
+            'revisi' => route('verifikasi.revisi', $this->laporan->getKey()),
+            'anomali' => route('verifikasi.anomali', $this->laporan->getKey()),
+            default => throw new InvalidArgumentException("Aksi verifikasi tidak dikenal: {$aksi}"),
+        };
+
+        $this->kirimRequest('POST', $url, $data);
+    }
+
+    private function statusPengajuanSaatIni(): string
+    {
+        Assert::assertNotNull($this->laporan);
+
+        return (string) $this->laporan->fresh()->status_pengajuan;
+    }
+
+    #[Given('saya masuk sebagai verifikator')]
+    public function sayaMasukSebagaiVerifikatorBDD(): void
+    {
+        $this->siapkanDataVerifikasi();
+        $this->loginSebagaiVerifikatorBDD();
+    }
+
+    #[Given('saya masuk sebagai pemohon')]
+    public function sayaMasukSebagaiPemohonBDD(): void
+    {
+        $this->siapkanDataVerifikasi();
+
+        $this->pemohon = $this->akunPemohonBDD;
+        $this->kirimDenganAutentikasi = true;
+
+        Auth::login($this->pemohon);
+    }
+
+    #[Given('terdapat pengajuan yang menunggu verifikasi')]
+    public function terdapatPengajuanMenungguVerifikasiBDD(): void
+    {
+        $this->siapkanDataVerifikasi();
+
+        Assert::assertSame(
+            LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+            $this->statusPengajuanSaatIni()
+        );
+    }
+
+    #[Given('terdapat pengajuan dengan berkas lengkap yang menunggu verifikasi')]
+    public function terdapatPengajuanBerkasLengkapBDD(): void
+    {
+        $this->siapkanDataVerifikasi(true);
+
+        Assert::assertSame(
+            LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+            $this->statusPengajuanSaatIni()
+        );
+    }
+
+    #[Given('terdapat pengajuan tanpa seluruh dokumen wajib yang menunggu verifikasi')]
+    public function terdapatPengajuanDokumenTidakLengkapBDD(): void
+    {
+        $this->siapkanDataVerifikasi();
+
+        // Pastikan pengajuan hanya memiliki sebagian dokumen wajib.
+        BerkasPendukung::query()
+            ->where('id_laporan', $this->laporan->getKey())
+            ->delete();
+
+        $jenisPertama = BerkasPendukung::DAFTAR_JENIS[0];
+
+        $this->buatBerkas($this->laporan, $jenisPertama);
+        $this->berkasLengkap = false;
+    }
+
+    #[When('saya membuka daftar antrean pengajuan')]
+    public function sayaMembukaDaftarAntreanPengajuanBDD(): void
+    {
+        $this->kirimRequest('GET', route('verifikasi.index'));
+    }
+
+    #[Then('halaman antrean pengajuan berhasil ditampilkan')]
+    public function halamanAntreanBerhasilDitampilkanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+
+        Assert::assertSame(
+            200,
+            $this->response->getStatusCode(),
+            'Halaman antrean seharusnya dapat dibuka oleh verifikator.'
+        );
+    }
+
+    #[Then('saya melihat pengajuan yang menunggu verifikasi')]
+    public function sayaMelihatPengajuanMenungguVerifikasiBDD(): void
+    {
+        Assert::assertNotNull($this->laporan);
+        Assert::assertNotNull($this->response);
+
+        Assert::assertStringContainsString(
+            (string) $this->laporan->nama_almarhum,
+            $this->response->getContent(),
+            'Daftar antrean seharusnya menampilkan pengajuan yang menunggu verifikasi.'
+        );
+    }
+
+    #[When('saya membuka detail pengajuan tersebut')]
+    public function sayaMembukaDetailPengajuanBDD(): void
+    {
+        Assert::assertNotNull($this->laporan);
+
+        $this->kirimRequest(
+            'GET',
+            route('verifikasi.show', $this->laporan->getKey())
+        );
+    }
+
+    #[Then('halaman detail pengajuan berhasil ditampilkan')]
+    public function halamanDetailPengajuanBerhasilDitampilkanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+
+        Assert::assertSame(
+            200,
+            $this->response->getStatusCode(),
+            'Halaman detail pengajuan seharusnya dapat dibuka.'
+        );
+    }
+
+    #[Then('saya melihat data laporan dan berkas pendukung')]
+    public function sayaMelihatDataLaporanDanBerkasBDD(): void
+    {
+        Assert::assertNotNull($this->laporan);
+        Assert::assertNotNull($this->response);
+
+        $isi = $this->response->getContent();
+
+        Assert::assertStringContainsString(
+            (string) $this->laporan->nama_almarhum,
+            $isi
+        );
+
+        Assert::assertStringContainsString('Berkas', $isi);
+    }
+
+    #[When('saya menyetujui pengajuan tersebut')]
+    public function sayaMenyetujuiPengajuanBDD(): void
+    {
+        $this->kirimAksiVerifikasi('setujui');
+    }
+
+    #[Then('status pengajuan menjadi :status')]
+    public function statusPengajuanMenjadiBDD(string $status): void
+    {
+        Assert::assertSame(
+            $status,
+            $this->statusPengajuanSaatIni()
+        );
+    }
+
+    #[Then('saya melihat notifikasi persetujuan berhasil')]
+    public function sayaMelihatNotifikasiPersetujuanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+
+        Assert::assertSame(
+            'Berkas berhasil disetujui dan masuk tahap menunggu TTE.',
+            $this->app['session.store']->get('sukses')
+        );
+    }
+
+    #[When('/^saya meminta revisi dengan alasan "([^"]*)"$/')]
+    public function sayaMemintaRevisiBDD(string $alasan): void
+    {
+        $this->kirimAksiVerifikasi('revisi', [
+            'catatan' => $alasan,
+        ]);
+    }
+
+    #[When('/^saya mengirim permintaan revisi dengan alasan "([^"]*)"$/')]
+    public function sayaMengirimPermintaanRevisiBDD(string $alasan): void
+    {
+        $this->sayaMemintaRevisiBDD($alasan);
+    }
+
+    #[Then('catatan revisi tersimpan')]
+    public function catatanRevisiTersimpanBDD(): void
+    {
+        Assert::assertNotNull($this->laporan);
+
+        $laporanSegar = $this->laporan->fresh();
+
+        Assert::assertNotEmpty(
+            $laporanSegar->catatan_revisi,
+            'Catatan revisi seharusnya tersimpan pada pengajuan.'
+        );
+
+        Assert::assertSame(
+            'Dokumen pendukung tidak terbaca',
+            $laporanSegar->catatan_revisi
+        );
+    }
+
+    #[When('/^saya menandai pengajuan sebagai anomali "([^"]+)" dengan catatan "([^"]*)"$/')]
+    public function sayaMenandaiPengajuanSebagaiAnomaliBDD(
+        string $jenis,
+        string $catatan
+    ): void {
+        $this->kirimAksiVerifikasi('anomali', [
+            'jenis_anomali' => $jenis,
+            'deskripsi' => $catatan,
+        ]);
+    }
+
+    #[Then('data anomali berhasil disimpan')]
+    public function dataAnomaliBerhasilDisimpanBDD(): void
+    {
+        Assert::assertNotNull($this->laporan);
+
+        $hasil = HasilVerifikasi::query()
+            ->where('id_laporan', $this->laporan->getKey())
+            ->latest('id_verifikasi')
+            ->first();
+
+        Assert::assertNotNull(
+            $hasil,
+            'Hasil verifikasi untuk anomali seharusnya tersimpan.'
+        );
+
+        $anomali = AnomaliDokumen::query()
+            ->where('id_verifikasi', $hasil->getKey())
+            ->first();
+
+        Assert::assertNotNull(
+            $anomali,
+            'Data anomali seharusnya tersimpan.'
+        );
+
+        Assert::assertSame(
+            'Perbedaan Identitas',
+            $anomali->jenis_anomali
+        );
+
+        Assert::assertSame(
+            'Terdapat perbedaan identitas pada dokumen',
+            $anomali->deskripsi
+        );
+    }
+
+    #[When('saya mencoba menyetujui pengajuan tersebut')]
+    public function sayaMencobaMenyetujuiPengajuanBDD(): void
+    {
+        $this->statusPengajuanAwal = $this->statusPengajuanSaatIni();
+
+        $this->kirimAksiVerifikasi('setujui');
+    }
+
+    #[Then('status pengajuan tetap :status')]
+    public function statusPengajuanTetapBDD(string $status): void
+    {
+        Assert::assertSame(
+            $status,
+            $this->statusPengajuanSaatIni()
+        );
+    }
+
+    #[Then('persetujuan ditolak karena dokumen belum lengkap')]
+    public function persetujuanDitolakKarenaDokumenBelumLengkapBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+
+        Assert::assertTrue(
+            $this->bagGalatMemilikiKolom('dokumen'),
+            'Penolakan persetujuan seharusnya menampilkan dokumen yang kurang.'
+        );
+
+        Assert::assertSame(
+            LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+            $this->statusPengajuanSaatIni()
+        );
+    }
+
+    #[Then('validasi alasan revisi ditampilkan')]
+    public function validasiAlasanRevisiDitampilkanBDD(): void
+    {
+        Assert::assertTrue(
+            $this->bagGalatMemilikiKolom('catatan'),
+            'Pesan validasi seharusnya terkait kolom catatan revisi.'
+        );
+    }
+
+    #[Then('validasi catatan anomali ditampilkan')]
+    public function validasiCatatanAnomaliDitampilkanBDD(): void
+    {
+        Assert::assertTrue(
+            $this->bagGalatMemilikiKolom('deskripsi'),
+            'Pesan validasi seharusnya terkait kolom deskripsi anomali.'
+        );
+    }
+
+    #[Then('akses ke halaman verifikasi ditolak')]
+    public function aksesKeHalamanVerifikasiDitolakBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+
+        Assert::assertContains(
+            $this->response->getStatusCode(),
+            [302, 401, 403],
+            'Pemohon seharusnya tidak dapat membuka antrean verifikasi.'
+        );
+    }
+
+    #[Then('akses ke aksi persetujuan ditolak')]
+    public function aksesKeAksiPersetujuanDitolakBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+
+        Assert::assertContains(
+            $this->response->getStatusCode(),
+            [302, 401, 403],
+            'Pemohon seharusnya tidak dapat menyetujui pengajuan.'
+        );
     }
 }
