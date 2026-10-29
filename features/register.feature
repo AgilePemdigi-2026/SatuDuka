@@ -4,8 +4,8 @@
 #     dipakai untuk pengaturan ulang kata sandi).
 #   - Nama lengkap tidak diminta; diambil dari SIAK bila tersedia dan memakai
 #     nama bawaan bila NIK belum ada pada data kependudukan.
-# Setiap skenario dipetakan ke tests/Feature/Autentikasi/DaftarTest.php karena
-# integrasi Behat-Mink diganti Pest.
+# Skenario ini dijalankan oleh Behat melalui features/bootstrap/FeatureContext.php.
+# Tes Pest terkait tersedia sebagai cakupan regresi tambahan.
 
 Feature: Register
   In order to submit a request for death registration and administration

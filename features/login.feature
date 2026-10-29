@@ -4,8 +4,8 @@
 #   - Kredensial demo memakai kata sandi "password123" (docs/DATABASE.md).
 #   - Pengaturan ulang kata sandi dikirim ke surel terdaftar, bukan menampilkan
 #     formulir kata sandi baru langsung setelah menekan "Kirim".
-# Setiap skenario dipetakan ke tests/Feature/Autentikasi/MasukTest.php karena
-# integrasi Behat-Mink diganti Pest.
+# Skenario ini dijalankan oleh Behat melalui features/bootstrap/FeatureContext.php.
+# Tes Pest terkait tersedia sebagai cakupan regresi tambahan.
 
 Feature: Login
   In order to access the system with proper authentication and authorization
@@ -16,6 +16,27 @@ Feature: Login
     Given saya melihat halaman "Masuk"
     When saya menekan tautan "Belum punya akun? Daftar di sini"
     Then saya melihat halaman "Registrasi"
+
+  Scenario: Berhasil mengatur ulang kata sandi melalui tautan surel
+    Given saya melihat halaman "Masuk"
+    When saya menekan tautan "Lupa Kata Sandi?"
+    Then saya melihat halaman "Lupa Kata Sandi"
+    When saya mengisi "9999990101900001" pada kolom "NIK/NIP"
+    And saya menekan tombol "Kirim"
+    Then tautan pengaturan ulang dikirim ke surel akun
+    When saya membuka tautan pengaturan ulang dari surel
+    Then saya melihat halaman "Kata Sandi Baru"
+    When saya mengisi "Baru12345" pada kolom "Kata Sandi"
+    And saya mengisi "Baru12345" pada kolom "Konfirmasi Kata Sandi"
+    And saya menekan tombol "Simpan"
+    Then saya melihat notifikasi "Kata sandi berhasil direset. Silakan login."
+    And saya melihat halaman "Masuk"
+    And kata sandi baru dapat digunakan untuk masuk
+
+  Scenario: Tersedia kontrol untuk menampilkan kata sandi
+    Given saya melihat halaman "Masuk"
+    When saya menekan ikon "tampilkan kata sandi"
+    Then kontrol tampilkan kata sandi terhubung ke kolom kata sandi
 
   Scenario: Berhasil masuk dengan kredensial Pemohon yang valid
     Given saya melihat halaman "Masuk"
@@ -64,6 +85,14 @@ Feature: Login
     Given saya melihat halaman "Masuk"
     When saya mengisi "9999990101900001" pada kolom "NIK/NIP"
     And saya membiarkan kolom "Kata Sandi" kosong
+    And saya menekan tombol "Masuk"
+    Then saya melihat pesan galat "Harap isi semua field yang diperlukan"
+    And kolom yang kosong ditandai
+
+  Scenario: Gagal masuk karena NIK/NIP kosong
+    Given saya melihat halaman "Masuk"
+    When saya membiarkan kolom "NIK/NIP" kosong
+    And saya mengisi "password123" pada kolom "Kata Sandi"
     And saya menekan tombol "Masuk"
     Then saya melihat pesan galat "Harap isi semua field yang diperlukan"
     And kolom yang kosong ditandai
