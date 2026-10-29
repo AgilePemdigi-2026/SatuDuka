@@ -1,4 +1,3 @@
-```blade
 @extends('tata_letak.verifikator')
 
 @section('judul', 'Detail Verifikasi Berkas')
@@ -460,4 +459,3 @@
     })();
 </script>
 @endsection
-```
