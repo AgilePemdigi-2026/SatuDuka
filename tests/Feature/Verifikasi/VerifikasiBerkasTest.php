@@ -131,7 +131,8 @@ it('membatasi seluruh rute verifikasi berkas hanya untuk verifikator', function 
     $this->actingAs($verifikator)
         ->get(route('verifikasi.index'))
         ->assertOk()
-        ->assertSee($laporan->nik_almarhum)
+        ->assertSee(\App\Support\MaskerNik::masker($laporan->nik_almarhum))
+        ->assertDontSee($laporan->nik_almarhum)
         ->assertSee($laporan->nama_almarhum);
 
     $this->get(route('verifikasi.show', $laporan))->assertOk();

@@ -1,78 +1,85 @@
-@extends('tata_letak.verifikator')
+@extends('tata_letak.utama')
 
 @section('judul', 'Detail Verifikasi Berkas')
-@section('subjudul', 'Periksa data pemohon, kelengkapan dokumen, dan kesesuaian SIAK sebelum memutuskan.')
-@section('tanpa_error_global', '1')
+
+@section('kembali')
+    <a href="{{ route('verifikasi.index') }}"
+        class="inline-flex items-center gap-2 text-sm font-semibold text-ink-soft hover:text-brand">
+        <x-icon.arrow-left class="h-4 w-4" />
+        Kembali ke Antrean
+    </a>
+@endsection
+
+@section('navigasi')
+    @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
+@endsection
 
 @section('konten')
-<div class="stack page-narrow">
+    @php
+        $kelasLabel = 'mb-1.5 block text-sm font-semibold text-ink-soft';
+        $kelasArea = 'block w-full rounded-xl border border-line-strong bg-surface px-3.5 py-3 text-sm text-ink outline-none transition placeholder:text-faint focus:border-brand focus:ring-2 focus:ring-brand/30';
+        $opsiAnomali = [
+            \App\Models\AnomaliDokumen::JENIS_PERBEDAAN_IDENTITAS => 'Perbedaan Identitas',
+            \App\Models\AnomaliDokumen::JENIS_NIK_GANDA => 'NIK Ganda',
+            \App\Models\AnomaliDokumen::JENIS_TANGGAL_KEMATIAN => 'Perbedaan Tanggal Kematian',
+            \App\Models\AnomaliDokumen::JENIS_TEMPAT_KEMATIAN => 'Perbedaan Tempat Kematian',
+            \App\Models\AnomaliDokumen::JENIS_DOKUMEN_TIDAK_TERBACA => 'Dokumen Tidak Terbaca',
+        ];
+    @endphp
 
-    <div class="toolbar">
-        <a href="{{ route('verifikasi.index') }}" class="btn btn-outline btn-sm"><span aria-hidden="true">←</span> Kembali ke Antrean</a>
-        <span class="badge badge-brand" style="padding: 8px 16px;">No. Pengajuan: {{ $laporan->no_pengajuan }}</span>
-    </div>
+    <div class="mx-auto max-w-5xl space-y-6">
+        <x-ui.page-header :title="$laporan->nama_almarhum ?: 'Detail Verifikasi Berkas'"
+            :subtitle="'Nomor Pengajuan: '.($laporan->no_pengajuan ?? '-')">
+            <x-slot:aksi>
+                @include('komponen.badge_status', ['status' => $laporan->status_pengajuan])
+            </x-slot:aksi>
+        </x-ui.page-header>
 
-    @if ($errors->any())
-        <div role="alert" class="alert alert-err" style="margin: 0;">
-            <strong>Periksa kembali pengajuan ini.</strong>
-            <ul>
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <!-- Informasi Pengajuan -->
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">Informasi Pemohon &amp; Almarhum</h2>
-        </div>
-        <div class="card-body">
-            <dl class="info-grid" style="margin: 0;">
-                <div class="info-item">
-                    <dt>Nama Almarhum</dt>
-                    <dd>{{ $laporan->nama_almarhum }}</dd>
+        <x-ui.card title="Informasi Pemohon &amp; Almarhum">
+            <dl class="grid gap-4 sm:grid-cols-2">
+                <div class="rounded-xl border border-line bg-canvas p-4">
+                    <dt class="text-xs text-muted">Nama Almarhum</dt>
+                    <dd class="mt-1 text-sm font-semibold text-ink">{{ $laporan->nama_almarhum }}</dd>
                 </div>
-                <div class="info-item">
-                    <dt>NIK Almarhum</dt>
-                    <dd class="num">{{ $laporan->nik_almarhum }}</dd>
+                <div class="rounded-xl border border-line bg-canvas p-4">
+                    <dt class="text-xs text-muted">NIK Almarhum</dt>
+                    <dd class="mt-1 font-mono text-sm font-semibold text-ink">{{ $laporan->nik_almarhum }}</dd>
                 </div>
-                <div class="info-item">
-                    <dt>Nama Pelapor</dt>
-                    <dd>{{ $laporan->nama_pelapor }}</dd>
+                <div class="rounded-xl border border-line bg-canvas p-4">
+                    <dt class="text-xs text-muted">Nama Pelapor</dt>
+                    <dd class="mt-1 text-sm font-semibold text-ink">{{ $laporan->nama_pelapor }}</dd>
                 </div>
-                <div class="info-item">
-                    <dt>Hubungan Pelapor</dt>
-                    <dd>{{ $laporan->hubungan_pelapor }}</dd>
+                <div class="rounded-xl border border-line bg-canvas p-4">
+                    <dt class="text-xs text-muted">Hubungan Pelapor</dt>
+                    <dd class="mt-1 text-sm font-semibold text-ink">{{ $laporan->hubungan_pelapor }}</dd>
                 </div>
-                <div class="info-item">
-                    <dt>Tanggal Kematian</dt>
-                    <dd>{{ $laporan->tanggal_kematian?->format('d/m/Y') ?? '-' }}</dd>
+                <div class="rounded-xl border border-line bg-canvas p-4">
+                    <dt class="text-xs text-muted">Tanggal Kematian</dt>
+                    <dd class="mt-1 text-sm font-semibold text-ink">
+                        {{ $laporan->tanggal_kematian?->format('d/m/Y') ?? '-' }}
+                    </dd>
                 </div>
-                <div class="info-item">
-                    <dt>Tempat Kematian</dt>
-                    <dd>{{ $laporan->tempat_kematian ?: '-' }}</dd>
+                <div class="rounded-xl border border-line bg-canvas p-4">
+                    <dt class="text-xs text-muted">Tempat Kematian</dt>
+                    <dd class="mt-1 text-sm font-semibold text-ink">{{ $laporan->tempat_kematian ?: '-' }}</dd>
                 </div>
             </dl>
-        </div>
-    </section>
+        </x-ui.card>
 
-    <!-- Pemeriksaan Dokumen -->
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">Pemeriksaan Kelengkapan Dokumen</h2>
-            <span class="badge {{ $jumlahTersedia === $jumlahWajib ? 'badge-ok' : 'badge-brand' }}">
-                {{ $jumlahTersedia }} / {{ $jumlahWajib }} lengkap
-            </span>
-        </div>
+        <x-ui.card>
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h2 class="text-lg font-semibold text-ink">Pemeriksaan Kelengkapan Dokumen</h2>
+                    <p class="mt-1 text-sm text-muted">
+                        Bukti kematian dapat berupa salah satu dari {{ implode(', ', $jenisBuktiKematian) }}.
+                    </p>
+                </div>
+                <x-ui.badge :variant="$jumlahTersedia === $jumlahWajib ? 'success' : 'warning'">
+                    {{ $jumlahTersedia }} / {{ $jumlahWajib }} lengkap
+                </x-ui.badge>
+            </div>
 
-        <div class="card-body">
-            <p class="hint" style="margin-bottom: 14px;">
-                Bukti kematian dapat berupa salah satu dari {{ implode(', ', $jenisBuktiKematian) }}.
-            </p>
-
-            <div class="doc-list">
+            <div class="mt-4 space-y-3">
                 @foreach ($dokumenTampil as $jenis)
                     @php
                         $berkas = $laporan->berkasPendukung->first(fn ($item) =>
@@ -84,14 +91,16 @@
                         $statusKurang = $wajib || ($alternatif && ! $adaBuktiKematian);
                     @endphp
 
-                    <div class="doc-item">
-                        <div class="doc-left">
-                            <span class="doc-ic {{ $berkas ? 'ok' : ($statusKurang ? 'bad' : '') }}">
+                    <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4">
+                        <div class="flex min-w-0 items-center gap-3">
+                            <span
+                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold
+                                    {{ $berkas ? 'bg-[#dcfce7] text-[#15803d]' : ($statusKurang ? 'bg-[#fee2e2] text-[#b91c1c]' : 'bg-[#f1f5f9] text-[#475569]') }}">
                                 {{ $berkas ? '✓' : ($statusKurang ? '!' : '–') }}
                             </span>
 
-                            <div style="min-width: 0;">
-                                <p class="doc-name">{{ $jenis }}</p>
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-ink">{{ $jenis }}</p>
 
                                 @if ($berkas)
                                     @php
@@ -105,7 +114,7 @@
 
                                     <button
                                         type="button"
-                                        class="doc-file doc-file-btn js-pratinjau"
+                                        class="js-pratinjau max-w-full truncate text-left text-xs font-semibold text-brand underline underline-offset-2 hover:text-brand-hover"
                                         title="Klik untuk pratinjau"
                                         data-nama="{{ $berkas->nama_file }}"
                                         data-tipe="{{ $tipe }}"
@@ -113,368 +122,236 @@
                                         data-unduh="{{ route('verifikasi.unduh', [$laporan, $berkas]) }}"
                                     >{{ $berkas->nama_file }}</button>
                                 @else
-                                    <p class="doc-file">Belum diunggah</p>
+                                    <p class="text-xs text-muted">Belum diunggah</p>
                                 @endif
                             </div>
                         </div>
 
                         @if ($berkas)
-                            <span class="badge badge-ok">Tersedia</span>
+                            <x-ui.badge variant="success">Tersedia</x-ui.badge>
                         @elseif ($statusKurang)
-                            <span class="badge badge-bad">Belum Lengkap</span>
+                            <x-ui.badge variant="danger">Belum Lengkap</x-ui.badge>
                         @elseif ($alternatif)
-                            <span class="badge badge-brand">Alternatif</span>
+                            <x-ui.badge variant="info">Alternatif</x-ui.badge>
                         @else
-                            <span class="badge badge-brand">Opsional</span>
+                            <x-ui.badge variant="info">Opsional</x-ui.badge>
                         @endif
                     </div>
                 @endforeach
             </div>
-        </div>
-    </section>
+        </x-ui.card>
 
-    <!-- Pencocokan SIAK -->
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">Pencocokan Data SIAK</h2>
-        </div>
-
-        <div class="card-body">
+        <x-ui.card title="Pencocokan Data SIAK">
             @if ($hasilPencocokan['ditemukan_di_siak'])
-                <div class="info-grid">
-                    <div class="match-row">
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="flex items-center justify-between gap-3 rounded-xl border border-line bg-canvas p-4 text-sm text-muted">
                         <span>Kesesuaian NIK</span>
-                        <span class="badge {{ $hasilPencocokan['nik_sesuai'] ? 'badge-ok' : 'badge-bad' }}">
+                        <x-ui.badge :variant="$hasilPencocokan['nik_sesuai'] ? 'success' : 'danger'">
                             {{ $hasilPencocokan['nik_sesuai'] ? 'Sesuai' : 'Tidak Sesuai' }}
-                        </span>
+                        </x-ui.badge>
                     </div>
 
-                    <div class="match-row">
+                    <div class="flex items-center justify-between gap-3 rounded-xl border border-line bg-canvas p-4 text-sm text-muted">
                         <span>Kesesuaian Nama</span>
-                        <span class="badge {{ $hasilPencocokan['nama_sesuai'] ? 'badge-ok' : 'badge-bad' }}">
+                        <x-ui.badge :variant="$hasilPencocokan['nama_sesuai'] ? 'success' : 'danger'">
                             {{ $hasilPencocokan['nama_sesuai'] ? 'Sesuai' : 'Tidak Sesuai' }}
-                        </span>
+                        </x-ui.badge>
                     </div>
                 </div>
             @else
-                <div class="alert alert-warn">
+                <x-ui.alert variant="warning">
                     Data tidak ditemukan pada SIAK dummy. Lakukan pemeriksaan manual.
-                </div>
+                </x-ui.alert>
             @endif
-        </div>
-    </section>
+        </x-ui.card>
 
-    <!-- Pemeriksaan Dokumen Berbantuan AI -->
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">Pemeriksaan Dokumen (AI)</h2>
-        </div>
-
-        <div class="card-body">
-            <p class="hint">
+        <x-ui.card title="Pemeriksaan Dokumen (AI)">
+            <p class="text-sm text-muted">
                 Hasil bantuan AI, hanya saran. AI tidak menyetujui, menolak, atau mengubah status pengajuan.
             </p>
 
             @if ($suratKeterangan !== null)
-                <div class="toolbar" style="margin-top: 14px;">
+                <div class="mt-4 flex flex-wrap items-center gap-2">
                     <form method="POST" action="{{ route('verifikasi.analisis_ai', $laporan) }}">
                         @csrf
                         <input type="hidden" name="asal" value="baru">
                         <input type="hidden" name="id_berkas" value="{{ $suratKeterangan->id_berkas }}">
-                        <button type="submit" class="btn btn-brand btn-sm">Baca dokumen (AI)</button>
+                        <x-ui.button type="submit" size="sm">Baca dokumen (AI)</x-ui.button>
                     </form>
 
                     <form method="POST" action="{{ route('verifikasi.ringkasan_ai', $laporan) }}">
                         @csrf
                         <input type="hidden" name="asal" value="baru">
-                        <button type="submit" class="btn btn-outline btn-sm">Buat ringkasan AI</button>
+                        <x-ui.button type="submit" variant="secondary" size="sm">Buat ringkasan AI</x-ui.button>
                     </form>
                 </div>
             @else
-                <div class="alert alert-warn" style="margin-top: 14px;">
+                <x-ui.alert variant="warning" class="mt-4">
                     Surat Keterangan Kematian belum diunggah.
-                </div>
+                </x-ui.alert>
             @endif
 
             @if ($analisis !== null)
-                @include('laporan.panel_analisis_ai', ['analisis' => $analisis])
+                <div class="mt-4">
+                    @include('laporan.panel_analisis_ai', ['analisis' => $analisis])
+                </div>
             @else
-                <p class="hint" style="margin-top: 14px;">Belum ada hasil pemeriksaan dokumen.</p>
+                <p class="mt-4 text-sm text-muted">Belum ada hasil pemeriksaan dokumen.</p>
             @endif
 
             @if ($ringkasan !== null)
-                <div class="alert {{ $ringkasanBerhasil ? 'alert-ok' : 'alert-warn' }}" style="margin-top: 14px;">
+                <x-ui.alert :variant="$ringkasanBerhasil ? 'success' : 'warning'" class="mt-4">
                     <strong>Ringkasan Ketidaksesuaian (AI)</strong>
-                    <p style="margin-top: 6px;">{{ $ringkasan['ringkasan'] ?? '-' }}</p>
+                    <p class="mt-1">{{ $ringkasan['ringkasan'] ?? '-' }}</p>
 
                     @if (! empty($ringkasan['saran']))
-                        <ul style="margin: 10px 0 0 18px;">
+                        <ul class="mt-2 list-disc space-y-1 pl-5">
                             @foreach ($ringkasan['saran'] as $saran)
                                 <li>{{ $saran }}</li>
                             @endforeach
                         </ul>
                     @endif
-                </div>
+                </x-ui.alert>
             @endif
-        </div>
-    </section>
+        </x-ui.card>
 
-    <!-- Keputusan Verifikasi -->
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">Keputusan Verifikasi</h2>
-        </div>
-
-        <div class="card-body">
-            <div class="decision-grid">
-
-                <form method="POST" action="{{ route('verifikasi.setujui', $laporan) }}" class="decision-box">
+        <x-ui.card title="Keputusan Verifikasi">
+            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <form method="POST" action="{{ route('verifikasi.setujui', $laporan) }}"
+                    class="flex flex-col justify-between gap-5 rounded-2xl border border-line bg-canvas p-5">
                     @csrf
 
                     <div>
-                        <h3>Setujui Berkas</h3>
-                        <p class="hint">Gunakan jika persyaratan dan data sudah sesuai sepenuhnya.</p>
+                        <h3 class="text-sm font-bold text-ink">Setujui Berkas</h3>
+                        <p class="mt-1 text-xs text-muted">
+                            Gunakan jika persyaratan dan data sudah sesuai sepenuhnya.
+                        </p>
 
-                        <label for="catatan" class="field-label">Catatan Persetujuan (Opsional)</label>
-                        <textarea
-                            id="catatan"
-                            name="catatan"
-                            rows="3"
-                            class="field"
-                            placeholder="Tambahkan catatan jika ada..."
-                        ></textarea>
+                        <label for="catatan" class="{{ $kelasLabel }} mt-4">Catatan Persetujuan (Opsional)</label>
+                        <textarea id="catatan" name="catatan" rows="3" class="{{ $kelasArea }}"
+                            placeholder="Tambahkan catatan jika ada..."></textarea>
                     </div>
 
-                    <button type="submit" class="btn btn-green btn-block">Setujui Berkas</button>
+                    <x-ui.button type="submit" class="w-full">Setujui Berkas</x-ui.button>
                 </form>
 
-                <form method="POST" action="{{ route('verifikasi.revisi', $laporan) }}" class="decision-box">
+                <form method="POST" action="{{ route('verifikasi.revisi', $laporan) }}"
+                    class="flex flex-col justify-between gap-5 rounded-2xl border border-line bg-canvas p-5">
                     @csrf
 
                     <div>
-                        <h3>Minta Revisi</h3>
-                        <p class="hint">Gunakan jika ada dokumen yang perlu diperbaiki oleh pemohon.</p>
+                        <h3 class="text-sm font-bold text-ink">Minta Revisi</h3>
+                        <p class="mt-1 text-xs text-muted">
+                            Gunakan jika ada dokumen yang perlu diperbaiki oleh pemohon.
+                        </p>
 
-                        <label for="catatan_revisi" class="field-label">Catatan Revisi (Wajib)</label>
-                        <textarea
-                            id="catatan_revisi"
-                            name="catatan"
-                            rows="3"
-                            required
-                            minlength="5"
-                            maxlength="2000"
-                            class="field"
-                            placeholder="Jelaskan berkas yang perlu diperbaiki..."
-                        ></textarea>
+                        <label for="catatan_revisi" class="{{ $kelasLabel }} mt-4">Catatan Revisi (Wajib)</label>
+                        <textarea id="catatan_revisi" name="catatan" rows="3" required minlength="5" maxlength="2000"
+                            class="{{ $kelasArea }}" placeholder="Jelaskan berkas yang perlu diperbaiki..."></textarea>
                     </div>
 
-                    <button type="submit" class="btn btn-outline btn-block">Minta Revisi</button>
+                    <x-ui.button type="submit" variant="secondary" class="w-full">Minta Revisi</x-ui.button>
                 </form>
 
-                <form method="POST" action="{{ route('verifikasi.anomali', $laporan) }}" class="decision-box">
+                <form method="POST" action="{{ route('verifikasi.anomali', $laporan) }}"
+                    class="flex flex-col justify-between gap-5 rounded-2xl border border-line bg-canvas p-5 md:col-span-2 lg:col-span-1">
                     @csrf
 
                     <div>
-                        <h3>Tandai Kasus Anomali</h3>
-                        <p class="hint">Alihkan ke rekonsiliasi jika ditemukan ketidaksesuaian data.</p>
+                        <h3 class="text-sm font-bold text-ink">Tandai Kasus Anomali</h3>
+                        <p class="mt-1 text-xs text-muted">
+                            Alihkan ke rekonsiliasi jika ditemukan ketidaksesuaian data.
+                        </p>
 
-                        <div class="form-stack">
-                            <div>
-                                <label for="jenis_anomali" class="field-label">Jenis Anomali</label>
-                                <select id="jenis_anomali" name="jenis_anomali" required class="field">
-                                    <option value="">Pilih Jenis Anomali</option>
-                                    <option value="{{ \App\Models\AnomaliDokumen::JENIS_PERBEDAAN_IDENTITAS }}">Perbedaan Identitas</option>
-                                    <option value="{{ \App\Models\AnomaliDokumen::JENIS_NIK_GANDA }}">NIK Ganda</option>
-                                    <option value="{{ \App\Models\AnomaliDokumen::JENIS_TANGGAL_KEMATIAN }}">Perbedaan Tanggal Kematian</option>
-                                    <option value="{{ \App\Models\AnomaliDokumen::JENIS_TEMPAT_KEMATIAN }}">Perbedaan Tempat Kematian</option>
-                                    <option value="{{ \App\Models\AnomaliDokumen::JENIS_DOKUMEN_TIDAK_TERBACA }}">Dokumen Tidak Terbaca</option>
-                                </select>
-                            </div>
+                        <div class="mt-4 space-y-3">
+                            <x-ui.select name="jenis_anomali" label="Jenis Anomali" placeholder="Pilih Jenis Anomali"
+                                :options="$opsiAnomali" required />
 
                             <div>
-                                <label for="deskripsi" class="field-label">Deskripsi</label>
-                                <textarea
-                                    id="deskripsi"
-                                    name="deskripsi"
-                                    rows="3"
-                                    required
-                                    class="field"
-                                    placeholder="Jelaskan ketidaksesuaian..."
-                                ></textarea>
+                                <label for="deskripsi" class="{{ $kelasLabel }}">Deskripsi</label>
+                                <textarea id="deskripsi" name="deskripsi" rows="3" required class="{{ $kelasArea }}"
+                                    placeholder="Jelaskan ketidaksesuaian..."></textarea>
                             </div>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-brand btn-block">Dialihkan ke Rekonsiliasi</button>
+                    <x-ui.button type="submit" class="w-full">Dialihkan ke Rekonsiliasi</x-ui.button>
                 </form>
-
             </div>
-        </div>
-    </section>
-</div>
-
-<!-- Modal Pratinjau Berkas -->
-<dialog id="dlg-pratinjau" class="dlg">
-    <div class="dlg-box">
-        <div class="dlg-head">
-            <strong id="dlg-judul" class="dlg-judul"></strong>
-
-            <div class="dlg-aksi">
-                <a id="dlg-unduh" href="#" class="btn btn-brand btn-sm">Unduh</a>
-                <button type="button" id="dlg-tutup" class="btn btn-outline btn-sm">Tutup</button>
-            </div>
-        </div>
-
-        <div id="dlg-isi" class="dlg-isi"></div>
+        </x-ui.card>
     </div>
-</dialog>
 
-<style>
-    .doc-file-btn {
-        background: none;
-        border: 0;
-        padding: 0;
-        font-family: inherit;
-        cursor: pointer;
-        color: var(--brand);
-        text-align: left;
-        max-width: 100%;
-        text-decoration: underline;
-        text-underline-offset: 2px;
-    }
+    <dialog id="dlg-pratinjau"
+        class="m-auto h-[88vh] w-[min(960px,94vw)] rounded-2xl border-0 p-0 shadow-[0_24px_60px_-12px_rgb(15_23_42_/_0.45)] backdrop:bg-ink/50">
+        <div class="flex h-full w-full flex-col bg-surface">
+            <div class="flex items-center justify-between gap-3 border-b border-line px-5 py-3">
+                <strong id="dlg-judul" class="truncate text-sm text-ink"></strong>
 
-    .doc-file-btn:hover {
-        color: var(--brand-dark);
-    }
+                <div class="flex shrink-0 items-center gap-2">
+                    <x-ui.button id="dlg-unduh" href="#" size="sm">Unduh</x-ui.button>
+                    <x-ui.button id="dlg-tutup" type="button" variant="secondary" size="sm">Tutup</x-ui.button>
+                </div>
+            </div>
 
-    .dlg {
-        margin: auto;
-        border: 0;
-        border-radius: 18px;
-        padding: 0;
-        width: min(960px, 94vw);
-        height: 88vh;
-        box-shadow: 0 24px 60px -12px rgba(15,23,42,.45);
-    }
+            <div id="dlg-isi" class="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-canvas"></div>
+        </div>
+    </dialog>
 
-    .dlg::backdrop {
-        background: rgba(15,23,42,.55);
-    }
+    <script>
+        (function () {
+            var dlg = document.getElementById('dlg-pratinjau');
+            var judul = document.getElementById('dlg-judul');
+            var unduh = document.getElementById('dlg-unduh');
+            var isi = document.getElementById('dlg-isi');
 
-    .dlg-box {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        height: 100%;
-        background: #fff;
-    }
-
-    .dlg-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 14px 20px;
-        border-bottom: 1px solid var(--line);
-    }
-
-    .dlg-judul {
-        font-size: 14px;
-        color: var(--ink);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .dlg-aksi {
-        display: flex;
-        gap: 8px;
-        flex-shrink: 0;
-    }
-
-    .dlg-isi {
-        flex: 1;
-        min-height: 0;
-        background: #F1F5F9;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: auto;
-    }
-
-    .dlg-isi iframe {
-        width: 100%;
-        height: 100%;
-        border: 0;
-    }
-
-    .dlg-isi img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-
-    .dlg-pesan {
-        padding: 24px;
-        font-size: 14px;
-        color: var(--muted);
-        text-align: center;
-    }
-</style>
-
-<script>
-    (function () {
-        var dlg = document.getElementById('dlg-pratinjau');
-        var judul = document.getElementById('dlg-judul');
-        var unduh = document.getElementById('dlg-unduh');
-        var isi = document.getElementById('dlg-isi');
-
-        function pesan(teks) {
-            var p = document.createElement('p');
-            p.className = 'dlg-pesan';
-            p.textContent = teks;
-            isi.appendChild(p);
-        }
-
-        document.querySelectorAll('.js-pratinjau').forEach(function (tombol) {
-            tombol.addEventListener('click', function () {
-                var tipe = tombol.dataset.tipe;
-
-                judul.textContent = tombol.dataset.nama;
-                unduh.href = tombol.dataset.unduh;
-                isi.innerHTML = '';
-
-                if (tipe === 'pdf') {
-                    var f = document.createElement('iframe');
-                    f.src = tombol.dataset.pratinjau;
-                    f.title = 'Pratinjau ' + tombol.dataset.nama;
-                    isi.appendChild(f);
-                } else if (tipe === 'gambar') {
-                    var g = document.createElement('img');
-                    g.src = tombol.dataset.pratinjau;
-                    g.alt = tombol.dataset.nama;
-                    isi.appendChild(g);
-                } else {
-                    pesan('Jenis berkas ini tidak bisa dipratinjau. Gunakan tombol Unduh.');
-                }
-
-                dlg.showModal();
-            });
-        });
-
-        document.getElementById('dlg-tutup').addEventListener('click', function () {
-            dlg.close();
-        });
-
-        dlg.addEventListener('click', function (e) {
-            if (e.target === dlg) {
-                dlg.close();
+            function pesan(teks) {
+                var p = document.createElement('p');
+                p.className = 'p-6 text-center text-sm text-muted';
+                p.textContent = teks;
+                isi.appendChild(p);
             }
-        });
 
-        dlg.addEventListener('close', function () {
-            isi.innerHTML = '';
-        });
-    })();
-</script>
+            document.querySelectorAll('.js-pratinjau').forEach(function (tombol) {
+                tombol.addEventListener('click', function () {
+                    var tipe = tombol.dataset.tipe;
+
+                    judul.textContent = tombol.dataset.nama;
+                    unduh.href = tombol.dataset.unduh;
+                    isi.innerHTML = '';
+
+                    if (tipe === 'pdf') {
+                        var f = document.createElement('iframe');
+                        f.src = tombol.dataset.pratinjau;
+                        f.title = 'Pratinjau ' + tombol.dataset.nama;
+                        f.className = 'h-full w-full border-0';
+                        isi.appendChild(f);
+                    } else if (tipe === 'gambar') {
+                        var g = document.createElement('img');
+                        g.src = tombol.dataset.pratinjau;
+                        g.alt = tombol.dataset.nama;
+                        g.className = 'max-h-full max-w-full object-contain';
+                        isi.appendChild(g);
+                    } else {
+                        pesan('Jenis berkas ini tidak bisa dipratinjau. Gunakan tombol Unduh.');
+                    }
+
+                    dlg.showModal();
+                });
+            });
+
+            document.getElementById('dlg-tutup').addEventListener('click', function () {
+                dlg.close();
+            });
+
+            dlg.addEventListener('click', function (e) {
+                if (e.target === dlg) {
+                    dlg.close();
+                }
+            });
+
+            dlg.addEventListener('close', function () {
+                isi.innerHTML = '';
+            });
+        })();
+    </script>
 @endsection

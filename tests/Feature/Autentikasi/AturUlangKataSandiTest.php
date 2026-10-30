@@ -17,7 +17,7 @@ it('menampilkan formulir lupa kata sandi dengan kolom nik/nip', function () {
     $this->get(route('lupa_kata_sandi'))
         ->assertOk()
         ->assertSee('Lupa Kata Sandi')
-        ->assertSee('NIK/NIP');
+        ->assertSee('NIK / NIP');
 });
 
 it('mengirim tautan pengaturan ulang ke surel terdaftar akun', function () {
@@ -54,7 +54,7 @@ it('menyimpan kata sandi baru dari tautan surel lalu mengarahkan ke halaman masu
 
     $this->get(route('atur_ulang_kata_sandi', ['token' => $token, 'email' => $pemohon->email]))
         ->assertOk()
-        ->assertSee('Kata Sandi Baru');
+        ->assertSee('Atur Ulang Kata Sandi');
 
     $this->post(route('atur_ulang_kata_sandi.simpan'), [
         'token' => $token,

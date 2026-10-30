@@ -16,9 +16,9 @@ use Illuminate\Support\Facades\Hash;
 it('menampilkan halaman registrasi dengan tautan ke halaman masuk', function () {
     $this->get(route('registrasi'))
         ->assertOk()
-        ->assertSee('Registrasi ke Akun Pemohon')
+        ->assertSee('Registrasi Akun Pemohon')
         ->assertSee('Nomor Induk Kependudukan (NIK)')
-        ->assertSee('Alamat Surel')
+        ->assertSee('Alamat Email')
         ->assertSee(route('masuk'));
 });
 

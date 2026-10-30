@@ -15,7 +15,7 @@
             <div class="text-center">
                 <a href="{{ url('/') }}"
                     class="text-[52px] font-extrabold leading-none tracking-tight text-ink">{{ config('app.name', 'SKD') }}</a>
-                <p class="mt-2 text-xl font-medium text-ink-soft">Layanan Pencatatan &amp; Administrasi Kematian</p>
+                <p class="mt-2 text-xl font-medium text-ink-soft">{{ config('satuduka.tagline') }}</p>
             </div>
 
             <x-ui.card class="mt-8">
@@ -63,8 +63,8 @@
         </div>
     </main>
 
-    <footer class="py-4 text-center text-xs text-faint">
-        &copy; {{ date('Y') }} {{ config('app.name', 'SKD') }}
+    <footer class="w-full border-t border-line bg-surface py-4 text-center text-xs text-faint">
+        &copy; {{ date('Y') }} {{ config('app.name', 'SKD') }} {{ config('satuduka.layanan') }}. Hak Cipta Dilindungi.
     </footer>
 </body>
 </html>

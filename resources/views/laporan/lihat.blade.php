@@ -213,8 +213,8 @@
                 <p class="text-xs text-faint">*Unduhan aktif setelah status "Selesai"</p>
 
                 <p class="text-xs leading-relaxed text-muted">
-                    Dokumen ini diterbitkan secara elektronik dan sah menurut Undang-Undang Informasi dan
-                    Transaksi Elektronik.
+                    Halaman ini adalah ringkasan simulasi akademik. Dokumen resmi hanya diterbitkan
+                    melalui proses tanda tangan elektronik pada aplikasi.
                 </p>
             </aside>
         </div>

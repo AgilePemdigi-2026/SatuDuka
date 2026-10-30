@@ -1,10 +1,10 @@
 @extends('tata_letak.tamu')
 
-@section('judul', 'Kata Sandi Baru')
+@section('judul', 'Atur Ulang Kata Sandi')
 
 @section('konten')
     <div class="text-center">
-        <h1 class="text-[28px] font-bold leading-tight text-ink">Kata Sandi Baru</h1>
+        <h1 class="text-[28px] font-bold leading-tight text-ink">Atur Ulang Kata Sandi</h1>
         <p class="mt-2 text-sm text-muted">
             Kata sandi minimal 8 karakter dan mengandung huruf serta angka.
         </p>
@@ -17,7 +17,8 @@
         <input type="hidden" name="email" value="{{ $email }}" />
 
         <x-ui.password id="kata_sandi" name="kata_sandi" label="Kata Sandi Baru"
-            placeholder="Masukkan kata sandi baru" autocomplete="new-password" required autofocus />
+            placeholder="Masukkan kata sandi baru" hint="Minimal 8 karakter, mengandung huruf dan angka."
+            autocomplete="new-password" required autofocus />
 
         <x-ui.password id="konfirmasi_kata_sandi" name="konfirmasi_kata_sandi" label="Konfirmasi Kata Sandi"
             placeholder="Masukkan ulang kata sandi baru" autocomplete="new-password" required />

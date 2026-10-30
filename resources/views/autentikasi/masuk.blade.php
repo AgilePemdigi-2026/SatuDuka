@@ -1,11 +1,11 @@
 @extends('tata_letak.tamu')
 
-@section('judul', 'Masuk')
+@section('judul', 'Masuk ke Akun Anda')
 
 @section('konten')
     <div class="text-center">
         <h1 class="text-[28px] font-bold leading-tight text-ink">Masuk ke Akun Anda</h1>
-        <p class="mt-2 text-sm text-muted">Layanan Pencatatan &amp; Administrasi Kematian</p>
+        <p class="mt-2 text-sm text-muted">{{ config('satuduka.layanan') }}</p>
     </div>
 
     <form method="POST" action="{{ route('masuk.coba') }}" class="mt-8 space-y-5">

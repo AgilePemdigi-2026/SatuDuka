@@ -48,6 +48,10 @@
                     </x-ui.alert>
                 @endif
 
+                <x-ui.card title="Pratinjau Dokumen">
+                    <x-dokumen.pratinjau-akta :laporan="$laporan" />
+                </x-ui.card>
+
                 <x-ui.card title="Lini Masa Pengajuan">
                     <x-ui.stepper :steps="$liniMasa" />
                 </x-ui.card>
@@ -123,8 +127,8 @@
                 <p class="text-xs text-faint">*Aktif setelah status "Selesai"</p>
 
                 <p class="text-xs leading-relaxed text-muted">
-                    Dokumen ini diterbitkan secara elektronik dan sah menurut Undang-Undang Informasi dan
-                    Transaksi Elektronik.
+                    Dokumen pada aplikasi ini adalah simulasi akademik, bukan dokumen resmi dan tidak
+                    memiliki kekuatan hukum.
                 </p>
             </aside>
         </div>
