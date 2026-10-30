@@ -47,55 +47,64 @@
                     <p class="mt-1">Semua pengajuan sudah diperiksa.</p>
                 </x-ui.notice>
             @else
-                <x-ui.table class="mt-4">
-                    <x-slot:head>
-                        <th class="w-16">No.</th>
-                        <th>No. Pengajuan</th>
-                        <th>NIK</th>
-                        <th>Nama</th>
-                        <th>Waktu</th>
-                        <th>Anomali</th>
-                        <th>Status</th>
-                        <th class="text-center">Aksi</th>
-                    </x-slot:head>
+                @php
+                    $baris = $pengajuan->getCollection()->map(function ($item) {
+                        $anomali = $item->hasil_analisis?->anomali ?? [];
+                        $teratas = $anomali[0] ?? null;
 
-                    @foreach ($pengajuan as $index => $item)
-                        @php
-                            $hasil = $item->hasil_analisis;
-                            $teratas = $hasil?->anomali[0] ?? null;
-                            $varianKeparahan = match ($teratas?->keparahan) {
+                        return [
+                            'item' => $item,
+                            'teratas' => $teratas,
+                            'lainnya' => max(0, count($anomali) - 1),
+                            'label' => $teratas
+                                ? config('verifikasi.taksonomi_anomali.'.$teratas->kode.'.label', $teratas->kode)
+                                : null,
+                            'varian' => match ($teratas?->keparahan) {
                                 'fatal' => 'danger',
                                 'tinggi' => 'warning',
                                 'sedang' => 'info',
                                 'rendah' => 'neutral',
                                 'info' => 'neutral',
                                 default => 'success',
-                            };
-                        @endphp
+                            },
+                        ];
+                    });
+                @endphp
 
+                <x-ui.table class="mt-4 hidden md:block">
+                    <x-slot:head>
+                        <th>No. Pengajuan &amp; Waktu</th>
+                        <th>NIK</th>
+                        <th>Nama</th>
+                        <th>Anomali</th>
+                        <th>Status</th>
+                        <th class="text-center">Aksi</th>
+                    </x-slot:head>
+
+                    @foreach ($baris as $data)
+                        @php($item = $data['item'])
                         <tr>
-                            <td class="text-xs text-faint">{{ $pengajuan->firstItem() + $index }}.</td>
-                            <td class="whitespace-nowrap font-mono text-xs font-semibold text-ink">
-                                {{ $item->no_pengajuan ?? '-' }}
+                            <td class="whitespace-nowrap">
+                                <span class="block font-mono text-xs font-semibold text-ink">
+                                    {{ $item->no_pengajuan ?? '-' }}
+                                </span>
+                                <span class="text-xs text-faint">
+                                    {{ $item->tanggal_pengajuan?->format('d/m/Y H:i') ?? '-' }}
+                                </span>
                             </td>
                             <td class="whitespace-nowrap font-mono text-xs text-ink-soft">
                                 {{ \App\Support\MaskerNik::masker($item->nik_almarhum) ?? '-' }}
                             </td>
                             <td class="font-semibold text-ink">{{ $item->nama_almarhum }}</td>
-                            <td class="whitespace-nowrap">
-                                @if ($item->tanggal_pengajuan)
-                                    <span class="block text-xs font-semibold text-ink">
-                                        {{ $item->tanggal_pengajuan->format('d/m/Y') }}
-                                    </span>
-                                    <span class="text-xs text-faint">{{ $item->tanggal_pengajuan->format('H:i') }}</span>
-                                @else
-                                    <span class="text-xs text-faint">-</span>
-                                @endif
-                            </td>
                             <td>
-                                @if ($teratas)
-                                    <x-ui.badge :variant="$varianKeparahan">{{ ucfirst($teratas->keparahan) }}</x-ui.badge>
-                                    <span class="mt-1 block text-xs text-muted">{{ $teratas->kode }}</span>
+                                @if ($data['teratas'])
+                                    <x-ui.badge :variant="$data['varian']">{{ ucfirst($data['teratas']->keparahan) }}</x-ui.badge>
+                                    <span class="mt-1 block text-xs text-muted">{{ $data['label'] }}</span>
+                                    @if ($data['lainnya'] > 0)
+                                        <span class="mt-1 block text-xs font-semibold text-ink-soft">
+                                            +{{ $data['lainnya'] }} lainnya
+                                        </span>
+                                    @endif
                                 @else
                                     <x-ui.badge variant="success">Bersih</x-ui.badge>
                                 @endif
@@ -109,6 +118,46 @@
                         </tr>
                     @endforeach
                 </x-ui.table>
+
+                <div class="mt-4 space-y-3 md:hidden">
+                    @foreach ($baris as $data)
+                        @php($item = $data['item'])
+                        <x-ui.card padding="p-4">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <span class="font-mono text-xs font-semibold text-ink">
+                                    {{ $item->no_pengajuan ?? '-' }}
+                                </span>
+                                @include('komponen.badge_status', ['status' => $item->status_pengajuan])
+                            </div>
+
+                            <p class="mt-2 font-semibold text-ink">{{ $item->nama_almarhum }}</p>
+                            <p class="mt-1 font-mono text-xs text-ink-soft">
+                                {{ \App\Support\MaskerNik::masker($item->nik_almarhum) ?? '-' }}
+                            </p>
+                            <p class="mt-1 text-xs text-muted">
+                                Waktu: {{ $item->tanggal_pengajuan?->format('d/m/Y H:i') ?? '-' }}
+                            </p>
+
+                            <div class="mt-2">
+                                @if ($data['teratas'])
+                                    <x-ui.badge :variant="$data['varian']">{{ ucfirst($data['teratas']->keparahan) }}</x-ui.badge>
+                                    <span class="text-xs text-muted">{{ $data['label'] }}</span>
+                                    @if ($data['lainnya'] > 0)
+                                        <span class="block text-xs font-semibold text-ink-soft">
+                                            +{{ $data['lainnya'] }} lainnya
+                                        </span>
+                                    @endif
+                                @else
+                                    <x-ui.badge variant="success">Bersih</x-ui.badge>
+                                @endif
+                            </div>
+
+                            <div class="mt-3">
+                                <x-ui.button :href="route('verifikasi.show', $item)" size="sm">LIHAT</x-ui.button>
+                            </div>
+                        </x-ui.card>
+                    @endforeach
+                </div>
 
                 <div class="mt-4">{{ $pengajuan->links() }}</div>
             @endif

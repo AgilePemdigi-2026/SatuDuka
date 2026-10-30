@@ -181,58 +181,72 @@ return [
 
     'taksonomi_anomali' => [
         'PENGAJUAN_GANDA' => [
+            'label' => 'Pengajuan ganda',
             'keparahan' => 'fatal',
             'rekomendasi' => 'Tolak anomali fatal atau minta verifikasi manual.',
         ],
         'SIAK_SUDAH_MENINGGAL' => [
+            'label' => 'Tercatat meninggal di SIAK',
             'keparahan' => 'fatal',
             'rekomendasi' => 'Rekonsiliasi data kependudukan; kemungkinan kematian sudah tercatat sebelumnya.',
         ],
         'KASUS_KHUSUS' => [
+            'label' => 'Kasus khusus',
             'keparahan' => 'tinggi',
             'rekomendasi' => 'Jalur manual; pastikan Surat Keterangan Kepolisian tersedia.',
         ],
         'NIK_TIDAK_VALID' => [
+            'label' => 'NIK tidak valid',
             'keparahan' => 'tinggi',
             'rekomendasi' => 'Minta perbaikan berkas dan NIK almarhum.',
         ],
         'NIK_TIDAK_DITEMUKAN' => [
+            'label' => 'NIK tidak ditemukan',
             'keparahan' => 'tinggi',
             'rekomendasi' => 'Minta perbaikan berkas atau rekonsiliasi data kependudukan.',
         ],
         'JENIS_KELAMIN_TIDAK_COCOK' => [
+            'label' => 'Jenis kelamin tidak cocok',
             'keparahan' => 'tinggi',
             'rekomendasi' => 'Rekonsiliasi jenis kelamin dengan data SIAK dan dokumen.',
         ],
         'TANGGAL_TIDAK_KONSISTEN' => [
+            'label' => 'Tanggal tidak konsisten',
             'keparahan' => 'tinggi',
             'rekomendasi' => 'Minta klarifikasi tanggal lahir, tanggal kematian, atau tanggal pengajuan.',
         ],
         'NAMA_TIDAK_COCOK' => [
+            'label' => 'Nama tidak cocok',
             'keparahan' => 'tinggi',
             'rekomendasi' => 'Minta perbaikan nama almarhum.',
         ],
         'TERLAMBAT_TANPA_SPTJM' => [
+            'label' => 'Terlambat tanpa SPTJM',
             'keparahan' => 'sedang',
             'rekomendasi' => 'Minta unggah SPTJM Kebenaran Data Kematian.',
         ],
         'BERKAS_TIDAK_LENGKAP' => [
+            'label' => 'Berkas tidak lengkap',
             'keparahan' => 'sedang',
             'rekomendasi' => 'Minta berkas wajib yang masih kurang.',
         ],
         'DOKUMEN_TIDAK_TERBACA' => [
+            'label' => 'Dokumen tidak terbaca',
             'keparahan' => 'sedang',
             'rekomendasi' => 'Verifikator membaca dokumen secara manual.',
         ],
         'NAMA_BEDA_TIPIS' => [
+            'label' => 'Nama beda tipis',
             'keparahan' => 'rendah',
             'rekomendasi' => 'Verifikator mengoreksi nama bila perlu.',
         ],
         'ALAMAT_DI_LUAR_WILAYAH' => [
+            'label' => 'Alamat di luar wilayah',
             'keparahan' => 'info',
             'rekomendasi' => 'Hanya catatan; lanjutkan verifikasi.',
         ],
         'LAYANAN_TIDAK_TERSEDIA' => [
+            'label' => 'Layanan tidak tersedia',
             'keparahan' => 'info',
             'rekomendasi' => 'Lanjut manual dan catat pada log audit.',
         ],

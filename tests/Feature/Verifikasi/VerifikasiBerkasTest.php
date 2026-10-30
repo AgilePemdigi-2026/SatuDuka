@@ -656,7 +656,8 @@ it('menampilkan panel pemeriksaan aturan dan rekomendasi mesin', function () {
         ->assertOk()
         ->assertSee('Pemeriksaan Aturan')
         ->assertSee('Rekomendasi Utama Mesin')
-        ->assertSee('BERKAS_TIDAK_LENGKAP')
+        ->assertSee('Berkas tidak lengkap')
+        ->assertDontSee('BERKAS_TIDAK_LENGKAP')
         ->assertSee('Minta Perbaikan Berkas');
 
     expect($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI);
@@ -746,6 +747,39 @@ it('mengurutkan antrean berdasarkan keparahan anomali tertinggi lalu tanggal', f
     $items = $respons->viewData('pengajuan')->items();
 
     expect($items[0]->id_laporan)->toBe($ganda->id_laporan);
+});
+
+it('menampilkan label anomali Indonesia dan penanda anomali lain pada antrean', function () {
+    Storage::fake('local');
+
+    [$pemohon, $verifikator] = buatAkunDemo();
+
+    buatLaporanAntreanVerifikasi($pemohon, [
+        'nik_almarhum' => '9999010101010001',
+        'nama_almarhum' => 'Nama Uji Anomali',
+        'no_pengajuan' => 'SD-20261028-0099',
+    ]);
+
+    $this->actingAs($verifikator)
+        ->get(route('verifikasi.index'))
+        ->assertOk()
+        ->assertSee('NIK tidak valid')
+        ->assertDontSee('NIK_TIDAK_VALID')
+        ->assertSee('lainnya')
+        ->assertSee('md:hidden')
+        ->assertSee('hidden md:block');
+});
+
+it('memiliki label Indonesia untuk setiap kode taksonomi anomali', function () {
+    $taksonomi = config('verifikasi.taksonomi_anomali');
+
+    expect($taksonomi)->not->toBeEmpty();
+
+    foreach ($taksonomi as $kode => $entri) {
+        expect($entri['label'] ?? null)
+            ->toBeString("Kode {$kode} belum memiliki label.")
+            ->not->toBe('');
+    }
 });
 
 it('menampilkan banner manual saat AI tidak tersedia dan tetap bisa memutuskan', function () {

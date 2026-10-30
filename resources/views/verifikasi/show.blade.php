@@ -188,14 +188,19 @@
                                 'rendah' => 'neutral',
                                 default => 'neutral',
                             };
+                            $labelAnomali = config(
+                                'verifikasi.taksonomi_anomali.'.$anomali->kode.'.label',
+                                $anomali->kode
+                            );
                         @endphp
 
                         <li class="rounded-xl border border-line bg-surface p-4">
                             <div class="flex flex-wrap items-center justify-between gap-2">
                                 <div class="flex items-center gap-2">
                                     <x-ui.badge :variant="$varianKeparahan">{{ ucfirst($anomali->keparahan) }}</x-ui.badge>
-                                    <span class="font-mono text-xs font-semibold text-ink-soft">{{ $anomali->kode }}</span>
+                                    <span class="text-xs font-semibold text-ink-soft">{{ $labelAnomali }}</span>
                                 </div>
+                            </div>
                             </div>
                             <p class="mt-2 text-sm font-semibold text-ink">{{ $anomali->pesan }}</p>
                             <p class="mt-1 text-xs text-muted">Rekomendasi: {{ $anomali->rekomendasi }}</p>
