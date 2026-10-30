@@ -12,7 +12,7 @@
         @csrf
 
         <x-ui.input id="nik" name="nik" label="Nomor Induk Kependudukan (NIK)" type="text" inputmode="numeric"
-            maxlength="16" :value="old('nik')" placeholder="Masukkan NIK" required autofocus />
+            maxlength="16" :value="old('nik')" placeholder="Masukkan NIK" autocomplete="username" required autofocus />
 
         <x-ui.input id="email" name="email" label="Alamat Surel" type="email" :value="old('email')"
             placeholder="nama@contoh.id" required />
@@ -30,17 +30,4 @@
         Sudah punya akun?
         <a href="{{ route('masuk') }}" class="font-semibold text-brand hover:text-brand-hover">Masuk di sini</a>
     </p>
-
-    @once
-        <script>
-            document.querySelectorAll('[data-tampilkan-sandi]').forEach((tombol) => {
-                tombol.addEventListener('click', () => {
-                    const kolom = document.getElementById(tombol.dataset.tampilkanSandi);
-                    if (kolom) {
-                        kolom.type = kolom.type === 'password' ? 'text' : 'password';
-                    }
-                });
-            });
-        </script>
-    @endonce
 @endsection

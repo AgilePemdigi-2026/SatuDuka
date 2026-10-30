@@ -39,6 +39,16 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Jangan simpan kata sandi ke old input saat validasi gagal. Nama field
+        // aplikasi berbeda dari bawaan Laravel, jadi keempatnya didaftarkan
+        // tanpa menghapus daftar bawaan (current_password, password, dsb.).
+        $exceptions->dontFlash([
+            'kata_sandi',
+            'kata_sandi_lama',
+            'kata_sandi_baru',
+            'konfirmasi_kata_sandi',
+        ]);
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

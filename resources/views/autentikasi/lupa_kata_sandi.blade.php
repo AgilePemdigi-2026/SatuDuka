@@ -14,7 +14,7 @@
         @csrf
 
         <x-ui.input id="identitas" name="identitas" label="NIK/NIP" type="text" inputmode="numeric"
-            :value="old('identitas')" placeholder="Masukkan NIK atau NIP" required autofocus />
+            maxlength="18" :value="old('identitas')" placeholder="Masukkan NIK atau NIP" required autofocus />
 
         <x-ui.button type="submit" class="w-full">Kirim</x-ui.button>
     </form>

@@ -5,7 +5,6 @@
     'value' => null,
     'hint' => null,
     'required' => false,
-    'repopulate' => true,
 ])
 
 @php
@@ -19,7 +18,7 @@
         'name' => $name,
         'type' => 'password',
         'placeholder' => $placeholder,
-        'value' => $repopulate ? old($name, $value) : $value,
+        'value' => $value,
         'class' => $kelas,
         'aria-invalid' => $punyaError ? 'true' : 'false',
     ];
@@ -41,11 +40,12 @@
 <div class="group relative">
     <input {{ $attributes->merge($atribut) }} />
 
-    <button type="button" data-tampilkan-sandi="{{ $id }}"
-        class="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-muted transition hover:text-ink-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
-        aria-label="Tampilkan kata sandi">
-        <x-icon.eye class="h-5 w-5 group-has-[input[type=text]]:hidden" />
-        <x-icon.eye-slash class="hidden h-5 w-5 group-has-[input[type=text]]:block" />
+    <button type="button" data-tampilkan-sandi="{{ $id }}" aria-pressed="false"
+        aria-label="Tampilkan kata sandi"
+        class="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-muted transition hover:text-ink-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30">
+        {{-- Kata sandi tersembunyi: ikon mata dicoret. Terlihat: ikon mata. --}}
+        <x-icon.eye-slash class="h-5 w-5 group-has-[input[type=text]]:hidden" />
+        <x-icon.eye class="hidden h-5 w-5 group-has-[input[type=text]]:block" />
     </button>
 </div>
 

@@ -28,17 +28,4 @@
 
         <x-ui.button type="submit" class="w-full">Simpan</x-ui.button>
     </form>
-
-    @once
-        <script>
-            document.querySelectorAll('[data-tampilkan-sandi]').forEach((tombol) => {
-                tombol.addEventListener('click', () => {
-                    const kolom = document.getElementById(tombol.dataset.tampilkanSandi);
-                    if (kolom) {
-                        kolom.type = kolom.type === 'password' ? 'text' : 'password';
-                    }
-                });
-            });
-        </script>
-    @endonce
 @endsection

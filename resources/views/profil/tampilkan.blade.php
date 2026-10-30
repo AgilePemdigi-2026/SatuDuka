@@ -127,31 +127,17 @@
 
                 <div class="grid gap-4 lg:grid-cols-3">
                     <x-ui.password name="kata_sandi_lama" label="Kata Sandi Lama" autocomplete="current-password"
-                        required :repopulate="false" />
+                        required />
 
                     <x-ui.password name="kata_sandi_baru" label="Kata Sandi Baru"
-                        hint="Minimal 8 karakter, mengandung huruf dan angka." autocomplete="new-password" required
-                        :repopulate="false" />
+                        hint="Minimal 8 karakter, mengandung huruf dan angka." autocomplete="new-password" required />
 
                     <x-ui.password name="konfirmasi_kata_sandi" label="Konfirmasi Kata Sandi"
-                        autocomplete="new-password" required :repopulate="false" />
+                        autocomplete="new-password" required />
                 </div>
 
                 <x-ui.button type="submit">Simpan Perubahan</x-ui.button>
             </form>
         </x-ui.card>
     </div>
-
-    @once
-        <script>
-            document.querySelectorAll('[data-tampilkan-sandi]').forEach((tombol) => {
-                tombol.addEventListener('click', () => {
-                    const kolom = document.getElementById(tombol.dataset.tampilkanSandi);
-                    if (kolom) {
-                        kolom.type = kolom.type === 'password' ? 'text' : 'password';
-                    }
-                });
-            });
-        </script>
-    @endonce
 @endsection
