@@ -161,6 +161,85 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Taksonomi Anomali Mesin Rekonsiliasi
+    |--------------------------------------------------------------------------
+    |
+    | Keparahan dan rekomendasi mengikuti docs/ATURAN_VERIFIKASI.md bagian 6.
+    | Mesin hanya mendeteksi dan merekomendasikan; tidak menolak otomatis.
+    |
+    */
+
+    'urutan_keparahan' => [
+        'fatal',
+        'tinggi',
+        'sedang',
+        'rendah',
+        'info',
+    ],
+
+    'rekomendasi_utama_bersih' => 'Siap disetujui',
+
+    'taksonomi_anomali' => [
+        'PENGAJUAN_GANDA' => [
+            'keparahan' => 'fatal',
+            'rekomendasi' => 'Tolak anomali fatal atau minta verifikasi manual.',
+        ],
+        'SIAK_SUDAH_MENINGGAL' => [
+            'keparahan' => 'fatal',
+            'rekomendasi' => 'Rekonsiliasi data kependudukan; kemungkinan kematian sudah tercatat sebelumnya.',
+        ],
+        'KASUS_KHUSUS' => [
+            'keparahan' => 'tinggi',
+            'rekomendasi' => 'Jalur manual; pastikan Surat Keterangan Kepolisian tersedia.',
+        ],
+        'NIK_TIDAK_VALID' => [
+            'keparahan' => 'tinggi',
+            'rekomendasi' => 'Minta perbaikan berkas dan NIK almarhum.',
+        ],
+        'NIK_TIDAK_DITEMUKAN' => [
+            'keparahan' => 'tinggi',
+            'rekomendasi' => 'Minta perbaikan berkas atau rekonsiliasi data kependudukan.',
+        ],
+        'JENIS_KELAMIN_TIDAK_COCOK' => [
+            'keparahan' => 'tinggi',
+            'rekomendasi' => 'Rekonsiliasi jenis kelamin dengan data SIAK dan dokumen.',
+        ],
+        'TANGGAL_TIDAK_KONSISTEN' => [
+            'keparahan' => 'tinggi',
+            'rekomendasi' => 'Minta klarifikasi tanggal lahir, tanggal kematian, atau tanggal pengajuan.',
+        ],
+        'NAMA_TIDAK_COCOK' => [
+            'keparahan' => 'tinggi',
+            'rekomendasi' => 'Minta perbaikan nama almarhum.',
+        ],
+        'TERLAMBAT_TANPA_SPTJM' => [
+            'keparahan' => 'sedang',
+            'rekomendasi' => 'Minta unggah SPTJM Kebenaran Data Kematian.',
+        ],
+        'BERKAS_TIDAK_LENGKAP' => [
+            'keparahan' => 'sedang',
+            'rekomendasi' => 'Minta berkas wajib yang masih kurang.',
+        ],
+        'DOKUMEN_TIDAK_TERBACA' => [
+            'keparahan' => 'sedang',
+            'rekomendasi' => 'Verifikator membaca dokumen secara manual.',
+        ],
+        'NAMA_BEDA_TIPIS' => [
+            'keparahan' => 'rendah',
+            'rekomendasi' => 'Verifikator mengoreksi nama bila perlu.',
+        ],
+        'ALAMAT_DI_LUAR_WILAYAH' => [
+            'keparahan' => 'info',
+            'rekomendasi' => 'Hanya catatan; lanjutkan verifikasi.',
+        ],
+        'LAYANAN_TIDAK_TERSEDIA' => [
+            'keparahan' => 'info',
+            'rekomendasi' => 'Lanjut manual dan catat pada log audit.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Jenis Kasus
     |--------------------------------------------------------------------------
     */
