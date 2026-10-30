@@ -54,7 +54,8 @@ it('mengarahkan verifikator ke dashboard verifikator saat masuk dengan nip', fun
     $this->assertAuthenticatedAs($verifikator);
 
     $this->get(route('dashboard'))
-        ->assertRedirect(route('verifikasi.index'));
+        ->assertOk()
+        ->assertSee('Dashboard Verifikator');
 });
 
 // Skenario: Berhasil masuk dengan kredensial Pejabat yang valid (NIP 18 digit).
@@ -247,7 +248,8 @@ it('mengalihkan akun verifikator yang masih aktif dari halaman masuk', function 
         );
 
     $this->get(route('dashboard'))
-        ->assertRedirect(route('verifikasi.index'));
+        ->assertOk()
+        ->assertSee('Dashboard Verifikator');
 });
 
 it('memberi tahu akun pejabat yang masih aktif saat membuka halaman registrasi', function () {

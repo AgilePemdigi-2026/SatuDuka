@@ -8,7 +8,8 @@ use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\RegistrasiController;
 use App\Http\Controllers\StatusPengajuanController;
 use App\Http\Controllers\VerifikasiBerkasController;
-use App\Http\Controllers\VerifikasiController;
+use App\Models\BerkasPendukung;
+use App\Models\LaporanKematian;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -96,19 +97,16 @@ Route::middleware(['auth', 'peran:pemohon'])->group(function () {
     Route::get('/pengajuan/{laporan}/dokumen', [StatusPengajuanController::class, 'unduh'])->name('pengajuan.unduh');
 });
 
-// Verifikasi berkas versi baca saja untuk Verifikator.
+// Pengalihan rute verifikasi lama ke alur verifikasi-berkas.
 Route::middleware(['auth', 'peran:verifikator'])->group(function () {
-    Route::get('/verifikasi', [VerifikasiController::class, 'daftar'])->name('verifikasi.daftar');
-    Route::get('/verifikasi/{laporan}/berkas/{berkas}', [VerifikasiController::class, 'pratinjauBerkas'])
-        ->name('verifikasi.berkas');
-    Route::post('/verifikasi/{laporan}/analisis-ai', [VerifikasiController::class, 'analisis'])
-        ->name('verifikasi.analisis_ai');
-    Route::post('/verifikasi/{laporan}/ringkasan-ai', [VerifikasiController::class, 'ringkasanAi'])
-        ->name('verifikasi.ringkasan_ai');
-    Route::get('/verifikasi/{laporan}', [VerifikasiController::class, 'detail'])->name('verifikasi.detail');
+    Route::get('/verifikasi', fn () => redirect()->route('verifikasi.index'));
+    Route::get('/verifikasi/{laporan}/berkas/{berkas}', fn (LaporanKematian $laporan, BerkasPendukung $berkas) => redirect()->route('verifikasi.pratinjau', [$laporan, $berkas]));
+    Route::post('/verifikasi/{laporan}/analisis-ai', fn (LaporanKematian $laporan) => redirect()->route('verifikasi.show', $laporan));
+    Route::post('/verifikasi/{laporan}/ringkasan-ai', fn (LaporanKematian $laporan) => redirect()->route('verifikasi.show', $laporan));
+    Route::get('/verifikasi/{laporan}', fn (LaporanKematian $laporan) => redirect()->route('verifikasi.show', $laporan));
 });
 
-// Fitur verifikasi berkas dengan persetujuan, revisi, dan anomali (branch verifikasi-berkas-pengajuan).
+// Alur utama verifikasi berkas: persetujuan, perbaikan, revisi, dan anomali.
 Route::middleware(['auth', 'peran:verifikator'])
     ->prefix('verifikasi-berkas')
     ->name('verifikasi.')
@@ -117,9 +115,13 @@ Route::middleware(['auth', 'peran:verifikator'])
         Route::get('/{laporan}', [VerifikasiBerkasController::class, 'show'])->name('show');
         Route::get('/{laporan}/berkas/{berkas}', [VerifikasiBerkasController::class, 'pratinjau'])->name('pratinjau');
         Route::get('/{laporan}/berkas/{berkas}/unduh', [VerifikasiBerkasController::class, 'unduh'])->name('unduh');
+        Route::post('/{laporan}/analisis-ai', [VerifikasiBerkasController::class, 'analisis'])->name('analisis_ai');
+        Route::post('/{laporan}/ringkasan-ai', [VerifikasiBerkasController::class, 'ringkasanAi'])->name('ringkasan_ai');
         Route::post('/{laporan}/setujui', [VerifikasiBerkasController::class, 'setujui'])->name('setujui');
+        Route::post('/{laporan}/perbaikan', [VerifikasiBerkasController::class, 'mintaPerbaikan'])->name('perbaikan');
         Route::post('/{laporan}/revisi', [VerifikasiBerkasController::class, 'mintaRevisi'])->name('revisi');
         Route::post('/{laporan}/anomali', [VerifikasiBerkasController::class, 'tandaiAnomali'])->name('anomali');
+        Route::post('/{laporan}/tolak-fatal', [VerifikasiBerkasController::class, 'tolakFatal'])->name('tolak_fatal');
     });
 
 Route::redirect('/pengajuan-laporan', '/laporan/baru');

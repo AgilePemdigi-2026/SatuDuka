@@ -1,23 +1,23 @@
 @extends('tata_letak.utama')
 
-@section('judul', 'Dashboard Verifikator')
+@section('judul', 'Verifikasi Berkas')
 
 @section('navigasi')
-    <a href="{{ route('verifikasi.daftar') }}" class="hidden text-sm font-semibold text-ink-soft hover:text-brand sm:inline">
-        Verifikasi Baca Saja
-    </a>
     @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
 @endsection
 
 @section('konten')
-    <x-ui.page-header title="Dashboard Verifikator"
-        subtitle="Ringkasan seluruh proses verifikasi dan rekonsiliasi berkas pengajuan." />
+    <x-ui.page-header title="Antrean Verifikasi Berkas"
+        subtitle="Urutan mengikuti keparahan anomali tertinggi dari mesin, lalu tanggal pengajuan.">
+        <x-slot:aksi>
+            <x-ui.button :href="route('dashboard')" variant="secondary">Dashboard</x-ui.button>
+        </x-slot:aksi>
+    </x-ui.page-header>
 
-    <section class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <x-ui.stat label="Total Antrean" :value="$pengajuan->total()" variant="warning" />
-        <x-ui.stat label="Menunggu Verifikasi" :value="$pengajuan->total()" variant="info" />
-        <x-ui.stat label="Hasil Pencarian" :value="$pengajuan->count()" variant="neutral" />
-        <x-ui.stat label="Halaman" :value="$pengajuan->currentPage()" variant="success" />
+    <section class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <x-ui.stat label="Menunggu Verifikasi" :value="$statistik['menunggu']" variant="warning" />
+        <x-ui.stat label="Dalam Rekonsiliasi" :value="$statistik['rekonsiliasi']" variant="purple" />
+        <x-ui.stat label="Selesai" :value="$statistik['selesai']" variant="success" />
     </section>
 
     <section class="mt-8">
@@ -54,11 +54,25 @@
                         <th>NIK</th>
                         <th>Nama</th>
                         <th>Waktu</th>
+                        <th>Anomali</th>
                         <th>Status</th>
                         <th class="text-center">Aksi</th>
                     </x-slot:head>
 
                     @foreach ($pengajuan as $index => $item)
+                        @php
+                            $hasil = $item->hasil_analisis;
+                            $teratas = $hasil?->anomali[0] ?? null;
+                            $varianKeparahan = match ($teratas?->keparahan) {
+                                'fatal' => 'danger',
+                                'tinggi' => 'warning',
+                                'sedang' => 'info',
+                                'rendah' => 'neutral',
+                                'info' => 'neutral',
+                                default => 'success',
+                            };
+                        @endphp
+
                         <tr>
                             <td class="text-xs text-faint">{{ $pengajuan->firstItem() + $index }}.</td>
                             <td class="whitespace-nowrap font-mono text-xs font-semibold text-ink">
@@ -76,6 +90,14 @@
                                     <span class="text-xs text-faint">{{ $item->tanggal_pengajuan->format('H:i') }}</span>
                                 @else
                                     <span class="text-xs text-faint">-</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if ($teratas)
+                                    <x-ui.badge :variant="$varianKeparahan">{{ ucfirst($teratas->keparahan) }}</x-ui.badge>
+                                    <span class="mt-1 block text-xs text-muted">{{ $teratas->kode }}</span>
+                                @else
+                                    <x-ui.badge variant="success">Bersih</x-ui.badge>
                                 @endif
                             </td>
                             <td>

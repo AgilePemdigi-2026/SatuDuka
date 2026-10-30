@@ -66,12 +66,12 @@ class MesinRekonsiliasi
         $this->pencariSiak = $pencariSiak;
     }
 
-    public function analisis(LaporanKematian $laporan): HasilAnalisis
+    public function analisis(LaporanKematian $laporan, bool $catatAudit = true): HasilAnalisis
     {
         $anomali = $this->dariAturanBerkas($laporan);
         $layananTidakTersedia = false;
 
-        [$siak, $siakGagal] = $this->ambilSiak($laporan);
+        [$siak, $siakGagal] = $this->ambilSiak($laporan, $catatAudit);
 
         if ($siakGagal) {
             $layananTidakTersedia = true;
@@ -84,7 +84,7 @@ class MesinRekonsiliasi
         $anomali = array_merge($anomali, $this->dariValidasiNik($laporan, $siak));
         $anomali = array_merge($anomali, $this->dariDataSiak($laporan, $siak, $siakGagal));
 
-        [$anomaliAi, $aiGagal] = $this->dariAnalisisAi($laporan);
+        [$anomaliAi, $aiGagal] = $this->dariAnalisisAi($laporan, $catatAudit);
 
         if ($aiGagal) {
             $layananTidakTersedia = true;
@@ -102,6 +102,20 @@ class MesinRekonsiliasi
             rekomendasiUtama: $utama,
             layananTidakTersedia: $layananTidakTersedia,
         );
+    }
+
+    /**
+     * Kunci tindakan yang disarankan berdasarkan anomali berkeparahan tertinggi.
+     */
+    public function tindakanDisarankan(HasilAnalisis $hasil): string
+    {
+        if ($hasil->anomali === []) {
+            return (string) config('verifikasi.tindakan_bersih', 'setujui');
+        }
+
+        $peta = (array) config('verifikasi.tindakan_anomali', []);
+
+        return (string) ($peta[$hasil->anomali[0]->kode] ?? 'minta_perbaikan');
     }
 
     /**
@@ -137,7 +151,7 @@ class MesinRekonsiliasi
     /**
      * @return array{0: array<string, string>|null, 1: bool}
      */
-    private function ambilSiak(LaporanKematian $laporan): array
+    private function ambilSiak(LaporanKematian $laporan, bool $catatAudit = true): array
     {
         $nik = trim((string) $laporan->nik_almarhum);
 
@@ -150,7 +164,9 @@ class MesinRekonsiliasi
                 ? ($this->pencariSiak)($nik)
                 : DataSIAK::cariNik($nik);
         } catch (\Throwable $kesalahan) {
-            $this->catatLayananGagal(LogAudit::LAYANAN_SIAK, $laporan, $kesalahan->getMessage());
+            if ($catatAudit) {
+                $this->catatLayananGagal(LogAudit::LAYANAN_SIAK, $laporan, $kesalahan->getMessage());
+            }
 
             return [null, true];
         }
@@ -265,7 +281,7 @@ class MesinRekonsiliasi
      *
      * @return array{0: list<AnomaliVerifikasi>, 1: bool}
      */
-    private function dariAnalisisAi(LaporanKematian $laporan): array
+    private function dariAnalisisAi(LaporanKematian $laporan, bool $catatAudit = true): array
     {
         try {
             $catatan = AnalisisAi::query()
@@ -273,7 +289,9 @@ class MesinRekonsiliasi
                 ->orderBy('id_analisis')
                 ->get();
         } catch (\Throwable $kesalahan) {
-            $this->catatLayananGagal(LogAudit::LAYANAN_AI, $laporan, $kesalahan->getMessage());
+            if ($catatAudit) {
+                $this->catatLayananGagal(LogAudit::LAYANAN_AI, $laporan, $kesalahan->getMessage());
+            }
 
             return [[
                 $this->buatAnomali(
@@ -358,11 +376,13 @@ class MesinRekonsiliasi
                 'Analisis AI tidak tersedia; verifikasi dilanjutkan secara manual.',
             );
 
-            $this->catatLayananGagal(
-                LogAudit::LAYANAN_AI,
-                $laporan,
-                'Analisis AI sebelumnya gagal atau tidak tersedia.',
-            );
+            if ($catatAudit) {
+                $this->catatLayananGagal(
+                    LogAudit::LAYANAN_AI,
+                    $laporan,
+                    'Analisis AI sebelumnya gagal atau tidak tersedia.',
+                );
+            }
         }
 
         return [$anomali, $layananGagal];

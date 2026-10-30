@@ -34,13 +34,6 @@
 
         <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
             <div class="space-y-6">
-                @if ($laporan->catatan_revisi && $laporan->bolehDiubah())
-                    <x-ui.alert variant="warning">
-                        <p class="font-semibold">Catatan Revisi</p>
-                        <p class="mt-1 font-normal">{{ $laporan->catatan_revisi }}</p>
-                    </x-ui.alert>
-                @endif
-
                 @if ($laporan->dokumenResmi?->alasan_pengembalian)
                     <x-ui.alert variant="warning">
                         <p class="font-semibold">Alasan Pengembalian Dokumen</p>
@@ -53,6 +46,13 @@
                 </x-ui.card>
 
                 <x-ui.card title="Lini Masa Pengajuan">
+                    @if (filled($laporan->catatan_revisi) && $laporan->bolehDiubah())
+                        <x-ui.alert variant="warning" class="mb-4">
+                            <p class="font-semibold">Catatan Revisi dari Verifikator</p>
+                            <p class="mt-1 font-normal">{{ $laporan->catatan_revisi }}</p>
+                        </x-ui.alert>
+                    @endif
+
                     <x-ui.stepper :steps="$liniMasa" />
                 </x-ui.card>
             </div>

@@ -40,6 +40,11 @@ class LaporanKematian extends Model
 
     public const STATUS_MENUNGGU_PERBAIKAN = 'Pending - Menunggu Perbaikan Berkas Pelapor';
 
+    /**
+     * Status penolakan permanen untuk anomali data fatal (ATURAN_VERIFIKASI bagian 7).
+     */
+    public const STATUS_DITOLAK_ANOMALI_FATAL = 'Ditolak - Anomali Data Fatal';
+
     /* Jenis kasus kematian. */
     public const JENIS_KASUS_NORMAL = 'Normal';
 
@@ -72,6 +77,7 @@ class LaporanKematian extends Model
         self::STATUS_DIKEMBALIKAN,
         self::STATUS_DALAM_REKONSILIASI,
         self::STATUS_MENUNGGU_PERBAIKAN,
+        self::STATUS_DITOLAK_ANOMALI_FATAL,
     ];
 
     /**

@@ -240,6 +240,35 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Pemetaan Anomali ke Saran Tindakan Verifikator
+    |--------------------------------------------------------------------------
+    |
+    | Mesin hanya menyarankan. Verifikator tetap memutuskan dan wajib mengisi
+    | alasan_override bila memilih tindakan berbeda dari saran tertinggi.
+    |
+    */
+
+    'tindakan_anomali' => [
+        'PENGAJUAN_GANDA' => 'tolak_fatal',
+        'SIAK_SUDAH_MENINGGAL' => 'tandai_anomali',
+        'KASUS_KHUSUS' => 'tandai_anomali',
+        'NIK_TIDAK_VALID' => 'minta_perbaikan',
+        'NIK_TIDAK_DITEMUKAN' => 'minta_perbaikan',
+        'JENIS_KELAMIN_TIDAK_COCOK' => 'tandai_anomali',
+        'TANGGAL_TIDAK_KONSISTEN' => 'minta_perbaikan',
+        'NAMA_TIDAK_COCOK' => 'minta_perbaikan',
+        'TERLAMBAT_TANPA_SPTJM' => 'minta_perbaikan',
+        'BERKAS_TIDAK_LENGKAP' => 'minta_perbaikan',
+        'DOKUMEN_TIDAK_TERBACA' => 'tandai_anomali',
+        'NAMA_BEDA_TIPIS' => 'minta_perbaikan',
+        'ALAMAT_DI_LUAR_WILAYAH' => 'setujui',
+        'LAYANAN_TIDAK_TERSEDIA' => 'setujui',
+    ],
+
+    'tindakan_bersih' => 'setujui',
+
+    /*
+    |--------------------------------------------------------------------------
     | Jenis Kasus
     |--------------------------------------------------------------------------
     */
