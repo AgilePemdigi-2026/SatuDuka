@@ -368,9 +368,12 @@ class VerifikasiBerkasController extends Controller
     ): StreamedResponse {
         $path = $this->jalurBerkas($laporan, $berkas);
 
-        return Storage::disk('local')->download($path, $berkas->nama_file, [
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+        $response = Storage::disk('local')->download($path, $berkas->nama_file);
+
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('Cache-Control', 'no-store, private');
+
+        return $response;
     }
 
     /**

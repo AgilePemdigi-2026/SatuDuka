@@ -907,18 +907,10 @@ it('mengirim header keamanan pada rute unduh berkas', function () {
     $respons = $this->actingAs($verifikator)
         ->get(route('verifikasi.unduh', [$laporan, $berkas]))
         ->assertOk()
-        ->assertHeader('X-Content-Type-Options', 'nosniff');
+        ->assertHeader('X-Content-Type-Options', 'nosniff')
+        ->assertHeader('Cache-Control', 'no-store, private');
 
-    $cacheControl = $respons->headers->get('Cache-Control');
-
-    if ($cacheControl !== 'no-store, private') {
-        $this->markTestSkipped(
-            'Temuan: rute unduh mengirim Cache-Control "'.$cacheControl
-            .'", bukan "no-store, private". Perlu keputusan pemilik proyek.'
-        );
-    }
-
-    $respons->assertHeader('Cache-Control', 'no-store, private');
+    expect($respons->headers->get('Cache-Control'))->toBe('no-store, private');
 });
 
 it('mencatat audit analisis AI verifikator dengan jenis, model, dan pemicu', function () {
