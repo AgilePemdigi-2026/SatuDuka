@@ -78,6 +78,79 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Normalisasi Nama
+    |--------------------------------------------------------------------------
+    |
+    | Gelar hanya dibuang bila berdiri sendiri di awal atau akhir nama. Token
+    | pendek "r" dan "rm" baru dianggap gelar bila masih ada cukup token nama
+    | setelahnya, sehingga "R. Farhan" tetap terbaca sebagai inisial.
+    |
+    */
+
+    'nama_gelar_depan' => [
+        'dr',
+        'drg',
+        'drs',
+        'dra',
+        'ir',
+        'prof',
+        'h',
+        'hj',
+        'kh',
+        'k.h',
+    ],
+
+    'nama_gelar_belakang' => [
+        's.pd',
+        's.kom',
+        's.h',
+        's.t',
+        'm.m',
+        'm.pd',
+        'm.si',
+        'm.sc',
+        'ph.d',
+        'a.md',
+        's.sos',
+        's.ak',
+        'm.ak',
+        'm.kes',
+        's.ked',
+        's.farm',
+        'm.farm',
+        's.psi',
+        'm.psi',
+        's.ip',
+        's.ab',
+        'm.h',
+        'm.t',
+        'm.kom',
+        's.ag',
+        'm.ag',
+        's.si',
+        's.kep',
+        'ns',
+        'amd',
+        'dr',
+        'drg',
+    ],
+
+    'nama_gelar_awal_pendek' => ['r', 'rm'],
+
+    'nama_gelar_awal_pendek_min_sisa' => 2,
+
+    'nama_ejaan_lama' => [
+        'oe' => 'u',
+        'dj' => 'j',
+        'tj' => 'c',
+    ],
+
+    'nama_penalti_inisial' => 0.05,
+
+    'nama_penalti_nama_tunggal' => 0.15,
+
+    /*
+    |--------------------------------------------------------------------------
     | Data Demo dan Batas Usia
     |--------------------------------------------------------------------------
     */
