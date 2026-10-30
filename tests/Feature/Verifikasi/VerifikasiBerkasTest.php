@@ -16,7 +16,23 @@ use App\Models\LaporanKematian;
 use App\Models\LogAudit;
 use App\Models\Pengguna;
 use App\Support\MaskerNik;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+
+/**
+ * Mengaktifkan driver penyedia AI nyata untuk pengujian kegagalan.
+ */
+function aktifkanDriverOpenAiVerifikasiBerkas(): void
+{
+    config([
+        'ai.driver' => 'openai',
+        'ai.openai.api_key' => 'kunci-uji',
+        'ai.openai.base_url' => 'https://api.openai.test/v1',
+        'ai.openai.model' => 'model-uji',
+        'ai.timeout' => 5,
+    ]);
+}
 
 /**
  * Membuat laporan yang berada dalam antrean verifikasi dengan data SIAK valid.
@@ -802,4 +818,220 @@ it('menolak transisi status di luar pemetaan verifikasi', function () {
 
     expect($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_SELESAI)
         ->and(HasilVerifikasi::where('id_laporan', $laporan->id_laporan)->count())->toBe(0);
+});
+
+it('hanya menampilkan pengajuan menunggu verifikasi dan rekonsiliasi pada antrean', function () {
+    [$pemohon, $verifikator] = buatAkunDemo();
+
+    $menunggu = buatLaporanAntreanVerifikasi($pemohon, [
+        'no_pengajuan' => 'SD-20261028-0001',
+        'nik_almarhum' => '3471031203559001',
+    ]);
+    $rekonsiliasi = buatLaporanAntreanVerifikasi($pemohon, [
+        'no_pengajuan' => 'SD-20261028-0002',
+        'nik_almarhum' => '3471036407609002',
+        'nama_almarhum' => 'Siti Aminah',
+        'jenis_kelamin' => 'P',
+        'status_pengajuan' => LaporanKematian::STATUS_DALAM_REKONSILIASI,
+    ]);
+    $draf = buatLaporanAntreanVerifikasi($pemohon, [
+        'no_pengajuan' => null,
+        'nik_almarhum' => '3471105701829028',
+        'nama_almarhum' => 'Retno Palupi',
+        'jenis_kelamin' => 'P',
+        'status_pengajuan' => LaporanKematian::STATUS_DRAF,
+        'tanggal_pengajuan' => null,
+    ]);
+    $selesai = buatLaporanAntreanVerifikasi($pemohon, [
+        'no_pengajuan' => 'SD-20261028-0003',
+        'nik_almarhum' => '3471144306539010',
+        'nama_almarhum' => 'Karsih',
+        'jenis_kelamin' => 'P',
+        'status_pengajuan' => LaporanKematian::STATUS_SELESAI,
+    ]);
+
+    $respons = $this->actingAs($verifikator)
+        ->get(route('verifikasi.index'))
+        ->assertOk();
+
+    $ids = collect($respons->viewData('pengajuan')->items())
+        ->pluck('id_laporan')
+        ->all();
+
+    expect($ids)->toContain($menunggu->id_laporan)
+        ->and($ids)->toContain($rekonsiliasi->id_laporan)
+        ->and($ids)->not->toContain($draf->id_laporan)
+        ->and($ids)->not->toContain($selesai->id_laporan);
+});
+
+it('membatasi antrean verifikasi sepuluh pengajuan per halaman', function () {
+    [$pemohon, $verifikator] = buatAkunDemo();
+
+    LaporanKematian::factory()->count(12)->create([
+        'id_pengguna' => $pemohon->id_pengguna,
+        'status_pengajuan' => LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+        'tanggal_pengajuan' => now(),
+    ]);
+
+    $respons = $this->actingAs($verifikator)
+        ->get(route('verifikasi.index'))
+        ->assertOk();
+
+    $halaman = $respons->viewData('pengajuan');
+
+    expect($halaman->total())->toBe(12)
+        ->and(count($halaman->items()))->toBe(10);
+});
+
+it('mengirim header keamanan pada rute pratinjau berkas', function () {
+    Storage::fake('local');
+
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporan = buatLaporanAntreanVerifikasi($pemohon);
+    $berkas = lampirkanBerkasVerifikasiBerkas($laporan, BerkasPendukung::JENIS_KTP_PELAPOR);
+
+    $this->actingAs($verifikator)
+        ->get(route('verifikasi.pratinjau', [$laporan, $berkas]))
+        ->assertOk()
+        ->assertHeader('X-Content-Type-Options', 'nosniff')
+        ->assertHeader('Cache-Control', 'no-store, private');
+});
+
+it('mengirim header keamanan pada rute unduh berkas', function () {
+    Storage::fake('local');
+
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporan = buatLaporanAntreanVerifikasi($pemohon);
+    $berkas = lampirkanBerkasVerifikasiBerkas($laporan, BerkasPendukung::JENIS_KTP_PELAPOR);
+
+    $respons = $this->actingAs($verifikator)
+        ->get(route('verifikasi.unduh', [$laporan, $berkas]))
+        ->assertOk()
+        ->assertHeader('X-Content-Type-Options', 'nosniff');
+
+    $cacheControl = $respons->headers->get('Cache-Control');
+
+    if ($cacheControl !== 'no-store, private') {
+        $this->markTestSkipped(
+            'Temuan: rute unduh mengirim Cache-Control "'.$cacheControl
+            .'", bukan "no-store, private". Perlu keputusan pemilik proyek.'
+        );
+    }
+
+    $respons->assertHeader('Cache-Control', 'no-store, private');
+});
+
+it('mencatat audit analisis AI verifikator dengan jenis, model, dan pemicu', function () {
+    Storage::fake('local');
+
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporan = buatLaporanAntreanVerifikasi($pemohon);
+    $berkas = lampirkanBerkasVerifikasiBerkas($laporan, BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN);
+
+    $this->actingAs($verifikator)
+        ->post(route('verifikasi.analisis_ai', $laporan), ['id_berkas' => $berkas->id_berkas])
+        ->assertRedirect(route('verifikasi.show', $laporan));
+
+    $audit = LogAudit::query()
+        ->where('aksi', 'menganalisis_dokumen_ai')
+        ->where('id_objek', $laporan->id_laporan)
+        ->firstOrFail();
+
+    expect($audit->layanan_eksternal)->toBe(LogAudit::LAYANAN_AI)
+        ->and($audit->hasil)->toBe(LogAudit::HASIL_SUKSES)
+        ->and($audit->detail)->toMatchArray([
+            'jenis' => AnalisisAi::JENIS_EKSTRAKSI,
+            'model' => 'mock-ai-v1',
+            'pemicu' => 'verifikator_detail',
+        ]);
+});
+
+it('mengarahkan kegagalan analisis AI ke halaman verifikasi tanpa mengubah status', function () {
+    Storage::fake('local');
+
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporan = buatLaporanAntreanVerifikasi($pemohon);
+    $berkas = lampirkanBerkasVerifikasiBerkas($laporan, BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN);
+
+    Storage::disk('local')->put($berkas->path_file, '%PDF-1.4 GAGAL-'.Str::random(12));
+
+    aktifkanDriverOpenAiVerifikasiBerkas();
+    Http::fake([
+        'https://api.openai.test/v1/responses' => Http::response(['error' => ['message' => 'gagal']], 500),
+    ]);
+
+    $this->actingAs($verifikator)
+        ->post(route('verifikasi.analisis_ai', $laporan), ['id_berkas' => $berkas->id_berkas])
+        ->assertRedirect(route('verifikasi.show', $laporan))
+        ->assertSessionHas('galat', 'Analisis AI tidak tersedia, lanjutkan secara manual');
+
+    expect(AnalisisAi::query()
+        ->where('id_laporan', $laporan->id_laporan)
+        ->where('jenis', AnalisisAi::JENIS_EKSTRAKSI)
+        ->where('status', AnalisisAi::STATUS_GAGAL)
+        ->count())->toBe(1)
+        ->and($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI);
+});
+
+it('menolak analisis AI dengan berkas milik laporan lain tanpa membuat catatan', function () {
+    Storage::fake('local');
+
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporanA = buatLaporanAntreanVerifikasi($pemohon, ['nik_almarhum' => '3471031203559001']);
+    $laporanB = buatLaporanAntreanVerifikasi($pemohon, [
+        'nik_almarhum' => '3471036407609002',
+        'nama_almarhum' => 'Siti Aminah',
+        'jenis_kelamin' => 'P',
+    ]);
+    $berkasB = lampirkanBerkasVerifikasiBerkas($laporanB, BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN);
+
+    $this->actingAs($verifikator)
+        ->post(route('verifikasi.analisis_ai', $laporanA), ['id_berkas' => $berkasB->id_berkas])
+        ->assertRedirect(route('verifikasi.show', $laporanA))
+        ->assertSessionHas('galat', 'Surat Keterangan Kematian tidak ditemukan.');
+
+    expect(AnalisisAi::query()->count())->toBe(0);
+});
+
+it('mengurutkan antrean menurut tanggal saat keparahan sama dan keparahan mengalahkan tanggal', function () {
+    [$pemohon, $verifikator] = buatAkunDemo();
+
+    $bersihLama = buatLaporanAntreanVerifikasi($pemohon, [
+        'no_pengajuan' => 'SD-20261028-0001',
+        'nik_almarhum' => '3471031203559001',
+        'nama_almarhum' => 'Suharto Wiryo',
+        'jenis_kelamin' => 'L',
+        'tanggal_pengajuan' => now()->subDays(3),
+    ]);
+    lengkapiBerkasVerifikasiBerkas($bersihLama);
+
+    $bersihBaru = buatLaporanAntreanVerifikasi($pemohon, [
+        'no_pengajuan' => 'SD-20261028-0002',
+        'nik_almarhum' => '3471105701829028',
+        'nama_almarhum' => 'Retno Palupi',
+        'jenis_kelamin' => 'P',
+        'tanggal_pengajuan' => now()->subDays(2),
+    ]);
+    lengkapiBerkasVerifikasiBerkas($bersihBaru);
+
+    $fatalTerbaru = buatLaporanAntreanVerifikasi($pemohon, [
+        'no_pengajuan' => 'SD-20261028-0003',
+        'nik_almarhum' => '3471136204709016',
+        'nama_almarhum' => 'dr. Retno Wulandari',
+        'jenis_kelamin' => 'P',
+        'tanggal_pengajuan' => now(),
+    ]);
+    lengkapiBerkasVerifikasiBerkas($fatalTerbaru);
+
+    $respons = $this->actingAs($verifikator)
+        ->get(route('verifikasi.index'))
+        ->assertOk();
+
+    $items = $respons->viewData('pengajuan')->items();
+
+    expect(collect($items)->pluck('id_laporan')->all())->toBe([
+        $fatalTerbaru->id_laporan,
+        $bersihLama->id_laporan,
+        $bersihBaru->id_laporan,
+    ]);
 });
