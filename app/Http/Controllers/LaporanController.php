@@ -66,6 +66,11 @@ class LaporanController extends Controller
     private const EKSTENSI_BERKAS = 'pdf,jpg,jpeg,png';
 
     /**
+     * MIME sebenarnya yang diterima (dibaca dari isi berkas, bukan ekstensi).
+     */
+    private const MIME_BERKAS = 'application/pdf,image/jpeg,image/png';
+
+    /**
      * Pilihan hubungan pelapor dengan almarhum.
      *
      * @var list<string>
@@ -265,7 +270,7 @@ class LaporanController extends Controller
         $namaInput = self::INPUT_BERKAS[$jenis];
 
         $request->validate([
-            $namaInput => ['required', 'file', 'max:'.self::MAKS_UKURAN_KB, 'mimes:'.self::EKSTENSI_BERKAS],
+            $namaInput => ['required', 'file', 'max:'.self::MAKS_UKURAN_KB, 'mimes:'.self::EKSTENSI_BERKAS, 'mimetypes:'.self::MIME_BERKAS],
         ], [
             $namaInput.'.required' => self::PESAN_BERKAS,
             $namaInput.'.file' => self::PESAN_BERKAS,

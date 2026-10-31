@@ -34,4 +34,30 @@ return [
         'SATUDUKA_TTE_PIN_DUMMY',
         in_array((string) env('APP_ENV', 'production'), ['local', 'testing'], true) ? '123456' : null,
     ),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Batas Laju (Rate Limit) Rute Sensitif
+    |--------------------------------------------------------------------------
+    |
+    | Nilai dalam "percobaan per menit". Semua batas dapat dilonggarkan untuk
+    | demo/presentasi dengan SATUDUKA_RATE_LIMIT_LONGGAR=true, yang mengalikan
+    | batas dengan `pengali_longgar`. Batas tetap ada agar tidak terbuka penuh.
+    |
+    */
+
+    'rate_limit' => [
+        'longgar' => filter_var(env('SATUDUKA_RATE_LIMIT_LONGGAR', false), FILTER_VALIDATE_BOOLEAN),
+        'pengali_longgar' => 20,
+
+        // 10/menit: penguncian akun (5 gagal) tetap tampil sebelum throttle.
+        'masuk' => 10,
+        'registrasi' => 5,
+        'lupa_kata_sandi' => 3,
+        'atur_ulang_kata_sandi' => 5,
+        'unggah_berkas' => 20,
+        'analisis_ai' => 10,
+        'tandatangani' => 10,
+        'terbitkan' => 5,
+    ],
 ];

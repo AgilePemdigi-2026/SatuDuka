@@ -28,7 +28,7 @@ it('mengirim tautan pengaturan ulang ke surel terdaftar akun', function () {
         'identitas' => '9999990101900001',
     ])
         ->assertRedirect()
-        ->assertSessionHas('sukses', __('passwords.sent'));
+        ->assertSessionHas('sukses', 'Jika data yang Anda masukkan terdaftar, tautan pengaturan ulang telah dikirim ke surel akun.');
 
     Notification::assertSentTo($pemohon, TautanAturUlangKataSandi::class);
 
@@ -37,14 +37,16 @@ it('mengirim tautan pengaturan ulang ke surel terdaftar akun', function () {
         ->exists())->toBeTrue();
 });
 
-it('menolak identitas yang tidak ditemukan pada formulir lupa kata sandi', function () {
+it('memberi pesan netral untuk identitas yang tidak ditemukan', function () {
     buatAkunDemo();
 
     $this->post(route('lupa_kata_sandi.kirim'), [
         'identitas' => '9999990101900099',
     ])
         ->assertRedirect()
-        ->assertSessionHasErrors(['identitas' => 'NIK/NIP tidak ditemukan']);
+        // Pesan netral: tidak membocorkan apakah identitas terdaftar.
+        ->assertSessionHas('info', 'Jika data yang Anda masukkan terdaftar, tautan pengaturan ulang telah dikirim ke surel akun.')
+        ->assertSessionMissing('errors');
 });
 
 it('menyimpan kata sandi baru dari tautan surel lalu mengarahkan ke halaman masuk', function () {

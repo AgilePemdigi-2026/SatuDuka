@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\LogAudit;
 use App\Models\Pengguna;
+use App\Support\MaskerNik;
 
 /**
  * Satu-satunya cara pencatatan jejak audit SATUDUKA.
@@ -41,7 +42,8 @@ final class LayananAudit
             'aksi' => $aksi,
             'objek' => $objek,
             'id_objek' => $idObjek,
-            'detail' => $detail === [] ? null : $detail,
+            // NIK 16 digit pada detail selalu dimasker sebelum disimpan.
+            'detail' => $detail === [] ? null : MaskerNik::terapkanArray($detail),
             'layanan_eksternal' => $layananEksternal,
             'hasil' => $hasil,
         ]);

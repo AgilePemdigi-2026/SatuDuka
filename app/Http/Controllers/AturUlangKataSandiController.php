@@ -30,6 +30,11 @@ class AturUlangKataSandiController extends Controller
     private const PESAN_KATA_SANDI_LEMAH = 'Kata sandi minimal 8 karakter dan mengandung huruf serta angka';
 
     /**
+     * Pesan netral yang tidak membocorkan apakah identitas terdaftar.
+     */
+    private const PESAN_NETRAL = 'Jika data yang Anda masukkan terdaftar, tautan pengaturan ulang telah dikirim ke surel akun.';
+
+    /**
      * Menampilkan formulir permintaan tautan pengaturan ulang.
      */
     public function tampilkanLupa()
@@ -55,11 +60,12 @@ class AturUlangKataSandiController extends Controller
             LayananAudit::catat(
                 aksi: 'minta_atur_ulang_kata_sandi_gagal',
                 objek: 'pengguna',
-                detail: ['identitas' => $identitas, 'alasan' => 'tidak ditemukan'],
+                detail: ['alasan' => 'tidak ditemukan'],
             );
 
+            // Pesan netral agar tidak membocorkan apakah identitas terdaftar.
             return back()
-                ->withErrors(['identitas' => 'NIK/NIP tidak ditemukan'])
+                ->with('info', self::PESAN_NETRAL)
                 ->onlyInput('identitas');
         }
 
@@ -70,12 +76,11 @@ class AturUlangKataSandiController extends Controller
             aksi: 'minta_atur_ulang_kata_sandi',
             objek: 'pengguna',
             idObjek: $pengguna->id_pengguna,
-            detail: ['surel_tujuan' => $pengguna->email],
             pengguna: $pengguna,
         );
 
         return $status === Password::RESET_LINK_SENT
-            ? back()->with('sukses', __($status))
+            ? back()->with('sukses', self::PESAN_NETRAL)
             : back()->withErrors(['identitas' => __($status)]);
     }
 

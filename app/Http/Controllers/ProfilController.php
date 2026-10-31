@@ -121,7 +121,7 @@ class ProfilController extends Controller
         $pengguna = $request->user();
 
         $request->validate([
-            'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png', 'mimetypes:image/jpeg,image/png', 'max:2048'],
         ], [
             'foto.required' => self::PESAN_FOTO,
             'foto.file' => self::PESAN_FOTO,

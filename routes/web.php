@@ -29,6 +29,7 @@ Route::middleware('guest')->group(function () {
         ->name('registrasi');
 
     Route::post('/registrasi', [RegistrasiController::class, 'daftar'])
+        ->middleware('throttle:registrasi')
         ->name('registrasi.simpan');
 
     // Login.
@@ -36,6 +37,7 @@ Route::middleware('guest')->group(function () {
         ->name('masuk');
 
     Route::post('/masuk', [LoginController::class, 'masuk'])
+        ->middleware('throttle:masuk')
         ->name('masuk.coba');
 
     // Permintaan pengaturan ulang kata sandi.
@@ -47,7 +49,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/lupa-kata-sandi', [
         AturUlangKataSandiController::class,
         'kirimTautan',
-    ])->name('lupa_kata_sandi.kirim');
+    ])->middleware('throttle:lupa-kata-sandi')->name('lupa_kata_sandi.kirim');
 
     // Form pengaturan ulang kata sandi.
     Route::get('/atur-ulang-kata-sandi/{token}', [
@@ -58,7 +60,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/atur-ulang-kata-sandi', [
         AturUlangKataSandiController::class,
         'aturUlang',
-    ])->name('atur_ulang_kata_sandi.simpan');
+    ])->middleware('throttle:atur-ulang-kata-sandi')->name('atur_ulang_kata_sandi.simpan');
 });
 
 // Keluar dari sistem.
@@ -87,9 +89,11 @@ Route::middleware(['auth', 'peran:pemohon'])->group(function () {
 
     Route::get('/laporan/{laporan}/ubah', [LaporanController::class, 'tampilkanUbah'])->name('laporan.ubah');
     Route::post('/laporan/{laporan}/draf', [LaporanController::class, 'simpanDraf'])->name('laporan.draf.ubah');
-    Route::post('/laporan/{laporan}/periksa-ai', [LaporanController::class, 'periksaAi'])->name('laporan.periksa_ai');
+    Route::post('/laporan/{laporan}/periksa-ai', [LaporanController::class, 'periksaAi'])
+        ->middleware('throttle:analisis-ai')->name('laporan.periksa_ai');
     Route::post('/laporan/{laporan}/kirim', [LaporanController::class, 'kirim'])->name('laporan.kirim');
-    Route::post('/laporan/{laporan}/berkas', [LaporanController::class, 'unggahBerkas'])->name('laporan.berkas.unggah');
+    Route::post('/laporan/{laporan}/berkas', [LaporanController::class, 'unggahBerkas'])
+        ->middleware('throttle:unggah-berkas')->name('laporan.berkas.unggah');
     Route::get('/laporan/{laporan}/berkas/{berkas}', [LaporanController::class, 'pratinjauBerkas'])->name('laporan.berkas');
     Route::get('/laporan/{laporan}', [LaporanController::class, 'lihat'])->name('laporan.lihat');
 
@@ -117,8 +121,10 @@ Route::middleware(['auth', 'peran:verifikator'])
         Route::get('/{laporan}', [VerifikasiBerkasController::class, 'show'])->name('show');
         Route::get('/{laporan}/berkas/{berkas}', [VerifikasiBerkasController::class, 'pratinjau'])->name('pratinjau');
         Route::get('/{laporan}/berkas/{berkas}/unduh', [VerifikasiBerkasController::class, 'unduh'])->name('unduh');
-        Route::post('/{laporan}/analisis-ai', [VerifikasiBerkasController::class, 'analisis'])->name('analisis_ai');
-        Route::post('/{laporan}/ringkasan-ai', [VerifikasiBerkasController::class, 'ringkasanAi'])->name('ringkasan_ai');
+        Route::post('/{laporan}/analisis-ai', [VerifikasiBerkasController::class, 'analisis'])
+            ->middleware('throttle:analisis-ai')->name('analisis_ai');
+        Route::post('/{laporan}/ringkasan-ai', [VerifikasiBerkasController::class, 'ringkasanAi'])
+            ->middleware('throttle:analisis-ai')->name('ringkasan_ai');
         Route::post('/{laporan}/setujui', [VerifikasiBerkasController::class, 'setujui'])->name('setujui');
         Route::post('/{laporan}/perbaikan', [VerifikasiBerkasController::class, 'mintaPerbaikan'])->name('perbaikan');
         Route::post('/{laporan}/revisi', [VerifikasiBerkasController::class, 'mintaRevisi'])->name('revisi');
@@ -146,11 +152,11 @@ Route::middleware(['auth', 'peran:pejabat'])
         Route::get('/{laporan}', [TandaTanganController::class, 'show'])->name('show');
         Route::get('/{laporan}/unduh', [TandaTanganController::class, 'unduh'])->name('unduh');
         Route::post('/{laporan}/tandatangani', [TandaTanganController::class, 'tandatangani'])
-            ->middleware('throttle:10,1')
+            ->middleware('throttle:tandatangani')
             ->name('tandatangani');
         Route::post('/{laporan}/kembalikan', [TandaTanganController::class, 'kembalikan'])->name('kembalikan');
         Route::post('/{laporan}/terbitkan', [TandaTanganController::class, 'terbitkan'])
-            ->middleware('throttle:5,1')
+            ->middleware('throttle:terbitkan')
             ->name('terbitkan');
     });
 
