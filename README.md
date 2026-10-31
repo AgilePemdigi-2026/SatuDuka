@@ -33,6 +33,20 @@ SKD adalah aplikasi web untuk digitalisasi pencatatan dan administrasi kematian 
 php artisan test
 ```
 
+## Evaluasi aturan verifikasi
+
+```bash
+php artisan aturan:evaluasi
+```
+
+Perintah ini menjalankan `MesinRekonsiliasi` pada 62 kasus fiktif berlabel di
+`database/data/kasus_uji_aturan.json`, menghitung presisi dan recall per kode anomali,
+membuat matriks kebingungan kategori nama, dan menulis hasilnya ke
+`docs/EVALUASI_ATURAN.md`. Dataset kasus uji dibuat dari rancangan aturan, bukan dari data
+kependudukan nyata. Ambang nama di `config/verifikasi.php` dievaluasi dengan 39 pasangan di
+`database/data/pasangan_nama_uji.json`; ambang saat ini dipertahankan sampai ada konfirmasi
+Dukcapil.
+
 ## Akun demo
 
 Akun berikut tersedia setelah menjalankan `php artisan migrate --seed`.

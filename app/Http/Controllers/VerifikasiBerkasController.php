@@ -70,7 +70,7 @@ class VerifikasiBerkasController extends Controller
      * Antrean verifikasi: Menunggu Verifikasi dan Dalam Rekonsiliasi Anomali.
      *
      * Urutan memakai keparahan anomali tertinggi dari mesin, lalu tanggal
-     * pengajuan terlama. Tidak ada skor kecurigaan pada antrean.
+     * pengajuan terlama. Tidak ada skor tambahan pada antrean.
      */
     public function index(Request $request): View
     {
