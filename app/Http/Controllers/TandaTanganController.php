@@ -6,6 +6,7 @@ use App\Models\DokumenResmi;
 use App\Models\LaporanKematian;
 use App\Models\LogAudit;
 use App\Models\Pengguna;
+use App\Services\Dokumen\LayananDokumenResmi;
 use App\Services\LayananAudit;
 use App\Services\LayananPenguncian;
 use App\Services\Tte\TTEService;
@@ -14,7 +15,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Penandatanganan dokumen kematian dengan TTE oleh Pejabat (use case 5.2.8).
@@ -63,7 +66,10 @@ class TandaTanganController extends Controller
         LaporanKematian::STATUS_DIKEMBALIKAN,
     ];
 
-    public function __construct(private readonly TTEService $tte) {}
+    public function __construct(
+        private readonly TTEService $tte,
+        private readonly LayananDokumenResmi $dokumenResmi,
+    ) {}
 
     /**
      * Daftar dokumen beserta statistik, pencarian, dan filter status.
@@ -123,10 +129,15 @@ class TandaTanganController extends Controller
 
         $laporan->loadMissing('pemohon');
 
+        $berkas = (string) ($dokumen->file_dokumen ?? '');
+        $berkasAda = $berkas !== '' && Storage::disk(LayananDokumenResmi::DISK)->exists($berkas);
+
         return response()
             ->view('tanda_tangan.show', [
                 'laporan' => $laporan,
                 'dokumen' => $dokumen,
+                'berkasAda' => $berkasAda,
+                'berkasHilang' => $berkas !== '' && ! $berkasAda,
                 'terkunci' => LayananPenguncian::terkunci($this->kunciTte(request()->user())),
                 'sisaKunci' => LayananPenguncian::sisaKunci($this->kunciTte(request()->user())),
             ])
@@ -253,9 +264,109 @@ class TandaTanganController extends Controller
         // Kredensial benar: hitungan kegagalan direset.
         LayananPenguncian::buka($kunci);
 
-        return redirect()
+        // Berkas PDF diterbitkan setelah status tersimpan; kegagalan render
+        // tidak membatalkan penandatanganan dan dapat dipulihkan kemudian.
+        $dokumen = DokumenResmi::query()
+            ->where('id_laporan', $laporan->id_laporan)
+            ->first();
+
+        $berkasSiap = $dokumen !== null && $this->dokumenResmi->terbitkan($dokumen);
+
+        $pengalihan = redirect()
             ->route('tanda_tangan.index')
-            ->with('sukses', 'Dokumen berhasil ditandatangani secara elektronik.');
+            ->with('sukses', $berkasSiap
+                ? 'Dokumen berhasil ditandatangani secara elektronik.'
+                : 'Dokumen berhasil ditandatangani. Berkas PDF sedang disiapkan dan dapat diterbitkan ulang.');
+
+        if (! $berkasSiap) {
+            $pengalihan->with('galat', 'Dokumen resmi sedang disiapkan.');
+        }
+
+        return $pengalihan;
+    }
+
+    /**
+     * Terbitkan ulang berkas PDF untuk dokumen yang sudah ditandatangani.
+     *
+     * Idempoten: nomor dokumen dipakai ulang dan berkas yang sudah ada tidak
+     * ditimpa. Dibatasi laju agar tidak dipakai membanjiri server.
+     */
+    public function terbitkan(Request $request, LaporanKematian $laporan): RedirectResponse
+    {
+        $dokumen = DB::transaction(function () use ($laporan): ?DokumenResmi {
+            $laporanTerkunci = LaporanKematian::query()
+                ->whereKey($laporan->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            abort_unless(
+                $laporanTerkunci->status_pengajuan === LaporanKematian::STATUS_SELESAI,
+                409,
+                'Dokumen belum ditandatangani.',
+            );
+
+            $dokumen = DokumenResmi::query()
+                ->where('id_laporan', $laporanTerkunci->id_laporan)
+                ->lockForUpdate()
+                ->first();
+
+            abort_unless(
+                $dokumen !== null && $dokumen->status_ttd === DokumenResmi::STATUS_SELESAI,
+                409,
+                'Dokumen belum ditandatangani.',
+            );
+
+            return $dokumen;
+        });
+
+        // Bersihkan rujukan berkas yang hilang dari disk sebelum menerbitkan.
+        $this->dokumenResmi->bersihkanBerkasHilang($dokumen);
+
+        if ($this->dokumenResmi->terbitkan($dokumen)) {
+            return back()->with('sukses', 'Berkas dokumen resmi berhasil disiapkan.');
+        }
+
+        return back()->with('galat', 'Berkas dokumen gagal dibuat. Coba lagi atau gunakan perintah dokumen:terbitkan.');
+    }
+
+    /**
+     * Mengunduh berkas PDF dokumen resmi (khusus pejabat).
+     */
+    public function unduh(Request $request, LaporanKematian $laporan): RedirectResponse|StreamedResponse
+    {
+        $dokumen = $laporan->dokumenResmi;
+
+        abort_unless(
+            $dokumen !== null
+                && $laporan->status_pengajuan === LaporanKematian::STATUS_SELESAI
+                && $dokumen->status_ttd === DokumenResmi::STATUS_SELESAI,
+            403,
+            'Dokumen belum dapat diunduh.',
+        );
+
+        $jalur = (string) ($dokumen->file_dokumen ?? '');
+
+        if ($jalur === '' || ! Storage::disk(LayananDokumenResmi::DISK)->exists($jalur)) {
+            return back()->with('galat', 'Dokumen resmi sedang disiapkan.');
+        }
+
+        LayananAudit::catat(
+            aksi: 'mengunduh_dokumen',
+            objek: 'dokumen_resmi',
+            idObjek: $dokumen->id_dokumen,
+            detail: ['no_pengajuan' => $laporan->no_pengajuan],
+            pengguna: $request->user(),
+            hasil: LogAudit::HASIL_SUKSES,
+        );
+
+        $namaBerkas = $this->namaBerkasUnduhan($dokumen);
+
+        return Storage::disk(LayananDokumenResmi::DISK)->download($jalur, $namaBerkas, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$namaBerkas.'"',
+            'Cache-Control' => 'no-store, private',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     /**
@@ -343,5 +454,15 @@ class TandaTanganController extends Controller
     private function kunciTte(?Pengguna $pengguna): string
     {
         return 'tte:'.($pengguna?->id_pengguna ?? 'tamu');
+    }
+
+    /**
+     * Nama berkas unduhan yang aman (nomor dokumen, tanpa masukan pengguna).
+     */
+    private function namaBerkasUnduhan(DokumenResmi $dokumen): string
+    {
+        $nomor = preg_replace('/[^A-Za-z0-9\-_]/', '', (string) ($dokumen->no_dokumen ?? '')) ?? '';
+
+        return ($nomor === '' ? 'dokumen-resmi' : 'Akta_Kematian_'.$nomor).'.pdf';
     }
 }

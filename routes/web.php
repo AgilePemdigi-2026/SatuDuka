@@ -144,8 +144,12 @@ Route::middleware(['auth', 'peran:pejabat'])
     ->group(function () {
         Route::get('/', [TandaTanganController::class, 'index'])->name('index');
         Route::get('/{laporan}', [TandaTanganController::class, 'show'])->name('show');
+        Route::get('/{laporan}/unduh', [TandaTanganController::class, 'unduh'])->name('unduh');
         Route::post('/{laporan}/tandatangani', [TandaTanganController::class, 'tandatangani'])->name('tandatangani');
         Route::post('/{laporan}/kembalikan', [TandaTanganController::class, 'kembalikan'])->name('kembalikan');
+        Route::post('/{laporan}/terbitkan', [TandaTanganController::class, 'terbitkan'])
+            ->middleware('throttle:5,1')
+            ->name('terbitkan');
     });
 
 Route::redirect('/pengajuan-laporan', '/laporan/baru');

@@ -15,6 +15,7 @@ use App\Models\Pengguna;
 use App\Services\LayananPenguncian;
 use App\Support\MaskerNik;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     config([
@@ -23,6 +24,7 @@ beforeEach(function () {
     ]);
 
     Cache::flush();
+    Storage::fake('local');
 });
 
 /**
@@ -115,7 +117,10 @@ it('menandatangani dokumen dengan PIN benar dan mencatat audit tanpa PIN', funct
         ->and($dokumen->status_ttd)->toBe(DokumenResmi::STATUS_SELESAI)
         ->and($dokumen->id_pengguna)->toBe($pejabat->id_pengguna)
         ->and($dokumen->tanggal_terbit)->not->toBeNull()
-        ->and($dokumen->file_dokumen)->toBeNull();
+        ->and($dokumen->no_dokumen)->not->toBeNull()
+        ->and($dokumen->file_dokumen)->not->toBeNull();
+
+    expect(Storage::disk('local')->exists($dokumen->file_dokumen))->toBeTrue();
 
     $audit = LogAudit::query()->where('aksi', 'menandatangani_dokumen')->firstOrFail();
 

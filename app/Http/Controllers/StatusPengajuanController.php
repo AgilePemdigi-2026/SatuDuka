@@ -112,7 +112,11 @@ class StatusPengajuanController extends Controller
             'Dokumen belum tersedia.',
         );
 
-        abort_unless(Storage::disk('local')->exists($dokumen->file_dokumen), 404);
+        if (! Storage::disk('local')->exists($dokumen->file_dokumen)) {
+            return redirect()
+                ->route('pengajuan.detail', $laporan)
+                ->with('galat', 'Dokumen resmi sedang disiapkan.');
+        }
 
         LayananAudit::catat(
             aksi: 'mengunduh_dokumen',
@@ -123,12 +127,17 @@ class StatusPengajuanController extends Controller
             hasil: 'Sukses',
         );
 
+        $nomor = preg_replace('/[^A-Za-z0-9\-_]/', '', (string) ($dokumen->no_dokumen ?? '')) ?? '';
+        $namaBerkas = ($nomor === '' ? 'Akta_Kematian' : 'Akta_Kematian_'.$nomor).'.pdf';
+
         return Storage::disk('local')->download(
             $dokumen->file_dokumen,
-            'Akta_Kematian_'.$laporan->no_pengajuan.'.pdf',
+            $namaBerkas,
             [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="'.$namaBerkas.'"',
                 'X-Content-Type-Options' => 'nosniff',
-                'Cache-Control' => 'private, no-store',
+                'Cache-Control' => 'no-store, private',
             ],
         );
     }

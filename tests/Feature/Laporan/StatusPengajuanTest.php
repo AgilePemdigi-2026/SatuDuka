@@ -185,19 +185,22 @@ it('hanya mengizinkan unduh dokumen setelah pengajuan selesai', function () {
 
     $this->get(route('pengajuan.unduh', $selesai))->assertForbidden();
 
-    DokumenResmi::factory()->selesai()->create([
+    $dokumen = DokumenResmi::factory()->selesai()->create([
         'id_laporan' => $selesai->id_laporan,
         'file_dokumen' => 'dokumen/akta-kematian.pdf',
         'tanggal_terbit' => now(),
     ]);
 
-    $this->get(route('pengajuan.unduh', $selesai))->assertNotFound();
+    // Berkas dirujuk tetapi belum ada di disk: arahkan kembali, bukan galat 500.
+    $this->get(route('pengajuan.unduh', $selesai))
+        ->assertRedirect(route('pengajuan.detail', $selesai))
+        ->assertSessionHas('galat', 'Dokumen resmi sedang disiapkan.');
 
     Storage::disk('local')->put('dokumen/akta-kematian.pdf', 'isi dokumen');
 
     $this->get(route('pengajuan.unduh', $selesai))
         ->assertOk()
-        ->assertDownload('Akta_Kematian_SD-20261020-0002.pdf')
+        ->assertDownload('Akta_Kematian_'.$dokumen->no_dokumen.'.pdf')
         ->assertHeader('Cache-Control', 'no-store, private')
         ->assertHeader('X-Content-Type-Options', 'nosniff');
 

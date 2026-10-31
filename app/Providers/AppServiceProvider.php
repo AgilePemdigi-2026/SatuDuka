@@ -8,6 +8,8 @@ use App\Models\LaporanKematian;
 use App\Services\Ai\AIService;
 use App\Services\Ai\MockAIService;
 use App\Services\Ai\OpenAiService;
+use App\Services\Dokumen\PembuatPdf;
+use App\Services\Dokumen\PembuatPdfDompdf;
 use App\Services\Tte\PabrikTte;
 use App\Services\Tte\TTEService;
 use Illuminate\Support\Facades\View;
@@ -43,6 +45,8 @@ class AppServiceProvider extends ServiceProvider
                     : (string) config('satuduka.tte_pin_dummy'),
             );
         });
+
+        $this->app->bind(PembuatPdf::class, PembuatPdfDompdf::class);
     }
 
     /**

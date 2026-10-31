@@ -56,6 +56,40 @@
             <x-dokumen.pratinjau-akta :laporan="$laporan" :dokumen="$dokumen" />
         </x-ui.card>
 
+        @if ($dokumen->status_ttd === \App\Models\DokumenResmi::STATUS_SELESAI)
+            <x-ui.card title="Berkas Dokumen Resmi">
+                @if ($berkasAda)
+                    <p class="text-sm text-muted">
+                        Berkas PDF Kutipan Akta Kematian sudah tersedia.
+                    </p>
+                    <div class="mt-3">
+                        <x-ui.button :href="route('tanda_tangan.unduh', $laporan)" size="sm">
+                            <x-icon.arrow-down-tray class="h-4 w-4" />
+                            Unduh Dokumen (PDF)
+                        </x-ui.button>
+                    </div>
+                @else
+                    <x-ui.alert variant="info">
+                        <p class="font-semibold">Dokumen resmi sedang disiapkan</p>
+                        <p class="mt-1 font-normal">
+                            {{ $berkasHilang
+                                ? 'Berkas tidak ditemukan pada penyimpanan. Gunakan perintah pemulihan atau terbitkan ulang dari layanan.'
+                                : 'Berkas PDF belum dibuat. Gunakan tombol di bawah untuk menerbitkan ulang.' }}
+                        </p>
+                    </x-ui.alert>
+
+                    @if (! $berkasHilang)
+                        <form method="POST" action="{{ route('tanda_tangan.terbitkan', $laporan) }}" class="mt-3">
+                            @csrf
+                            <x-ui.button type="submit" size="sm" variant="secondary">
+                                Buat ulang dokumen
+                            </x-ui.button>
+                        </form>
+                    @endif
+                @endif
+            </x-ui.card>
+        @endif
+
         @if ($menunggu)
             <x-ui.card title="Keputusan Pejabat">
                 <p class="text-sm text-muted">
