@@ -8,6 +8,7 @@ use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\RegistrasiController;
 use App\Http\Controllers\RekonsiliasiController;
 use App\Http\Controllers\StatusPengajuanController;
+use App\Http\Controllers\TandaTanganController;
 use App\Http\Controllers\VerifikasiBerkasController;
 use App\Models\BerkasPendukung;
 use App\Models\LaporanKematian;
@@ -134,6 +135,17 @@ Route::middleware(['auth', 'peran:verifikator'])
         Route::get('/{laporan}', [RekonsiliasiController::class, 'show'])->name('show');
         Route::post('/{laporan}/selesaikan', [RekonsiliasiController::class, 'selesaikan'])->name('selesaikan');
         Route::post('/{laporan}/tolak-fatal', [RekonsiliasiController::class, 'tolakFatal'])->name('tolak_fatal');
+    });
+
+// Penandatanganan dokumen dengan TTE oleh Pejabat (use case 5.2.8).
+Route::middleware(['auth', 'peran:pejabat'])
+    ->prefix('tanda-tangan')
+    ->name('tanda_tangan.')
+    ->group(function () {
+        Route::get('/', [TandaTanganController::class, 'index'])->name('index');
+        Route::get('/{laporan}', [TandaTanganController::class, 'show'])->name('show');
+        Route::post('/{laporan}/tandatangani', [TandaTanganController::class, 'tandatangani'])->name('tandatangani');
+        Route::post('/{laporan}/kembalikan', [TandaTanganController::class, 'kembalikan'])->name('kembalikan');
     });
 
 Route::redirect('/pengajuan-laporan', '/laporan/baru');

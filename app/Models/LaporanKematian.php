@@ -89,6 +89,7 @@ class LaporanKematian extends Model
         self::STATUS_DRAF,
         self::STATUS_MENUNGGU_PERBAIKAN,
         self::STATUS_DITOLAK_BUTUH_REVISI,
+        self::STATUS_DIKEMBALIKAN,
     ];
 
     protected $table = 'laporan_kematian';

@@ -69,3 +69,26 @@ it('memakai ambang kategori dari konfigurasi', function () {
     expect($hasil->skor)->toBe(0.8)
         ->and($hasil->kategori)->toBe(HasilPencocokanNama::KATEGORI_TIDAK_COCOK);
 });
+
+it('memperlakukan skor tepat di ambang secara konsisten setelah pembulatan', function () {
+    // "Ahmad" vs "Ahmas" menghasilkan skor tepat 0,8.
+    $pencocok = new LayananPencocokNama(batasBedaTipis: 0.8);
+
+    $tepat = $pencocok->cocokkan('Ahmad', 'Ahmas');
+
+    expect($tepat->skor)->toBe(0.8)
+        ->and($tepat->kategori)->toBe(HasilPencocokanNama::KATEGORI_BEDA_TIPIS);
+
+    // Ambang yang terkena galat floating-point dibulatkan ke presisi skor.
+    $hampir = new LayananPencocokNama(batasBedaTipis: 0.8000000001);
+    $hasilHampir = $hampir->cocokkan('Ahmad', 'Ahmas');
+
+    expect($hasilHampir->skor)->toBe(0.8)
+        ->and($hasilHampir->kategori)->toBe(HasilPencocokanNama::KATEGORI_BEDA_TIPIS);
+
+    // Selisih 0,0001 tetap dianggap di bawah ambang, bukan dibulatkan naik.
+    $diBawah = new LayananPencocokNama(batasBedaTipis: 0.8001);
+
+    expect($diBawah->cocokkan('Ahmad', 'Ahmas')->kategori)
+        ->toBe(HasilPencocokanNama::KATEGORI_TIDAK_COCOK);
+});

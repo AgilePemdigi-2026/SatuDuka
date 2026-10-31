@@ -10,6 +10,11 @@ namespace App\Services\Verifikasi;
  */
 class LayananPencocokNama
 {
+    /**
+     * Jumlah digit desimal untuk skor dan ambang.
+     */
+    public const PRESISI_SKOR = 4;
+
     private LayananNormalisasiNama $normalisasi;
 
     private float $batasPersis;
@@ -69,11 +74,16 @@ class LayananPencocokNama
             $this->skorToken($urutPertama, $urutKedua),
         );
 
-        $skor = round(min(1.0, max(0.0, $skor)), 4);
+        $skor = round(min(1.0, max(0.0, $skor)), self::PRESISI_SKOR);
+
+        // Ambang dan skor dibulatkan dengan presisi yang sama agar perbandingan
+        // tidak bergantung pada galat floating-point (mis. 0,8 vs 0,8000000001).
+        $batasPersis = round($this->batasPersis, self::PRESISI_SKOR);
+        $batasBedaTipis = round($this->batasBedaTipis, self::PRESISI_SKOR);
 
         $kategori = match (true) {
-            $skor >= $this->batasPersis => HasilPencocokanNama::KATEGORI_PERSIS,
-            $skor >= $this->batasBedaTipis => HasilPencocokanNama::KATEGORI_BEDA_TIPIS,
+            $skor >= $batasPersis => HasilPencocokanNama::KATEGORI_PERSIS,
+            $skor >= $batasBedaTipis => HasilPencocokanNama::KATEGORI_BEDA_TIPIS,
             default => HasilPencocokanNama::KATEGORI_TIDAK_COCOK,
         };
 

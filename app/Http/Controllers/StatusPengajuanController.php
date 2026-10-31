@@ -98,6 +98,14 @@ class StatusPengajuanController extends Controller
 
         $dokumen = $laporan->dokumenResmi;
 
+        // Dokumen sudah ditandatangani tetapi berkas PDF belum diterbitkan
+        // (Fase TTE belum membuat PDF): arahkan kembali dengan pesan jelas.
+        if ($dokumen !== null && blank($dokumen->file_dokumen)) {
+            return redirect()
+                ->route('pengajuan.detail', $laporan)
+                ->with('galat', 'Dokumen resmi sedang disiapkan.');
+        }
+
         abort_unless(
             $dokumen !== null && $dokumen->file_dokumen !== null && $dokumen->file_dokumen !== '',
             403,

@@ -49,6 +49,7 @@ class VerifikasiBerkasController extends Controller
     private const STATUS_BOLEH_DIVERIFIKASI = [
         LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
         LaporanKematian::STATUS_DALAM_REKONSILIASI,
+        LaporanKematian::STATUS_DIKEMBALIKAN,
     ];
 
     /**

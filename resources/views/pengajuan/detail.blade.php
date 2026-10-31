@@ -41,6 +41,16 @@
                     </x-ui.alert>
                 @endif
 
+                @if ($laporan->selesai() && blank($laporan->dokumenResmi?->file_dokumen))
+                    <x-ui.alert variant="info">
+                        <p class="font-semibold">Dokumen resmi sedang disiapkan</p>
+                        <p class="mt-1 font-normal">
+                            Pengajuan sudah selesai dan ditandatangani. Unduhan akan tersedia setelah
+                            berkas dokumen resmi diterbitkan.
+                        </p>
+                    </x-ui.alert>
+                @endif
+
                 <x-ui.card title="Pratinjau Dokumen">
                     <x-dokumen.pratinjau-akta :laporan="$laporan" />
                 </x-ui.card>
@@ -113,10 +123,12 @@
                     @endif
 
                     @if ($laporan->selesai())
-                        <x-ui.button :href="route('pengajuan.unduh', $laporan)" class="w-full">
-                            <x-icon.arrow-down-tray class="h-4 w-4" />
-                            Unduh Dokumen (PDF)
-                        </x-ui.button>
+                        @if (filled($laporan->dokumenResmi?->file_dokumen))
+                            <x-ui.button :href="route('pengajuan.unduh', $laporan)" class="w-full">
+                                <x-icon.arrow-down-tray class="h-4 w-4" />
+                                Unduh Dokumen (PDF)
+                            </x-ui.button>
+                        @endif
                     @else
                         <x-ui.button type="button" disabled class="w-full">
                             <x-icon.arrow-down-tray class="h-4 w-4" />

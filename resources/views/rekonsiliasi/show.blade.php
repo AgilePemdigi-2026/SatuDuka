@@ -62,17 +62,17 @@
                         @foreach ($kolomKomparasi as $baris)
                             <tr class="border-b border-line last:border-0 align-top">
                                 <td class="py-3 pr-3 font-semibold text-ink">{{ $baris['label'] }}</td>
-                                <td class="px-3 py-3 text-ink">{{ $baris['nilai_pemohon'] ?: 'â€”' }}</td>
+                                <td class="px-3 py-3 text-ink">{{ $baris['nilai_pemohon'] ?: '—' }}</td>
                                 <td class="px-3 py-3">
                                     @if ($siakTersedia)
-                                        <span class="text-ink">{{ $baris['nilai_siak'] ?: 'â€”' }}</span>
+                                        <span class="text-ink">{{ $baris['nilai_siak'] ?: '—' }}</span>
                                     @else
                                         <span class="text-muted italic">Tidak tersedia</span>
                                     @endif
                                 </td>
                                 <td class="px-3 py-3">
                                     @if ($ekstraksiTersedia)
-                                        <span class="text-ink">{{ $baris['nilai_ekstraksi'] ?: 'â€”' }}</span>
+                                        <span class="text-ink">{{ $baris['nilai_ekstraksi'] ?: '—' }}</span>
                                     @else
                                         <span class="text-muted italic">Tidak tersedia</span>
                                     @endif

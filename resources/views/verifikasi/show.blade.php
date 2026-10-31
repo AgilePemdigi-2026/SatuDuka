@@ -56,6 +56,17 @@
             </x-ui.alert>
         @endif
 
+        @if ($laporan->status_pengajuan === \App\Models\LaporanKematian::STATUS_DIKEMBALIKAN
+            && filled($laporan->dokumenResmi?->alasan_pengembalian))
+            <x-ui.alert variant="warning">
+                <p class="font-semibold">Dokumen dikembalikan oleh Pejabat</p>
+                <p class="mt-1 font-normal">{{ $laporan->dokumenResmi->alasan_pengembalian }}</p>
+                <p class="mt-1 font-normal">
+                    Periksa kembali berkas dan data; setelah sesuai, setujui ulang agar dapat ditandatangani.
+                </p>
+            </x-ui.alert>
+        @endif
+
         <x-ui.card title="Informasi Pemohon &amp; Almarhum">
             <dl class="grid gap-4 sm:grid-cols-2">
                 <div class="rounded-xl border border-line bg-canvas p-4">

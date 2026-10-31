@@ -596,6 +596,6 @@ class EvaluasiAturan extends Command
 
     private function formatRasio(?float $nilai): string
     {
-        return $nilai === null ? 'â€”' : number_format($nilai, 4, ',', '.');
+        return $nilai === null ? '—' : number_format($nilai, 4, ',', '.');
     }
 }
