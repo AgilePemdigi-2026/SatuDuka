@@ -85,3 +85,50 @@ function something()
 {
     // ..
 }
+
+/**
+ * Membuat data URL PNG tanda tangan kecil (dengan goresan) lewat GD.
+ *
+ * Dipakai seluruh pengujian TTE karena penandatanganan mewajibkan gambar.
+ *
+ * @param  array{0: int, 1: int}|null  $garis
+ */
+function pngTandaTangan(?array $garis = null, int $lebar = 300, int $tinggi = 120): string
+{
+    $gambar = imagecreatetruecolor($lebar, $tinggi);
+    imagealphablending($gambar, false);
+    imagesavealpha($gambar, true);
+    $transparan = imagecolorallocatealpha($gambar, 0, 0, 0, 127);
+    imagefilledrectangle($gambar, 0, 0, $lebar, $tinggi, $transparan);
+
+    $hitam = imagecolorallocatealpha($gambar, 0, 0, 0, 0);
+    imagesetthickness($gambar, 2);
+    [$awalX, $awalY] = $garis ?? [20, (int) ($tinggi / 2)];
+    imageline($gambar, $awalX, $awalY, $awalX + (int) ($lebar * 0.6), $awalY - 20, $hitam);
+
+    ob_start();
+    imagepng($gambar);
+    $biner = (string) ob_get_clean();
+    imagedestroy($gambar);
+
+    return 'data:image/png;base64,'.base64_encode($biner);
+}
+
+/**
+ * PNG transparan tanpa goresan (untuk menguji gambar kosong).
+ */
+function pngKosongTandaTangan(int $lebar = 200, int $tinggi = 80): string
+{
+    $gambar = imagecreatetruecolor($lebar, $tinggi);
+    imagealphablending($gambar, false);
+    imagesavealpha($gambar, true);
+    $transparan = imagecolorallocatealpha($gambar, 0, 0, 0, 127);
+    imagefilledrectangle($gambar, 0, 0, $lebar, $tinggi, $transparan);
+
+    ob_start();
+    imagepng($gambar);
+    $biner = (string) ob_get_clean();
+    imagedestroy($gambar);
+
+    return 'data:image/png;base64,'.base64_encode($biner);
+}

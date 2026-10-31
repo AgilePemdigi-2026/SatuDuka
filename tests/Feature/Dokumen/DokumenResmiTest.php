@@ -93,7 +93,7 @@ it('membuat PDF saat dokumen ditandatangani dan menyimpannya di disk privat', fu
     ]);
 
     $this->actingAs($pejabat)
-        ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456'])
+        ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456', 'tanda_tangan' => pngTandaTangan()])
         ->assertRedirect(route('tanda_tangan.index'));
 
     $dokumen->refresh();
@@ -272,7 +272,7 @@ it('tidak menghasilkan galat 500 saat render PDF gagal dan dapat dipulihkan', fu
     });
 
     $this->actingAs($pejabat)
-        ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456'])
+        ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456', 'tanda_tangan' => pngTandaTangan()])
         ->assertRedirect(route('tanda_tangan.index'))
         ->assertSessionHas('galat', 'Dokumen resmi sedang disiapkan.');
 

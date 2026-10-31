@@ -7,6 +7,7 @@ use App\Models\LaporanKematian;
 use App\Models\LogAudit;
 use App\Models\Pengguna;
 use App\Services\Dokumen\LayananDokumenResmi;
+use App\Services\Dokumen\LayananTandaTanganVisual;
 use App\Services\LayananAudit;
 use App\Services\LayananPenguncian;
 use App\Services\Tte\TTEService;
@@ -16,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\MessageBag;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -69,6 +71,7 @@ class TandaTanganController extends Controller
     public function __construct(
         private readonly TTEService $tte,
         private readonly LayananDokumenResmi $dokumenResmi,
+        private readonly LayananTandaTanganVisual $tandaTanganVisual,
     ) {}
 
     /**
@@ -132,6 +135,10 @@ class TandaTanganController extends Controller
         $berkas = (string) ($dokumen->file_dokumen ?? '');
         $berkasAda = $berkas !== '' && Storage::disk(LayananDokumenResmi::DISK)->exists($berkas);
 
+        $galat = session('errors');
+        $bukaModal = $galat instanceof MessageBag
+            && ($galat->has('pin') || $galat->has('tanda_tangan'));
+
         return response()
             ->view('tanda_tangan.show', [
                 'laporan' => $laporan,
@@ -140,6 +147,7 @@ class TandaTanganController extends Controller
                 'berkasHilang' => $berkas !== '' && ! $berkasAda,
                 'terkunci' => LayananPenguncian::terkunci($this->kunciTte(request()->user())),
                 'sisaKunci' => LayananPenguncian::sisaKunci($this->kunciTte(request()->user())),
+                'bukaModal' => $bukaModal,
             ])
             ->withHeaders([
                 'Cache-Control' => 'no-store, private',
@@ -175,6 +183,14 @@ class TandaTanganController extends Controller
             );
 
             return back()->with('galat', self::PESAN_TERKUNCI);
+        }
+
+        // Validasi tanda tangan visual sebelum PIN diverifikasi: kegagalan di
+        // sini TIDAK menambah hitungan PIN salah.
+        $tandaTangan = $this->tandaTanganVisual->periksa($request->input('tanda_tangan'));
+
+        if (! $tandaTangan['berhasil']) {
+            return back()->withErrors(['tanda_tangan' => (string) $tandaTangan['pesan']]);
         }
 
         try {
@@ -217,7 +233,7 @@ class TandaTanganController extends Controller
             );
         }
 
-        DB::transaction(function () use ($request, $laporan): void {
+        DB::transaction(function () use ($request, $laporan, $tandaTangan): void {
             $laporanTerkunci = LaporanKematian::query()
                 ->whereKey($laporan->getKey())
                 ->lockForUpdate()
@@ -241,6 +257,8 @@ class TandaTanganController extends Controller
                 'id_pengguna' => $request->user()->id_pengguna,
                 'tanggal_terbit' => now(),
                 'alasan_pengembalian' => null,
+                'tanda_tangan_visual' => $tandaTangan['base64'],
+                'tanda_tangan_hash' => $tandaTangan['hash'],
             ]);
 
             $laporanTerkunci->update([
@@ -254,6 +272,8 @@ class TandaTanganController extends Controller
                 detail: [
                     'no_pengajuan' => $laporanTerkunci->no_pengajuan,
                     'penyedia' => $this->tte->namaPenyedia(),
+                    'tanda_tangan_visual' => true,
+                    'tanda_tangan_hash' => $tandaTangan['hash'],
                 ],
                 pengguna: $request->user(),
                 layananEksternal: LogAudit::LAYANAN_TTE,

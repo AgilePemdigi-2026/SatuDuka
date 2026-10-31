@@ -222,6 +222,7 @@ class LayananDokumenResmi
             'tanggalKematian' => $laporan->tanggal_kematian?->translatedFormat('j F Y'),
             'tanggalTerbit' => $dokumen->tanggal_terbit?->translatedFormat('j F Y'),
             'alamat' => $siak['alamat'] ?? ($laporan->pemohon?->alamat ?: null),
+            'tandaTangan' => filled($dokumen->tanda_tangan_visual) ? (string) $dokumen->tanda_tangan_visual : null,
             'mock' => (string) config('satuduka.tte_driver', 'mock') === 'mock',
         ];
     }

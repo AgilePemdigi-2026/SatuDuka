@@ -81,7 +81,17 @@
             <td class="kanan">
                 <div>{{ config('satuduka.daerah') }}, {{ $tanggalTerbit ?? '-' }}</div>
                 <div>Pejabat Penanda Tangan</div>
-                <div style="margin-top: 28px; font-weight: bold;">{{ $pejabat?->nama_lengkap ?: '[ BELUM DITANDATANGANI ]' }}</div>
+
+                @if (filled($tandaTangan ?? null))
+                    <div style="margin-top: 6px;">
+                        <img src="data:image/png;base64,{{ $tandaTangan }}" alt="Tanda tangan pejabat"
+                            style="max-width: 220px; max-height: 110px;" />
+                    </div>
+                @else
+                    <div style="margin-top: 28px; font-size: 10px; color: #64748b;">[ TANDA TANGAN VISUAL TIDAK TERSEDIA ]</div>
+                @endif
+
+                <div style="margin-top: 6px; font-weight: bold;">{{ $pejabat?->nama_lengkap ?: '[ BELUM DITANDATANGANI ]' }}</div>
                 <div style="font-size: 10px; color: #475569;">NIP: {{ $pejabat?->nip ?: '-' }}</div>
 
                 @if ($mock)

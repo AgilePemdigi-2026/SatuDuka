@@ -145,7 +145,9 @@ Route::middleware(['auth', 'peran:pejabat'])
         Route::get('/', [TandaTanganController::class, 'index'])->name('index');
         Route::get('/{laporan}', [TandaTanganController::class, 'show'])->name('show');
         Route::get('/{laporan}/unduh', [TandaTanganController::class, 'unduh'])->name('unduh');
-        Route::post('/{laporan}/tandatangani', [TandaTanganController::class, 'tandatangani'])->name('tandatangani');
+        Route::post('/{laporan}/tandatangani', [TandaTanganController::class, 'tandatangani'])
+            ->middleware('throttle:10,1')
+            ->name('tandatangani');
         Route::post('/{laporan}/kembalikan', [TandaTanganController::class, 'kembalikan'])->name('kembalikan');
         Route::post('/{laporan}/terbitkan', [TandaTanganController::class, 'terbitkan'])
             ->middleware('throttle:5,1')

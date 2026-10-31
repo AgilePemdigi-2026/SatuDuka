@@ -106,7 +106,7 @@ it('menandatangani dokumen dengan PIN benar dan mencatat audit tanpa PIN', funct
     [$laporan, $dokumen] = buatDokumenMenungguTandaTangan($pemohon);
 
     $this->actingAs($pejabat)
-        ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456'])
+        ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456', 'tanda_tangan' => pngTandaTangan()])
         ->assertRedirect(route('tanda_tangan.index'))
         ->assertSessionHas('sukses');
 
@@ -138,7 +138,7 @@ it('menolak PIN salah tanpa menyimpan PIN pada sesi, respons, atau audit', funct
 
     $response = $this->actingAs($pejabat)
         ->from(route('tanda_tangan.show', $laporan))
-        ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => $pinSalah]);
+        ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => $pinSalah, 'tanda_tangan' => pngTandaTangan()]);
 
     $response->assertRedirect(route('tanda_tangan.show', $laporan))
         ->assertSessionHas('galat', 'Kredensial tidak valid. Silakan coba lagi.');
@@ -162,7 +162,7 @@ it('tidak menyimpan PIN berformat salah pada old input', function () {
 
     $this->actingAs($pejabat)
         ->from(route('tanda_tangan.show', $laporan))
-        ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => 'abc123'])
+        ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => 'abc123', 'tanda_tangan' => pngTandaTangan()])
         ->assertRedirect(route('tanda_tangan.show', $laporan))
         ->assertSessionHasErrors('pin');
 
@@ -179,12 +179,12 @@ it('mengunci akses setelah tiga kali PIN salah dan mencatat audit', function () 
 
     for ($i = 1; $i <= 2; $i++) {
         $this->from(route('tanda_tangan.show', $laporan))
-            ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '000000'])
+            ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '000000', 'tanda_tangan' => pngTandaTangan()])
             ->assertSessionHas('galat', 'Kredensial tidak valid. Silakan coba lagi.');
     }
 
     $this->from(route('tanda_tangan.show', $laporan))
-        ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '000000'])
+        ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '000000', 'tanda_tangan' => pngTandaTangan()])
         ->assertSessionHas('galat', 'Akses TTE dikunci selama 15 menit. Silakan coba lagi nanti.');
 
     expect(LayananPenguncian::terkunci($kunci))->toBeTrue()
@@ -207,7 +207,7 @@ it('menolak PIN benar selama akses terkunci tanpa menambah hitungan gagal', func
     $this->actingAs($pejabat);
 
     for ($i = 0; $i < 3; $i++) {
-        $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '000000']);
+        $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '000000', 'tanda_tangan' => pngTandaTangan()]);
     }
 
     expect(LayananPenguncian::terkunci($kunci))->toBeTrue()
@@ -215,7 +215,7 @@ it('menolak PIN benar selama akses terkunci tanpa menambah hitungan gagal', func
 
     // PIN benar tetap ditolak karena penguncian diperiksa lebih dahulu.
     $this->from(route('tanda_tangan.show', $laporan))
-        ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456'])
+        ->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456', 'tanda_tangan' => pngTandaTangan()])
         ->assertSessionHas('galat', 'Akses TTE dikunci selama 15 menit. Silakan coba lagi nanti.');
 
     expect(LayananPenguncian::jumlahGagal($kunci))->toBe(3)
@@ -233,14 +233,14 @@ it('mengizinkan PIN benar setelah masa kunci berakhir', function () {
     $this->actingAs($pejabat);
 
     for ($i = 0; $i < 3; $i++) {
-        $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '000000']);
+        $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '000000', 'tanda_tangan' => pngTandaTangan()]);
     }
 
     expect(LayananPenguncian::terkunci($kunci))->toBeTrue();
 
     $this->travel(16)->minutes();
 
-    $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456'])
+    $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456', 'tanda_tangan' => pngTandaTangan()])
         ->assertRedirect(route('tanda_tangan.index'));
 
     expect($dokumen->fresh()->status_ttd)->toBe(DokumenResmi::STATUS_SELESAI)
@@ -255,12 +255,12 @@ it('mereset hitungan gagal setelah penandatanganan berhasil', function () {
 
     $this->actingAs($pejabat);
 
-    $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '000000']);
-    $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '000000']);
+    $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '000000', 'tanda_tangan' => pngTandaTangan()]);
+    $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '000000', 'tanda_tangan' => pngTandaTangan()]);
 
     expect(LayananPenguncian::jumlahGagal($kunci))->toBe(2);
 
-    $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456'])
+    $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456', 'tanda_tangan' => pngTandaTangan()])
         ->assertRedirect(route('tanda_tangan.index'));
 
     expect(LayananPenguncian::jumlahGagal($kunci))->toBe(0);
@@ -272,10 +272,10 @@ it('menolak aksi tanda tangan ganda pada dokumen yang sama', function () {
 
     $this->actingAs($pejabat);
 
-    $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456'])
+    $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456', 'tanda_tangan' => pngTandaTangan()])
         ->assertRedirect(route('tanda_tangan.index'));
 
-    $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456'])
+    $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456', 'tanda_tangan' => pngTandaTangan()])
         ->assertStatus(409);
 
     expect(LogAudit::query()->where('aksi', 'menandatangani_dokumen')->count())->toBe(1);
@@ -291,7 +291,7 @@ it('menolak tanda tangan untuk pengajuan yang belum disetujui verifikator', func
 
     $this->get(route('tanda_tangan.show', $laporan))->assertNotFound();
 
-    $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456'])
+    $this->post(route('tanda_tangan.tandatangani', $laporan), ['pin' => '123456', 'tanda_tangan' => pngTandaTangan()])
         ->assertStatus(409);
 
     $this->post(route('tanda_tangan.kembalikan', $laporan), [
@@ -315,7 +315,7 @@ it('menolak detail dokumen yang tidak ada atau milik alur lain', function () {
         ->get(route('tanda_tangan.show', $tanpaDokumen))
         ->assertNotFound();
 
-    $this->post(route('tanda_tangan.tandatangani', $tanpaDokumen), ['pin' => '123456'])
+    $this->post(route('tanda_tangan.tandatangani', $tanpaDokumen), ['pin' => '123456', 'tanda_tangan' => pngTandaTangan()])
         ->assertStatus(409);
 });
 

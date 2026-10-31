@@ -48,6 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'kata_sandi_baru',
             'konfirmasi_kata_sandi',
             'pin',
+            'tanda_tangan',
         ]);
 
         $exceptions->shouldRenderJsonWhen(
