@@ -4,6 +4,7 @@ namespace App\Services\Verifikasi;
 
 use App\Models\BerkasPendukung;
 use App\Models\LaporanKematian;
+use App\Support\PengindeksNik;
 use Illuminate\Support\Carbon;
 
 /**
@@ -148,14 +149,14 @@ class LayananAturanBerkas
 
     public function adaPengajuanGanda(string $nik, ?int $kecualiIdLaporan = null): bool
     {
-        $nik = trim($nik);
+        $nik = PengindeksNik::angka($nik);
 
         if ($nik === '') {
             return false;
         }
 
         return LaporanKematian::query()
-            ->where('nik_almarhum', $nik)
+            ->denganNik($nik)
             ->when(
                 $kecualiIdLaporan !== null,
                 fn ($kueri) => $kueri->where('id_laporan', '!=', $kecualiIdLaporan),

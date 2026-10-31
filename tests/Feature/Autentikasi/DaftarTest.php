@@ -35,7 +35,7 @@ it('menyimpan akun pemohon baru dan mengarahkan ke halaman masuk', function () {
         ->assertRedirect(route('masuk'))
         ->assertSessionHas('sukses', 'Registrasi berhasil!');
 
-    $pengguna = Pengguna::cariByNik($nik);
+    $pengguna = Pengguna::cariDenganNik($nik);
 
     expect($pengguna)->not->toBeNull()
         ->and($pengguna->nama_lengkap)->toBe(DataSIAK::cariNik($nik)['nama_lengkap'])

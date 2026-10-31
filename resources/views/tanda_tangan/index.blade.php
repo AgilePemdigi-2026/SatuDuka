@@ -25,14 +25,14 @@
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div class="min-w-0">
                     <h2 class="text-lg font-semibold text-ink">Daftar Dokumen</h2>
-                    <p class="mt-1 text-sm text-muted">Cari berdasarkan nomor pengajuan, NIK, atau nama.</p>
+                    <p class="mt-1 text-sm text-muted">Cari berdasarkan nomor pengajuan, nama, atau NIK lengkap (16 digit).</p>
                 </div>
 
                 <form method="GET" action="{{ route('tanda_tangan.index') }}"
                     class="flex w-full flex-wrap items-end gap-2 sm:w-auto">
                     <div class="min-w-0 flex-1 sm:w-64">
                         <x-ui.input name="cari" type="search" :value="$cari"
-                            placeholder="Cari nomor pengajuan atau NIK..." />
+                            placeholder="Cari nomor pengajuan, nama, atau NIK lengkap (16 digit)" />
                     </div>
 
                     <div class="w-40">

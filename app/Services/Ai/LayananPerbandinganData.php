@@ -4,6 +4,8 @@ namespace App\Services\Ai;
 
 use App\Models\LaporanKematian;
 use App\Support\DataSIAK;
+use App\Support\MaskerNik;
+use App\Support\PengindeksNik;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -51,13 +53,19 @@ class LayananPerbandinganData
             $keyakinan = (float) ($hasilEkstraksi[$kunci]['keyakinan'] ?? 0);
             $nilaiSiak = $this->nilaiSiak($siak, $kunci);
 
+            // NIK tidak pernah disimpan utuh: perbandingan memakai blind index,
+            // sedangkan nilai yang ditampilkan sudah termasker.
+            $hashEkstraksi = $kunci === 'nik'
+                ? ($hasilEkstraksi[$kunci]['hash'] ?? PengindeksNik::hash($nilaiEkstraksi))
+                : null;
+
             $catatan = [];
             $status = 'cocok';
 
             if ($nilaiEkstraksi === null || trim((string) $nilaiEkstraksi) === '') {
                 $status = 'tidak terbaca';
             } else {
-                if (! $this->sama($kunci, $nilaiPemohon, $nilaiEkstraksi)) {
+                if (! $this->sama($kunci, $nilaiPemohon, $nilaiEkstraksi, $hashEkstraksi)) {
                     $status = 'beda';
                     $catatan[] = 'Hasil ekstraksi berbeda dengan isian pemohon.';
                 }
@@ -77,16 +85,19 @@ class LayananPerbandinganData
                 $jumlahKeyakinan++;
             }
 
-            $baris[] = [
+            $baris[] = array_filter([
                 'kunci' => $kunci,
                 'label' => $label,
                 'nilai_pemohon' => $this->tampilkan($kunci, $nilaiPemohon),
                 'nilai_ekstraksi' => $this->tampilkan($kunci, $nilaiEkstraksi),
                 'nilai_siak' => $this->tampilkan($kunci, $nilaiSiak),
+                'hash_pemohon' => $kunci === 'nik' ? PengindeksNik::hash($nilaiPemohon) : null,
+                'hash_ekstraksi' => $hashEkstraksi,
+                'hash_siak' => $kunci === 'nik' ? PengindeksNik::hash($nilaiSiak) : null,
                 'status' => $status,
                 'keyakinan' => round(max(0.0, min(1.0, $keyakinan)), 4),
                 'catatan' => $catatan,
-            ];
+            ], static fn (mixed $nilai): bool => $nilai !== null);
         }
 
         return [
@@ -126,8 +137,15 @@ class LayananPerbandinganData
         };
     }
 
-    private function sama(string $kunci, ?string $kiri, ?string $kanan): bool
+    private function sama(string $kunci, ?string $kiri, ?string $kanan, ?string $hashKanan = null): bool
     {
+        if ($kunci === 'nik') {
+            $hashKiri = PengindeksNik::hash($kiri);
+            $hashKanan ??= PengindeksNik::hash($kanan);
+
+            return $hashKiri !== null && $hashKanan !== null && hash_equals($hashKiri, $hashKanan);
+        }
+
         $kiri = $this->normalisasi($kunci, $kiri);
         $kanan = $this->normalisasi($kunci, $kanan);
 
@@ -191,6 +209,10 @@ class LayananPerbandinganData
     {
         if ($nilai === null || trim($nilai) === '') {
             return null;
+        }
+
+        if ($kunci === 'nik') {
+            return MaskerNik::masker($nilai);
         }
 
         if ($kunci === 'tanggal_kematian') {

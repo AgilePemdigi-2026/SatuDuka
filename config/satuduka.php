@@ -37,6 +37,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Blind Index NIK
+    |--------------------------------------------------------------------------
+    |
+    | Kunci HMAC-SHA256 untuk kolom `nik_hash` dan `nik_almarhum_hash`.
+    | WAJIB diisi eksplisit pada produksi lewat SATUDUKA_NIK_HASH_KEY. Pada
+    | local/testing boleh kosong: kunci diturunkan sebagai sub-kunci APP_KEY
+    | sehingga APP_KEY mentah tidak pernah dipakai langsung sebagai kunci HMAC.
+    | Nilai kunci tidak pernah dicetak ke log, output perintah, atau pesan galat.
+    |
+    */
+
+    'nik_hash_key' => env('SATUDUKA_NIK_HASH_KEY'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Batas Laju (Rate Limit) Rute Sensitif
     |--------------------------------------------------------------------------
     |

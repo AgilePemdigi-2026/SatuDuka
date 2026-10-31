@@ -60,6 +60,7 @@ Pengujian memakai SQLite in-memory sehingga tidak menyentuh database pengembanga
 php artisan aturan:evaluasi              # evaluasi mesin aturan + docs/EVALUASI_ATURAN.md
 php artisan dokumen:terbitkan --semua    # pulihkan PDF dokumen resmi yang belum ada
 php artisan berkas:bersihkan --dry-run   # daftar berkas yatim
+php artisan nik:enkripsi-ulang --dry-run # pratinjau enkripsi/blind index NIK
 ```
 
 ## Evaluasi aturan verifikasi
@@ -80,6 +81,34 @@ ambang saat ini dipertahankan sampai ada konfirmasi Dukcapil.
 - **Dokumen** yang dihasilkan adalah simulasi akademik, bukan akta resmi, dan tidak memiliki
   kekuatan hukum.
 - Status pengajuan hanya berubah lewat aksi pengguna; mesin aturan tidak menolak otomatis.
+
+## Enkripsi NIK
+
+NIK pada `pengguna.nik` dan `laporan_kematian.nik_almarhum` disimpan terenkripsi
+(cast `encrypted` Laravel). Pencarian, login, deteksi pengajuan ganda, dan perbandingan
+data memakai **blind index** HMAC-SHA256 di kolom `nik_hash` / `nik_almarhum_hash`,
+bukan kolom NIK.
+
+- Kunci blind index diatur `SATUDUKA_NIK_HASH_KEY` dan **wajib diisi eksplisit saat
+  `APP_ENV=production`**; aplikasi dan migrasi gagal dengan pesan jelas bila kosong.
+  Pada local/testing kunci diturunkan sebagai sub-kunci `APP_KEY`.
+- Pencarian NIK hanya cocok **penuh 16 digit**; spasi, tanda hubung, dan titik
+  dinormalisasi lebih dulu sehingga `3471-0312-0355-9001` sama dengan `3471031203559001`.
+  Pencarian sebagian/wildcard pada NIK tidak didukung.
+- Hasil analisis AI (`analisis_ai.hasil`) tidak menyimpan NIK utuh: hanya hash blind
+  index dan nilai termasker.
+- NIK tidak pernah ditulis ke log, audit, pesan galat, atau flash session.
+
+### Rotasi kunci
+
+| Yang dirotasi | Langkah |
+|---|---|
+| `SATUDUKA_NIK_HASH_KEY` | Ganti nilai, lalu `php artisan nik:enkripsi-ulang --hanya-hash` (ciphertext tidak berubah). |
+| `APP_KEY` | Simpan kunci lama di `APP_PREVIOUS_KEYS`, set `APP_KEY` baru, lalu `php artisan nik:enkripsi-ulang --enkripsi-ulang` agar ciphertext ditulis ulang dengan kunci baru. |
+
+Selalu jalankan `--dry-run` lebih dulu. Perintah hanya mencetak jumlah baris, tidak
+pernah nilai NIK atau kunci. Bila kunci hash hilang tanpa cadangan, NIK lama tidak
+dapat dicari/di-login-kan sampai hash dihitung ulang dengan kunci yang benar.
 
 ## Keamanan dan audit
 

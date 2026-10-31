@@ -11,6 +11,7 @@ use App\Services\LayananAudit;
 use App\Services\Verifikasi\LayananValidasiNik;
 use App\Support\DataSIAK;
 use App\Support\MaskerNik;
+use App\Support\PengindeksNik;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -62,12 +63,16 @@ class RekonsiliasiController extends Controller
                 $cari
             );
             $pola = '%'.$escapedCari.'%';
+            $hashNik = PengindeksNik::hash($cari);
 
-            $query->where(function ($subquery) use ($pola) {
+            $query->where(function ($subquery) use ($pola, $hashNik) {
                 $subquery
                     ->whereRaw('LOWER(no_pengajuan) LIKE ? ESCAPE ?', [$pola, '\\'])
-                    ->orWhereRaw('LOWER(nama_almarhum) LIKE ? ESCAPE ?', [$pola, '\\'])
-                    ->orWhereRaw('LOWER(nik_almarhum) LIKE ? ESCAPE ?', [$pola, '\\']);
+                    ->orWhereRaw('LOWER(nama_almarhum) LIKE ? ESCAPE ?', [$pola, '\\']);
+
+                if ($hashNik !== null) {
+                    $subquery->orWhere('nik_almarhum_hash', $hashNik);
+                }
             });
         }
 
@@ -458,7 +463,13 @@ class RekonsiliasiController extends Controller
                 'nilai_pemohon' => $this->tampilkan($kunci, $nilaiPemohon),
                 'nilai_siak' => $this->tampilkan($kunci, $nilaiSiak),
                 'nilai_ekstraksi' => $this->tampilkan($kunci, $nilaiEkstraksi),
-                'status' => $this->statusBaris($kunci, $nilaiPemohon, $nilaiSiak, $nilaiEkstraksi),
+                'status' => $this->statusBaris(
+                    $kunci,
+                    $nilaiPemohon,
+                    $nilaiSiak,
+                    $nilaiEkstraksi,
+                    $ekstraksi[$kunci]['hash'] ?? null,
+                ),
             ];
         }
 
@@ -513,8 +524,31 @@ class RekonsiliasiController extends Controller
         return $nilai;
     }
 
-    private function statusBaris(string $kunci, ?string $pemohon, ?string $siak, ?string $ekstraksi): string
-    {
+    private function statusBaris(
+        string $kunci,
+        ?string $pemohon,
+        ?string $siak,
+        ?string $ekstraksi,
+        ?string $hashEkstraksi = null,
+    ): string {
+        if ($kunci === 'nik') {
+            $hashEkstraksi ??= PengindeksNik::hash($ekstraksi);
+
+            if ($hashEkstraksi === null) {
+                return 'tidak terbaca';
+            }
+
+            $hashPemohon = PengindeksNik::hash($pemohon);
+
+            if ($hashPemohon === null || ! hash_equals($hashPemohon, $hashEkstraksi)) {
+                return 'beda';
+            }
+
+            $hashSiak = PengindeksNik::hash($siak);
+
+            return $hashSiak === null || hash_equals($hashPemohon, $hashSiak) ? 'cocok' : 'beda';
+        }
+
         if ($ekstraksi === null || trim((string) $ekstraksi) === '') {
             return 'tidak terbaca';
         }

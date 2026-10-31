@@ -8,6 +8,7 @@ use App\Models\LaporanKematian;
 use App\Models\LogAudit;
 use App\Models\Pengguna;
 use App\Services\LayananAudit;
+use App\Support\NikAnalisis;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
@@ -56,10 +57,16 @@ class LayananAnalisisAi
         }
 
         try {
+            // NIK pada hasil ekstraksi langsung disamarkan sebelum masuk cache:
+            // cache TIDAK boleh menyimpan NIK utuh, sama seperti basis data.
             $ekstraksi = Cache::remember(
                 'analisis-ai:'.$hash,
                 max(60, (int) config('ai.cache_ttl', 3600)),
-                fn (): array => $this->ai->ekstrakSuratKematian($berkas),
+                function () use ($berkas): array {
+                    $mentah = $this->ai->ekstrakSuratKematian($berkas);
+
+                    return is_array($mentah) ? NikAnalisis::samarkanEkstraksi($mentah) : $mentah;
+                },
             );
         } catch (\Throwable) {
             return $this->gagal($berkas, $laporan, $model, $pengguna, $pemicu, $hash);
@@ -270,7 +277,7 @@ class LayananAnalisisAi
             'id_laporan' => $laporan->id_laporan,
             'id_berkas' => $berkas->id_berkas,
             'jenis' => $jenis,
-            'hasil' => $hasil,
+            'hasil' => NikAnalisis::samarkan($jenis, $hasil),
             'skor' => $skor,
             'model' => $model,
             'status' => $status,

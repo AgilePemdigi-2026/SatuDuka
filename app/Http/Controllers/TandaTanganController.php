@@ -12,6 +12,7 @@ use App\Services\LayananAudit;
 use App\Services\LayananPenguncian;
 use App\Services\Tte\TTEService;
 use App\Services\Tte\TteTidakTersedia;
+use App\Support\PengindeksNik;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -94,12 +95,16 @@ class TandaTanganController extends Controller
 
         if ($cari !== '') {
             $pola = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_strtolower($cari)).'%';
+            $hashNik = PengindeksNik::hash($cari);
 
-            $query->whereHas('laporanKematian', function ($subquery) use ($pola): void {
+            $query->whereHas('laporanKematian', function ($subquery) use ($pola, $hashNik): void {
                 $subquery
                     ->whereRaw('LOWER(no_pengajuan) LIKE ? ESCAPE ?', [$pola, '\\'])
-                    ->orWhereRaw('LOWER(nik_almarhum) LIKE ? ESCAPE ?', [$pola, '\\'])
                     ->orWhereRaw('LOWER(nama_almarhum) LIKE ? ESCAPE ?', [$pola, '\\']);
+
+                if ($hashNik !== null) {
+                    $subquery->orWhere('nik_almarhum_hash', $hashNik);
+                }
             });
         }
 

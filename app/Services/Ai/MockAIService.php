@@ -4,6 +4,8 @@ namespace App\Services\Ai;
 
 use App\Models\BerkasPendukung;
 use App\Support\DataSIAK;
+use App\Support\MaskerNik;
+use App\Support\PengindeksNik;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -126,7 +128,7 @@ class MockAIService implements AIService
 
     /**
      * @param  array<string, array{0: string|null, 1: float}>  $kolom
-     * @return array{berhasil: bool, kolom: array<string, array{nilai: string|null, keyakinan: float}>, skor: float, pesan: string|null}
+     * @return array{berhasil: bool, kolom: array<string, array{nilai: string|null, keyakinan: float, hash?: string}>, skor: float, pesan: string|null}
      */
     private function hasil(array $kolom, ?string $pesan = null): array
     {
@@ -135,10 +137,23 @@ class MockAIService implements AIService
         $jumlah = 0;
 
         foreach ($kolom as $kunci => [$nilai, $keyakinan]) {
-            $hasil[$kunci] = [
+            $baris = [
                 'nilai' => $nilai,
                 'keyakinan' => round((float) $keyakinan, 4),
             ];
+
+            // NIK tidak pernah dikembalikan utuh: simpan hash blind index dan
+            // nilai termasker, sama seperti yang disimpan di basis data.
+            if ($kunci === 'nik' && $nilai !== null) {
+                $baris['nilai'] = MaskerNik::masker($nilai);
+                $hash = PengindeksNik::hash($nilai);
+
+                if ($hash !== null) {
+                    $baris['hash'] = $hash;
+                }
+            }
+
+            $hasil[$kunci] = $baris;
 
             if ($nilai !== null) {
                 $total += (float) $keyakinan;

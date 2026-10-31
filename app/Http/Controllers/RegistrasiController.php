@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pengguna;
+use App\Rules\NikBelumTerdaftar;
 use App\Services\LayananAudit;
 use App\Support\DataSIAK;
 use Illuminate\Http\Request;
@@ -44,7 +45,7 @@ class RegistrasiController extends Controller
     public function daftar(Request $request)
     {
         $valid = $request->validate([
-            'nik' => ['required', 'digits:16', 'unique:pengguna,nik'],
+            'nik' => ['required', 'digits:16', new NikBelumTerdaftar],
             'email' => ['required', 'email:filter', 'max:100', 'unique:pengguna,email'],
             'kata_sandi' => ['required', 'string', 'min:8', 'regex:/[a-zA-Z]/', 'regex:/[0-9]/'],
             'konfirmasi_kata_sandi' => ['required', 'string', 'same:kata_sandi'],

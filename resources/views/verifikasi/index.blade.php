@@ -33,7 +33,7 @@
                     class="flex w-full flex-wrap items-end gap-2 sm:w-auto">
                     <div class="min-w-0 flex-1 sm:w-72">
                         <x-ui.input name="cari" type="search" :value="request('cari')"
-                            placeholder="Cari NIK atau Nama..." />
+                            placeholder="Cari nama atau NIK lengkap (16 digit)" />
                     </div>
                     <x-ui.button type="submit">Cari</x-ui.button>
                     @if (request('cari'))

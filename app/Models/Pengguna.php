@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Notifications\TautanAturUlangKataSandi;
+use App\Support\PengindeksNik;
 use Database\Factories\PenggunaFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -75,6 +77,7 @@ class Pengguna extends Authenticatable
      */
     protected $hidden = [
         'kata_sandi',
+        'nik_hash',
     ];
 
     /**
@@ -83,10 +86,21 @@ class Pengguna extends Authenticatable
     protected function casts(): array
     {
         return [
+            'nik' => 'encrypted',
             'kata_sandi' => 'hashed',
             'dibuat_pada' => 'datetime',
             'diperbarui_pada' => 'datetime',
         ];
+    }
+
+    /**
+     * Menjaga blind index NIK selalu sinkron dengan nilai NIK.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $pengguna): void {
+            $pengguna->nik_hash = PengindeksNik::hash($pengguna->nik);
+        });
     }
 
     /*
@@ -167,23 +181,39 @@ class Pengguna extends Authenticatable
     | Pencarian pengguna
     |--------------------------------------------------------------------------
     |
-    | Semua pencarian NIK/NIP dipusatkan di sini agar mudah dienkripsi pada
-    | penguatan keamanan nanti.
+    | NIK disimpan terenkripsi, sehingga semua pencarian NIK WAJIB lewat
+    | `denganNik()` / `cariDenganNik()` yang memakai blind index `nik_hash`.
+    | Jangan pernah memakai `where('nik', ...)`.
     |
     */
 
     /**
+     * Batasi kueri pada NIK tertentu lewat blind index.
+     *
+     * NIK dinormalisasi (spasi/tanda hubung dibuang) agar pencarian dengan
+     * format bertanda baca tetap menemukan data yang sama.
+     */
+    public function scopeDenganNik(Builder $query, ?string $nik): Builder
+    {
+        $hash = PengindeksNik::hash($nik);
+
+        if ($hash === null) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where('nik_hash', $hash);
+    }
+
+    /**
      * Cari pengguna berdasarkan NIK.
      */
-    public static function cariByNik(string $nik): ?self
+    public static function cariDenganNik(string $nik): ?self
     {
-        $nik = trim($nik);
-
-        if ($nik === '') {
+        if (PengindeksNik::angka($nik) === '') {
             return null;
         }
 
-        return self::query()->where('nik', $nik)->first();
+        return self::query()->denganNik($nik)->first();
     }
 
     /**
@@ -217,14 +247,15 @@ class Pengguna extends Authenticatable
     /**
      * Cari pengguna dari satu identitas "NIK atau NIP" pada formulir login.
      *
-     * Identitas 16 digit dibaca sebagai NIK, identitas 18 digit dibaca sebagai NIP.
+     * Pemisah (spasi, tanda hubung, titik) dinormalisasi lebih dulu. Identitas
+     * yang tersisa 16 digit dibaca sebagai NIK, 18 digit sebagai NIP.
      */
     public static function cariDenganNikAtauNip(string $identitas): ?self
     {
-        $identitas = trim($identitas);
+        $identitas = PengindeksNik::angka($identitas);
 
         return match (strlen($identitas)) {
-            16 => self::cariByNik($identitas),
+            16 => self::cariDenganNik($identitas),
             18 => self::cariByNip($identitas),
             default => null,
         };

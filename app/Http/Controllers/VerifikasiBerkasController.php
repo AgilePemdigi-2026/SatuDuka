@@ -12,6 +12,7 @@ use App\Services\Ai\LayananAnalisisAi;
 use App\Services\LayananAudit;
 use App\Services\Verifikasi\HasilAnalisis;
 use App\Services\Verifikasi\MesinRekonsiliasi;
+use App\Support\PengindeksNik;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -88,12 +89,16 @@ class VerifikasiBerkasController extends Controller
                 $cari
             );
             $pola = '%'.$escapedCari.'%';
+            $hashNik = PengindeksNik::hash($cari);
 
-            $query->where(function ($subquery) use ($pola) {
+            $query->where(function ($subquery) use ($pola, $hashNik) {
                 $subquery
                     ->whereRaw('LOWER(no_pengajuan) LIKE ? ESCAPE ?', [$pola, '\\'])
-                    ->orWhereRaw('LOWER(nama_almarhum) LIKE ? ESCAPE ?', [$pola, '\\'])
-                    ->orWhereRaw('LOWER(nik_almarhum) LIKE ? ESCAPE ?', [$pola, '\\']);
+                    ->orWhereRaw('LOWER(nama_almarhum) LIKE ? ESCAPE ?', [$pola, '\\']);
+
+                if ($hashNik !== null) {
+                    $subquery->orWhere('nik_almarhum_hash', $hashNik);
+                }
             });
         }
 

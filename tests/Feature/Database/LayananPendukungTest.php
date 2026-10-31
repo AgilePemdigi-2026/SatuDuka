@@ -76,9 +76,9 @@ it('mencari pengguna berdasarkan nik dan nip', function () {
     $pemohon = Pengguna::factory()->pemohon()->create();
     $verifikator = Pengguna::factory()->verifikator()->create();
 
-    expect(Pengguna::cariByNik($pemohon->nik)?->is($pemohon))->toBeTrue()
+    expect(Pengguna::cariDenganNik($pemohon->nik)?->is($pemohon))->toBeTrue()
         ->and(Pengguna::cariByNip($verifikator->nip)?->is($verifikator))->toBeTrue()
-        ->and(Pengguna::cariByNik('0000000000000000'))->toBeNull()
+        ->and(Pengguna::cariDenganNik('0000000000000000'))->toBeNull()
         ->and(Pengguna::cariDenganNikAtauNip($pemohon->nik)?->is($pemohon))->toBeTrue()
         ->and(Pengguna::cariDenganNikAtauNip($verifikator->nip)?->is($verifikator))->toBeTrue()
         ->and(Pengguna::cariDenganNikAtauNip('12345'))->toBeNull();

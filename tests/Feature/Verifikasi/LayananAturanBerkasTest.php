@@ -273,5 +273,5 @@ it('tetap memeriksa banyak laporan factory dengan NIK serupa tanpa mengubah data
     lengkapiBerkasAturanBerkas($laporan);
 
     expect((new LayananAturanBerkas)->adaPengajuanGanda('3471031203559001', (int) $laporan->id_laporan))->toBeTrue()
-        ->and(LaporanKematian::query()->where('nik_almarhum', '3471031203559001')->count())->toBe(13);
+        ->and(LaporanKematian::query()->denganNik('3471031203559001')->count())->toBe(13);
 });
