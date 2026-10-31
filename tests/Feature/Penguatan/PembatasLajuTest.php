@@ -82,3 +82,23 @@ it('melonggarkan batas lewat konfigurasi tanpa menghapusnya', function () {
         'kata_sandi' => 'salah',
     ])->assertStatus(429);
 });
+
+it('membatasi satu IP yang mencoba banyak identitas berbeda', function () {
+    // Batas per IP dibuat kecil agar mudah diuji; batas per akun tetap longgar
+    // karena tiap identitas berbeda punya penghitungnya sendiri.
+    config(['satuduka.rate_limit.masuk_ip' => 2]);
+
+    for ($i = 0; $i < 2; $i++) {
+        $this->post(route('masuk.coba'), [
+            'identitas' => '99999901019000'.str_pad((string) $i, 2, '0', STR_PAD_LEFT),
+            'kata_sandi' => 'salah',
+        ])->assertRedirect();
+    }
+
+    $this->post(route('masuk.coba'), [
+        'identitas' => '9999990101900099',
+        'kata_sandi' => 'salah',
+    ])
+        ->assertStatus(429)
+        ->assertSee('Terlalu Banyak Permintaan');
+});

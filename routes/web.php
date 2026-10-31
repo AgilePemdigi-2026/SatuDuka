@@ -37,7 +37,7 @@ Route::middleware('guest')->group(function () {
         ->name('masuk');
 
     Route::post('/masuk', [LoginController::class, 'masuk'])
-        ->middleware('throttle:masuk')
+        ->middleware(['throttle:masuk', 'throttle:masuk-ip'])
         ->name('masuk.coba');
 
     // Permintaan pengaturan ulang kata sandi.

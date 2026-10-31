@@ -14,6 +14,7 @@ use App\Services\Tte\PabrikTte;
 use App\Services\Tte\TTEService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -58,6 +59,15 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->daftarkanPembatasLaju();
+
+        if (config('verifikasi.nik_demo_diabaikan')) {
+            Log::warning(
+                'VERIFIKASI_NIK_DEMO diminta aktif tetapi APP_ENV=production tanpa '
+                .'SATUDUKA_IZINKAN_MOCK_DEMO=true. Verifikasi NIK demo (awalan 99) '
+                .'DINONAKTIFKAN. Nyalakan SATUDUKA_IZINKAN_MOCK_DEMO=true hanya '
+                .'untuk demo terkontrol.'
+            );
+        }
 
         View::composer('verifikasi.show', function (Tampilan $view): void {
             $laporan = $view->getData()['laporan'] ?? null;
@@ -124,6 +134,11 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute($batas('masuk'))->by($kunci($request, 'masuk').'|'.$identitas);
         });
+
+        // Batas khusus per alamat IP saja: satu IP yang mencoba banyak identitas
+        // berbeda tetap dibatasi, terpisah dari batas per akun di atas.
+        RateLimiter::for('masuk-ip', fn (Request $request) => Limit::perMinute($batas('masuk_ip'))
+            ->by($kunci($request, 'masuk-ip')));
 
         RateLimiter::for('registrasi', fn (Request $request) => Limit::perMinute($batas('registrasi'))
             ->by($kunci($request, 'registrasi')));

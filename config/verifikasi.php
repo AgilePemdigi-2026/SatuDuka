@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\BerkasPendukung;
+use App\Support\PenjagaNikDemo;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +15,14 @@ use App\Models\BerkasPendukung;
 */
 
 $nikDemo = env('VERIFIKASI_NIK_DEMO', env('APP_ENV', 'production') === 'local');
+
+// Guard: NIK demo tidak boleh aktif di produksi kecuali operator menyalakan
+// flag demo eksplisit (SATUDUKA_IZINKAN_MOCK_DEMO) untuk demo terkontrol.
+$nikDemoKeputusan = PenjagaNikDemo::putuskan(
+    lingkungan: (string) env('APP_ENV', 'production'),
+    diminta: filter_var($nikDemo, FILTER_VALIDATE_BOOLEAN),
+    izinkanMock: filter_var(env('SATUDUKA_IZINKAN_MOCK_DEMO', false), FILTER_VALIDATE_BOOLEAN),
+);
 
 return [
     /*
@@ -155,7 +164,11 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'izinkan_nik_demo' => filter_var($nikDemo, FILTER_VALIDATE_BOOLEAN),
+    'izinkan_nik_demo' => $nikDemoKeputusan['aktif'],
+
+    // True bila permintaan aktif di produksi ditolak karena tidak ada flag demo
+    // eksplisit; dipakai AppServiceProvider untuk mencatat satu peringatan.
+    'nik_demo_diabaikan' => $nikDemoKeputusan['diabaikan'],
 
     'batas_usia' => 120,
 

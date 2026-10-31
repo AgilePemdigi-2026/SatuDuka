@@ -67,6 +67,9 @@ return [
 
         // 10/menit: penguncian akun (5 gagal) tetap tampil sebelum throttle.
         'masuk' => 10,
+        // 30/menit per IP: membatasi satu IP yang mencoba banyak identitas
+        // berbeda (mis. credential stuffing) tanpa mengganggu penguncian akun.
+        'masuk_ip' => 30,
         'registrasi' => 5,
         'lupa_kata_sandi' => 3,
         'atur_ulang_kata_sandi' => 5,

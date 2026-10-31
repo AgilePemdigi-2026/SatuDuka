@@ -14,6 +14,11 @@ use Symfony\Component\HttpFoundation\Cookie;
 
 const KATA_SANDI_DEMO = 'password123';
 
+// Halaman awal mengalihkan tamu ke halaman masuk.
+it('halaman awal mengalihkan tamu ke halaman masuk', function () {
+    $this->get('/')->assertRedirect(route('masuk'));
+});
+
 // Skenario: Berpindah ke halaman Registrasi dari halaman Masuk.
 it('menampilkan halaman masuk dengan tautan ke registrasi', function () {
     $this->get(route('masuk'))
@@ -274,4 +279,58 @@ it('mengakhiri sesi ketika pengguna keluar', function () {
 
     $this->assertGuest();
     expect(LogAudit::where('aksi', 'keluar')->where('id_pengguna', $pemohon->id_pengguna)->exists())->toBeTrue();
+});
+
+// Normalisasi identitas: format berbeda tetap dihitung sebagai satu akun.
+it('menghitung kegagalan dari berbagai format identitas sebagai akun yang sama', function () {
+    buatAkunDemo();
+
+    $kunci = 'login:9999990101900001';
+
+    // Lima percobaan gagal dengan format berbeda (polos, tanda hubung, spasi).
+    $formatGagal = [
+        '9999990101900001',
+        '9999-9901-0190-0001',
+        '9999 9901 0190 0001',
+        '9999990101900001',
+        '9999-9901-0190-0001',
+    ];
+
+    foreach ($formatGagal as $identitas) {
+        $this->post(route('masuk.coba'), [
+            'identitas' => $identitas,
+            'kata_sandi' => 'password124',
+        ])->assertSessionHasErrors();
+    }
+
+    // Percobaan kelima (format apa pun) memicu penguncian pada kunci kanonik.
+    expect(LayananPenguncian::terkunci($kunci))->toBeTrue()
+        ->and(LayananPenguncian::jumlahGagal($kunci))->toBe(LayananPenguncian::MAKS_GAGAL_LOGIN);
+
+    $this->assertGuest();
+});
+
+// Login benar setelah terkunci tetap ditolak untuk semua format identitas.
+it('menolak login benar setelah terkunci pada semua format identitas', function () {
+    buatAkunDemo();
+
+    $kunci = 'login:9999990101900001';
+
+    for ($i = 0; $i < LayananPenguncian::MAKS_GAGAL_LOGIN; $i++) {
+        $this->post(route('masuk.coba'), [
+            'identitas' => '9999990101900001',
+            'kata_sandi' => 'password124',
+        ])->assertSessionHasErrors();
+    }
+
+    expect(LayananPenguncian::terkunci($kunci))->toBeTrue();
+
+    foreach (['9999990101900001', '9999-9901-0190-0001', '9999 9901 0190 0001'] as $identitas) {
+        $this->post(route('masuk.coba'), [
+            'identitas' => $identitas,
+            'kata_sandi' => KATA_SANDI_DEMO,
+        ])->assertSessionHasErrors(['identitas' => 'Akun Anda dikunci sementara']);
+    }
+
+    $this->assertGuest();
 });
