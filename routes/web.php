@@ -6,6 +6,7 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\RegistrasiController;
+use App\Http\Controllers\RekonsiliasiController;
 use App\Http\Controllers\StatusPengajuanController;
 use App\Http\Controllers\VerifikasiBerkasController;
 use App\Models\BerkasPendukung;
@@ -122,6 +123,17 @@ Route::middleware(['auth', 'peran:verifikator'])
         Route::post('/{laporan}/revisi', [VerifikasiBerkasController::class, 'mintaRevisi'])->name('revisi');
         Route::post('/{laporan}/anomali', [VerifikasiBerkasController::class, 'tandaiAnomali'])->name('anomali');
         Route::post('/{laporan}/tolak-fatal', [VerifikasiBerkasController::class, 'tolakFatal'])->name('tolak_fatal');
+    });
+
+// Rekonsiliasi anomali data kependudukan (use case 5.2.7 dan user story 6.2.7).
+Route::middleware(['auth', 'peran:verifikator'])
+    ->prefix('rekonsiliasi')
+    ->name('rekonsiliasi.')
+    ->group(function () {
+        Route::get('/', [RekonsiliasiController::class, 'index'])->name('index');
+        Route::get('/{laporan}', [RekonsiliasiController::class, 'show'])->name('show');
+        Route::post('/{laporan}/selesaikan', [RekonsiliasiController::class, 'selesaikan'])->name('selesaikan');
+        Route::post('/{laporan}/tolak-fatal', [RekonsiliasiController::class, 'tolakFatal'])->name('tolak_fatal');
     });
 
 Route::redirect('/pengajuan-laporan', '/laporan/baru');

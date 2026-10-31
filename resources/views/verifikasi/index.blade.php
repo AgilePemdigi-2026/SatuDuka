@@ -10,6 +10,7 @@
     <x-ui.page-header title="Antrean Verifikasi Berkas"
         subtitle="Urutan mengikuti keparahan anomali tertinggi dari mesin, lalu tanggal pengajuan.">
         <x-slot:aksi>
+            <x-ui.button :href="route('rekonsiliasi.index')" variant="secondary">Rekonsiliasi Anomali</x-ui.button>
             <x-ui.button :href="route('dashboard')" variant="secondary">Dashboard</x-ui.button>
         </x-slot:aksi>
     </x-ui.page-header>

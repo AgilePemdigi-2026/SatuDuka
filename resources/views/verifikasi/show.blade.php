@@ -39,6 +39,11 @@
             :subtitle="'Nomor Pengajuan: '.($laporan->no_pengajuan ?? '-')">
             <x-slot:aksi>
                 @include('komponen.badge_status', ['status' => $laporan->status_pengajuan])
+                @if ($laporan->status_pengajuan === \App\Models\LaporanKematian::STATUS_DALAM_REKONSILIASI)
+                    <x-ui.button :href="route('rekonsiliasi.show', $laporan)" size="sm">
+                        Telusuri Rekonsiliasi
+                    </x-ui.button>
+                @endif
             </x-slot:aksi>
         </x-ui.page-header>
 

@@ -46,9 +46,15 @@
                 </x-ui.card>
 
                 <x-ui.card title="Lini Masa Pengajuan">
-                    @if (filled($laporan->catatan_revisi) && $laporan->bolehDiubah())
+                    @if (filled($laporan->catatan_revisi)
+                        && ($laporan->bolehDiubah()
+                            || $laporan->status_pengajuan === \App\Models\LaporanKematian::STATUS_DITOLAK_ANOMALI_FATAL))
                         <x-ui.alert variant="warning" class="mb-4">
-                            <p class="font-semibold">Catatan Revisi dari Verifikator</p>
+                            <p class="font-semibold">
+                                {{ $laporan->status_pengajuan === \App\Models\LaporanKematian::STATUS_DITOLAK_ANOMALI_FATAL
+                                    ? 'Catatan Resmi Verifikator'
+                                    : 'Catatan Revisi dari Verifikator' }}
+                            </p>
                             <p class="mt-1 font-normal">{{ $laporan->catatan_revisi }}</p>
                         </x-ui.alert>
                     @endif

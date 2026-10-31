@@ -11,6 +11,7 @@
         :subtitle="'Selamat datang, '.$pengguna->nama_lengkap.'. Anda masuk sebagai '.$pengguna->labelPeran().'. Antrean verifikasi berkas pengajuan.'">
         <x-slot:aksi>
             <x-ui.button :href="route('verifikasi.index')">Buka Daftar Verifikasi</x-ui.button>
+            <x-ui.button :href="route('rekonsiliasi.index')" variant="secondary">Rekonsiliasi Anomali</x-ui.button>
         </x-slot:aksi>
     </x-ui.page-header>
 

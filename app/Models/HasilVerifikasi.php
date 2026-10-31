@@ -28,6 +28,11 @@ class HasilVerifikasi extends Model
     public const STATUS_ANOMALI = 'Anomali';
 
     /**
+     * Hasil rekonsiliasi anomali yang sudah diselesaikan (SRS 5.2.7).
+     */
+    public const STATUS_REKONSILIASI = 'Rekonsiliasi';
+
+    /**
      * Daftar status hasil verifikasi yang sah.
      *
      * @var list<string>
@@ -37,6 +42,7 @@ class HasilVerifikasi extends Model
         self::STATUS_DITOLAK,
         self::STATUS_PERLU_REVISI,
         self::STATUS_ANOMALI,
+        self::STATUS_REKONSILIASI,
     ];
 
     protected $table = 'hasil_verifikasi';
