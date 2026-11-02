@@ -60,6 +60,15 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->daftarkanPembatasLaju();
 
+        // Blade menyimpan hasil kompilasi komponen anonim di direktori view
+        // terkompilasi dengan namespace `__components`. Namespace itu biasanya
+        // baru didaftarkan saat komponen dikompilasi dari string, sehingga
+        // proses yang memakai ulang view terkompilasi (mis. harness BDD yang
+        // memuat aplikasi berkali-kali) bisa gagal "No hint path defined".
+        // Daftarkan sejak awal agar setiap instans aplikasi dapat merender
+        // komponen anonim, termasuk pada basis data kosong.
+        View::addNamespace('__components', (string) config('view.compiled'));
+
         if (config('verifikasi.nik_demo_diabaikan')) {
             Log::warning(
                 'VERIFIKASI_NIK_DEMO diminta aktif tetapi APP_ENV=production tanpa '
