@@ -59,6 +59,8 @@ class DokumenResmi extends Model
         'status_ttd',
         'file_dokumen',
         'alasan_pengembalian',
+        'tanda_tangan_visual',
+        'tanda_tangan_hash',
     ];
 
     /**

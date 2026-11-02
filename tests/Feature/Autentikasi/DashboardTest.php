@@ -25,9 +25,8 @@ it('menampilkan dashboard sesuai peran pengguna', function () {
     $this->actingAs($verifikator)->get(route('dashboard'))
         ->assertOk()
         ->assertSee('Dashboard Verifikator')
-        ->assertSee('Anda masuk sebagai Verifikator')
-        ->assertSee('Kelola Profil')
-        ->assertDontSee('Profil Saya');
+        ->assertSee('Menunggu Verifikasi')
+        ->assertSee('Buka Daftar Verifikasi');
 
     $this->actingAs($pejabat)->get(route('dashboard'))
         ->assertOk()

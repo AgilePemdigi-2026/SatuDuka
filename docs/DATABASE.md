@@ -9,42 +9,44 @@ Gunakan `$table`, `$primaryKey`, dan `$timestamps` eksplisit di model karena tid
 |---|---|---|
 | id_pengguna | bigint PK auto | |
 | nama_lengkap | varchar(100) | |
-| nik | varchar(16) | unik, nullable untuk petugas |
+| nik | text | terenkripsi (cast `encrypted`), nullable untuk petugas; ciphertext lebih panjang dari 16 karakter |
+| nik_hash | varchar(64) | blind index HMAC-SHA256, unik; dipakai login/pencarian/cek duplikat |
 | nip | varchar(20) | IMPROVISASI: unik, nullable; dipakai login Verifikator/Pejabat |
-| email | varchar(100) | unik, WAJIB diisi saat registrasi (deviasi dari use case 5.2.1) |
+| email | varchar(100) | unik |
 | kata_sandi | varchar(255) | hash; override `getAuthPassword()` |
 | no_telepon | varchar(15) | |
 | peran | enum('pemohon','verifikator','pejabat') | |
-| remember_token | varchar(100) nullable | IMPROVISASI (Fase 2): tidak ada di PDM; dibutuhkan Laravel untuk fitur "Ingat Saya" use case 5.2.2 alur 4.b. Migration `2026_10_20_000010` |
 | dibuat_pada / diperbarui_pada | timestamp | map ke created_at/updated_at |
 
 Auth Laravel: set `config/auth.php` provider ke model `Pengguna`; `getAuthPassword()` mengembalikan `kata_sandi`; `getAuthIdentifierName()` = `id_pengguna`.
-Login memakai satu formulir "NIK atau NIP": identitas 16 digit dibaca sebagai `nik`, identitas 18 digit dibaca sebagai `nip`. Pencarian NIK dipusatkan pada `Pengguna::cariByNik()` agar mudah dienkripsi pada Fase 9.
 
 ## laporan_kematian
-id_laporan (PK), id_pengguna (FK → pengguna, pemohon), no_pengajuan varchar(30) unik (format mis. `SD-20261020-0001`), nama_pelapor varchar(100), hubungan_pelapor varchar(50), nama_almarhum varchar(100), nik_almarhum varchar(16), tanggal_kematian date, tempat_kematian varchar(100), sebab_kematian text, status_pengajuan varchar(30), tanggal_pengajuan timestamp nullable, dibuat_pada timestamp nullable, diperbarui_pada timestamp nullable.
-Nilai status_pengajuan: `Draf` (IMPROVISASI), `Menunggu Verifikasi`, `Ditolak/Butuh Revisi`, `Disetujui/Menunggu TTE`, `Selesai`, `Dikembalikan`, `Dalam Rekonsiliasi Anomali`, `Pending - Menunggu Perbaikan Berkas Pelapor`.
+id_laporan (PK), id_pengguna (FK → pengguna, pemohon), no_pengajuan varchar(30) unik (format mis. `SD-20261020-0001`), nama_pelapor varchar(100), hubungan_pelapor varchar(50), nama_almarhum varchar(100), nik_almarhum text (terenkripsi), nik_almarhum_hash varchar(64) (blind index, indeks komposit dengan `status_pengajuan`), tanggal_kematian date, tempat_kematian varchar(100), sebab_kematian text, status_pengajuan varchar(30), tanggal_pengajuan timestamp nullable.
+Nilai status_pengajuan: `Draf` (IMPROVISASI), `Menunggu Verifikasi`, `Ditolak/Butuh Revisi`, `Disetujui/Menunggu TTE`, `Selesai`, `Dikembalikan`.
 IMPROVISASI: tambah `catatan_revisi` text nullable dan `perlu_verifikasi_manual` boolean default false (fallback layanan eksternal).
-IMPROVISASI (keputusan pemilik proyek, migration `2026_10_20_000009_tambah_kolom_waktu_ke_tabel_pengajuan`): tambah `dibuat_pada` dan `diperbarui_pada` timestamp nullable.
 
 ## berkas_pendukung
-id_berkas (PK), id_laporan (FK), jenis_dokumen varchar(50) (Surat Keterangan Kematian, KTP Almarhum, KTP Pelapor, Kartu Keluarga), nama_file varchar(255), path_file varchar(255), status_unggahan varchar(20), tanggal_unggah timestamp.
+id_berkas (PK), id_laporan (FK), jenis_dokumen varchar(50) (mengikuti `BerkasPendukung::DAFTAR_JENIS`: 4 berkas wajib — Surat Keterangan Kematian, KTP Almarhum, KTP Pelapor, Kartu Keluarga — dan 5 berkas opsional — Surat Keterangan Kelurahan, SPTJM Kebenaran Data Kematian, Surat Keterangan Kepolisian, KTP Saksi 1, KTP Saksi 2), nama_file varchar(255), path_file varchar(255), status_unggahan varchar(20), tanggal_unggah timestamp.
 
 ## hasil_verifikasi
-id_verifikasi (PK), id_laporan (FK), id_pengguna (FK → pengguna, verifikator), status_verifikasi varchar(30), catatan text, tanggal_verifikasi timestamp, dibuat_pada timestamp nullable, diperbarui_pada timestamp nullable.
-IMPROVISASI (migration `2026_10_20_000009_tambah_kolom_waktu_ke_tabel_pengajuan`): tambah `dibuat_pada` dan `diperbarui_pada` timestamp nullable.
+id_verifikasi (PK), id_laporan (FK), id_pengguna (FK → pengguna, verifikator), status_verifikasi varchar(30), catatan text, tanggal_verifikasi timestamp.
 
 ## anomali_dokumen
-id_anomali (PK), id_verifikasi (FK → hasil_verifikasi), jenis_anomali varchar(50), deskripsi text, status_rekonsiliasi varchar(20) (`Terbuka`, `Selesai`, `Ditolak - Anomali Data Fatal`), tanggal_rekonsiliasi timestamp nullable, dibuat_pada timestamp nullable, diperbarui_pada timestamp nullable.
-IMPROVISASI (migration `2026_10_20_000009_tambah_kolom_waktu_ke_tabel_pengajuan`): tambah `dibuat_pada` dan `diperbarui_pada` timestamp nullable.
+id_anomali (PK), id_verifikasi (FK → hasil_verifikasi), jenis_anomali varchar(50), deskripsi text, status_rekonsiliasi varchar(20) (mis. `Terbuka`, `Selesai`), tanggal_rekonsiliasi timestamp nullable.
 
 ## dokumen_resmi
-id_dokumen (PK), id_laporan (FK, unik → relasi 1:1), id_pengguna (FK → pengguna, pejabat, nullable sampai ditandatangani), no_dokumen varchar(30) unik nullable, tanggal_terbit timestamp nullable, status_ttd varchar(20) (`Menunggu`, `Selesai`, `Dikembalikan`), file_dokumen varchar(255) nullable, dibuat_pada timestamp nullable, diperbarui_pada timestamp nullable.
+id_dokumen (PK), id_laporan (FK, unik → relasi 1:1), id_pengguna (FK → pengguna, pejabat), no_dokumen varchar(30), tanggal_terbit timestamp nullable, status_ttd varchar(20) (`Menunggu`, `Selesai`, `Dikembalikan`), file_dokumen varchar(255) nullable.
 IMPROVISASI: tambah `alasan_pengembalian` text nullable.
-IMPROVISASI (migration `2026_10_20_000009_tambah_kolom_waktu_ke_tabel_pengajuan`): tambah `dibuat_pada` dan `diperbarui_pada` timestamp nullable.
 
 ## log_audit (IMPROVISASI, kebutuhan NFR-06)
 id_log (PK), id_pengguna (FK nullable), aksi varchar(100), objek varchar(50), id_objek bigint nullable, detail jsonb nullable, layanan_eksternal varchar(30) nullable, hasil varchar(20) nullable, dibuat_pada timestamp. Tanpa updated_at. Append-only.
+
+## Enkripsi NIK dan blind index (Fase 9b)
+- `pengguna.nik`, `laporan_kematian.nik_almarhum`, dan NIK di `analisis_ai.hasil` TIDAK disimpan sebagai plaintext.
+- Kolom NIK memakai cast Eloquent `encrypted`; tipe `text` karena ciphertext (base64 + IV + MAC) jauh lebih panjang dari 16 karakter. Indeks unik/like lama pada kolom NIK sudah dilepas.
+- Blind index `*_hash` = HMAC-SHA256 atas NIK yang sudah dinormalisasi (hanya digit), memakai `SATUDUKA_NIK_HASH_KEY`. Kunci wajib eksplisit di produksi; local/testing menurunkan sub-kunci dari `APP_KEY`.
+- Semua kueri NIK WAJIB lewat `Pengguna::scopeDenganNik()` / `cariDenganNik()` dan `LaporanKematian::scopeDenganNik()` / `cariDenganNik()`. Jangan memakai `where('nik', ...)`, `where('nik_almarhum', ...)`, atau `LIKE` pada kolom NIK.
+- `analisis_ai.hasil` menyimpan `hash` (blind index) dan nilai termasker (mis. `347103120355****`) untuk kolom NIK, bukan NIK utuh.
 
 ## Relasi (Tabel 8.2)
 1. pengguna 1:N laporan_kematian (pemohon)
@@ -57,9 +59,6 @@ id_log (PK), id_pengguna (FK nullable), aksi varchar(100), objek varchar(50), id
 
 ## Seeder data dummy
 - Akun demo (kata sandi `password123`): 1 pemohon (email demo), 1 verifikator (NIP demo), 1 pejabat (NIP demo). Tampilkan kredensial demo di `PROGRESS.md`.
-  - Pemohon: email `pemohon@demo.satuduka.id`, NIK `9999990101900001`.
-  - Verifikator: email `verifikator@demo.satuduka.id`, NIP `999999991234567890`.
-  - Pejabat: email `pejabat@demo.satuduka.id`, NIP `999999992345678901`.
 - 10 laporan kematian tersebar di semua status, masing-masing 3 sampai 4 berkas.
 - 3 hasil verifikasi, 2 anomali (1 Terbuka, 1 Selesai), 2 dokumen resmi (1 Menunggu, 1 Selesai).
 - Data SIAK dummy (NIK → nama, tanggal lahir) untuk SIAKService mock: simpan di file `database/data/siak_dummy.json`, bukan di tabel aplikasi.

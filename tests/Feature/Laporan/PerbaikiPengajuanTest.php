@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\LaporanController;
-use App\Models\BerkasPendukung;
 use App\Models\LaporanKematian;
 use App\Models\LogAudit;
 use App\Models\Pengguna;
@@ -21,7 +20,7 @@ function dataPerbaikanLengkap(array $timpa = []): array
         'nama_pelapor' => 'Pemohon Demo',
         'hubungan_pelapor' => 'Anak Kandung',
         'nama_almarhum' => 'Budi Santoso',
-        'nik_almarhum' => '9999990101900101',
+        'nik_almarhum' => '3471031203559001',
         'tanggal_kematian' => now()->subDay()->toDateString(),
         'tempat_kematian' => 'RSUD Kota Yogyakarta',
         'sebab_kematian' => 'Sakit',
@@ -40,6 +39,19 @@ function unggahBerkasPerbaikan(object $test, LaporanKematian $laporan, string $j
 }
 
 /**
+ * Unggah satu bukti kematian dan seluruh berkas wajib lainnya.
+ */
+function unggahBerkasWajibPerbaikan(object $test, LaporanKematian $laporan, ?string $buktiKematian = null): void
+{
+    $buktiKematian ??= config('verifikasi.berkas_wajib.bukti_kematian.jenis')[0];
+
+    foreach (array_merge([$buktiKematian], config('verifikasi.berkas_wajib.lainnya')) as $jenis) {
+        unggahBerkasPerbaikan($test, $laporan, $jenis)
+            ->assertRedirect(route('laporan.ubah', $laporan).'?langkah=3');
+    }
+}
+
+/**
  * Pengajuan berstatus revisi milik seorang pemohon.
  *
  * @param  array<string, mixed>  $timpa
@@ -54,6 +66,7 @@ function buatLaporanRevisi(
         'no_pengajuan' => 'SD-20260910-0001',
         'status_pengajuan' => $status,
         'tanggal_pengajuan' => Carbon::parse('2026-09-10 09:00'),
+        'tanggal_kematian' => '2026-09-09',
         'catatan_revisi' => 'Surat keterangan kematian kurang jelas.',
         'nama_almarhum' => 'Budi Santoso',
     ], $timpa));
@@ -70,10 +83,7 @@ it('memperbaiki dan mengirim ulang pengajuan berstatus revisi', function () {
         ->assertOk()
         ->assertSee('Perbaiki Pengajuan');
 
-    foreach (BerkasPendukung::DAFTAR_JENIS as $jenis) {
-        unggahBerkasPerbaikan($this, $laporan, $jenis)
-            ->assertRedirect(route('laporan.ubah', $laporan).'?langkah=3');
-    }
+    unggahBerkasWajibPerbaikan($this, $laporan);
 
     $this->post(route('laporan.draf.ubah', $laporan), dataPerbaikanLengkap([
         'nama_almarhum' => 'Budi Santoso Revisi',
@@ -144,9 +154,7 @@ it('tidak menampilkan catatan revisi setelah pengajuan dikirim ulang', function 
 
     $this->actingAs($pemohon);
 
-    foreach (BerkasPendukung::DAFTAR_JENIS as $jenis) {
-        unggahBerkasPerbaikan($this, $laporan, $jenis);
-    }
+    unggahBerkasWajibPerbaikan($this, $laporan);
 
     $this->post(route('laporan.kirim', $laporan), dataPerbaikanLengkap(['pernyataan' => '1']))
         ->assertRedirect(route('laporan.lihat', $laporan));

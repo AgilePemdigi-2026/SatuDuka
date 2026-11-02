@@ -222,6 +222,25 @@ it('mengunggah foto profil baru dan menghapus foto lama', function () {
     expect(LogAudit::where('aksi', 'mengubah_foto_profil')->exists())->toBeTrue();
 });
 
+it('mengirim header keamanan pada rute foto profil', function () {
+    Storage::fake('local');
+    [$pemohon] = buatAkunDemo();
+
+    $isi = base64_decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+    );
+
+    Storage::disk('local')->put('foto_profil/foto.png', $isi);
+    $pemohon->update(['path_foto' => 'foto_profil/foto.png']);
+
+    $this->actingAs($pemohon)
+        ->get(route('profil.foto.tampil'))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'image/png')
+        ->assertHeader('X-Content-Type-Options', 'nosniff')
+        ->assertHeader('Cache-Control', 'no-store, private');
+});
+
 it('menampilkan inisial saat foto profil belum ada', function () {
     Storage::fake('local');
     [$pemohon] = buatAkunDemo();
@@ -314,16 +333,21 @@ it('mengalihkan sesi kedaluwarsa ke halaman masuk dengan pesan', function () {
         ->assertSessionHas('galat', 'Sesi Anda telah berakhir. Silakan login kembali.');
 });
 
-it('menampilkan tautan kelola profil pada dashboard setiap peran', function () {
+it('menampilkan tautan kelola profil pada dashboard pemohon dan pejabat serta mengalihkan verifikator', function () {
     [$pemohon, $verifikator, $pejabat] = buatAkunDemo();
 
-    foreach ([$pemohon, $verifikator, $pejabat] as $pengguna) {
+    foreach ([$pemohon, $pejabat] as $pengguna) {
         $this->actingAs($pengguna)
             ->get(route('dashboard'))
             ->assertOk()
             ->assertSee('Kelola Profil')
             ->assertSee(route('profil.tampilkan'));
     }
+
+    $this->actingAs($verifikator)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Dashboard Verifikator');
 
     expect(Pengguna::count())->toBe(3);
 });

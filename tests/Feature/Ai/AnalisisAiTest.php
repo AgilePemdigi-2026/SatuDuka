@@ -26,8 +26,8 @@ function buatLaporanAi(Pengguna $pemohon, array $timpa = []): LaporanKematian
         'nama_pelapor' => 'Pemohon Demo',
         'hubungan_pelapor' => 'Anak Kandung',
         'nama_almarhum' => 'Suharto Wiryo',
-        'nik_almarhum' => '9999990101900101',
-        'tanggal_kematian' => '2026-10-01',
+        'nik_almarhum' => '3471031203559001',
+        'tanggal_kematian' => now()->subDays(2)->toDateString(),
         'tempat_kematian' => 'RSUD Kota Yogyakarta',
         'sebab_kematian' => 'Sakit',
     ], $timpa));
@@ -56,11 +56,16 @@ function lampirkanBerkasAi(
 }
 
 /**
- * Melengkapi keempat berkas pendukung agar pengajuan dapat dikirim.
+ * Melengkapi satu bukti kematian dan berkas wajib lainnya.
  */
 function lengkapiBerkasAi(LaporanKematian $laporan, string $varian = 'cocok'): void
 {
-    foreach (BerkasPendukung::DAFTAR_JENIS as $urutan => $jenis) {
+    $jenisWajib = array_merge(
+        [config('verifikasi.berkas_wajib.bukti_kematian.jenis')[0]],
+        config('verifikasi.berkas_wajib.lainnya'),
+    );
+
+    foreach ($jenisWajib as $urutan => $jenis) {
         lampirkanBerkasAi($laporan, $jenis, 'berkas-'.$urutan.'-'.$varian.'.pdf');
     }
 }
@@ -88,8 +93,8 @@ function responOpenAi(?array $kolom = null)
 {
     $data = $kolom ?? [
         'nama_almarhum' => 'Suharto Wiryo',
-        'nik' => '9999990101900101',
-        'tanggal_kematian' => '2026-10-01',
+        'nik' => '3471031203559001',
+        'tanggal_kematian' => now()->subDays(2)->toDateString(),
         'tempat_kematian' => 'RSUD Kota Yogyakarta',
         'keyakinan' => [
             'nama_almarhum' => 0.99,
@@ -227,8 +232,8 @@ it('menangani waktu tunggu layanan ai tanpa menolak pengajuan', function () {
         'nama_pelapor' => 'Pemohon Demo',
         'hubungan_pelapor' => 'Anak Kandung',
         'nama_almarhum' => 'Suharto Wiryo',
-        'nik_almarhum' => '9999990101900101',
-        'tanggal_kematian' => '2026-10-01',
+        'nik_almarhum' => '3471031203559001',
+        'tanggal_kematian' => now()->subDays(2)->toDateString(),
         'tempat_kematian' => 'RSUD Kota Yogyakarta',
         'sebab_kematian' => 'Sakit',
         'pernyataan' => '1',

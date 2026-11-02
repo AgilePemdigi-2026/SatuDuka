@@ -16,6 +16,10 @@ final class DataSIAK
      */
     public const LOKASI = 'database/data/siak_dummy.json';
 
+    public const STATUS_HIDUP = 'Hidup';
+
+    public const STATUS_MENINGGAL = 'Meninggal';
+
     /**
      * Memuat seluruh data dummy SIAK.
      *
@@ -54,6 +58,16 @@ final class DataSIAK
         }
 
         return null;
+    }
+
+    /**
+     * Menentukan apakah catatan SIAK menandai penduduk sudah meninggal.
+     *
+     * @param  array<string, string>|null  $data
+     */
+    public static function sudahMeninggal(?array $data): bool
+    {
+        return ($data['status_kependudukan'] ?? self::STATUS_HIDUP) === self::STATUS_MENINGGAL;
     }
 
     /**
