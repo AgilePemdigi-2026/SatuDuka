@@ -121,7 +121,7 @@ it('mengizinkan registrasi dengan nik 16 digit yang tidak ada pada data kependud
         ->assertRedirect(route('masuk'))
         ->assertSessionHas('sukses', 'Registrasi berhasil!');
 
-    $pengguna = Pengguna::cariByNik($nik);
+    $pengguna = Pengguna::cariDenganNik($nik);
 
     expect($pengguna)->not->toBeNull()
         ->and($pengguna->nama_lengkap)->toBe('Pemohon')

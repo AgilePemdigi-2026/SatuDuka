@@ -217,6 +217,19 @@ class Pengguna extends Authenticatable
     }
 
     /**
+     * Nama lama pencarian NIK.
+     *
+     * @deprecated Gunakan cariDenganNik(). Alias ini hanya dipertahankan karena
+     *             tes BDD tim di `features/bootstrap/FeatureContext.php` masih
+     *             memanggil cariByNik(); logika pencarian tetap satu jalur lewat
+     *             cariDenganNik() dan blind index `nik_hash`.
+     */
+    public static function cariByNik(string $nik): ?self
+    {
+        return self::cariDenganNik($nik);
+    }
+
+    /**
      * Cari pengguna berdasarkan NIP.
      */
     public static function cariByNip(string $nip): ?self
