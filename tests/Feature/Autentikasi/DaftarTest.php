@@ -108,18 +108,24 @@ it('menolak nik yang sudah terdaftar', function () {
         ->assertSessionHasErrors(['nik' => 'NIK sudah terdaftar']);
 });
 
-// Skenario: Registrasi gagal karena NIK tidak ditemukan pada data kependudukan.
-it('menolak nik yang tidak ditemukan pada data kependudukan', function () {
+// NIK harus unik dan 16 digit, tetapi tidak harus ada pada data kependudukan.
+it('mengizinkan registrasi dengan nik 16 digit yang tidak ada pada data kependudukan', function () {
+    $nik = '9999990101900099';
+
     $this->post(route('registrasi.simpan'), [
-        'nik' => '9999990101900099',
+        'nik' => $nik,
         'email' => 'pemohon.baru@demo.satuduka.id',
         'kata_sandi' => 'Baru12345',
         'konfirmasi_kata_sandi' => 'Baru12345',
     ])
-        ->assertRedirect()
-        ->assertSessionHasErrors(['nik' => 'NIK tidak ditemukan pada data kependudukan']);
+        ->assertRedirect(route('masuk'))
+        ->assertSessionHas('sukses', 'Registrasi berhasil!');
 
-    expect(Pengguna::count())->toBe(0);
+    $pengguna = Pengguna::cariByNik($nik);
+
+    expect($pengguna)->not->toBeNull()
+        ->and($pengguna->nama_lengkap)->toBe('Pemohon')
+        ->and(LogAudit::where('aksi', 'registrasi')->where('id_pengguna', $pengguna->id_pengguna)->exists())->toBeTrue();
 });
 
 // Skenario: Registrasi gagal karena surel sudah terdaftar.
