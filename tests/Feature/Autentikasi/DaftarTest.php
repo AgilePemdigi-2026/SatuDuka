@@ -3,7 +3,7 @@
 /**
  * Pengujian fitur Registrasi.
  *
- * Sumber skenario: features/register.feature (SRS Bab VI Tabel 6.2).
+ * Sumber skenario: SRS Bab VI Tabel 6.2.
  * Setiap blok pengujian memetakan satu skenario Gherkin.
  */
 
@@ -16,15 +16,15 @@ use Illuminate\Support\Facades\Hash;
 it('menampilkan halaman registrasi dengan tautan ke halaman masuk', function () {
     $this->get(route('registrasi'))
         ->assertOk()
-        ->assertSee('Registrasi ke Akun Pemohon')
+        ->assertSee('Registrasi Akun Pemohon')
         ->assertSee('Nomor Induk Kependudukan (NIK)')
-        ->assertSee('Alamat Surel')
+        ->assertSee('Alamat Email')
         ->assertSee(route('masuk'));
 });
 
 // Skenario: Berhasil registrasi dengan NIK yang terdapat pada data kependudukan.
 it('menyimpan akun pemohon baru dan mengarahkan ke halaman masuk', function () {
-    $nik = '9999990101900115';
+    $nik = '3471031907459015';
 
     $this->post(route('registrasi.simpan'), [
         'nik' => $nik,
@@ -35,7 +35,7 @@ it('menyimpan akun pemohon baru dan mengarahkan ke halaman masuk', function () {
         ->assertRedirect(route('masuk'))
         ->assertSessionHas('sukses', 'Registrasi berhasil!');
 
-    $pengguna = Pengguna::cariByNik($nik);
+    $pengguna = Pengguna::cariDenganNik($nik);
 
     expect($pengguna)->not->toBeNull()
         ->and($pengguna->nama_lengkap)->toBe(DataSIAK::cariNik($nik)['nama_lengkap'])
@@ -50,7 +50,7 @@ it('menyimpan akun pemohon baru dan mengarahkan ke halaman masuk', function () {
 // Skenario: Registrasi gagal karena kata sandi lemah.
 it('menolak kata sandi yang tidak memenuhi nfr-01', function () {
     $this->post(route('registrasi.simpan'), [
-        'nik' => '9999990101900114',
+        'nik' => '3404016511599014',
         'email' => 'pemohon.baru@demo.satuduka.id',
         'kata_sandi' => 'abc123',
         'konfirmasi_kata_sandi' => 'abc123',
@@ -66,7 +66,7 @@ it('menolak kata sandi yang tidak memenuhi nfr-01', function () {
 // Skenario: Registrasi gagal karena konfirmasi kata sandi tidak cocok.
 it('menolak konfirmasi kata sandi yang tidak cocok', function () {
     $this->post(route('registrasi.simpan'), [
-        'nik' => '9999990101900114',
+        'nik' => '3404016511599014',
         'email' => 'pemohon.baru@demo.satuduka.id',
         'kata_sandi' => 'Baru12345',
         'konfirmasi_kata_sandi' => 'Baru12346',
@@ -108,18 +108,24 @@ it('menolak nik yang sudah terdaftar', function () {
         ->assertSessionHasErrors(['nik' => 'NIK sudah terdaftar']);
 });
 
-// Skenario: Registrasi gagal karena NIK tidak ditemukan pada data kependudukan.
-it('menolak nik yang tidak ditemukan pada data kependudukan', function () {
+// NIK harus unik dan 16 digit, tetapi tidak harus ada pada data kependudukan.
+it('mengizinkan registrasi dengan nik 16 digit yang tidak ada pada data kependudukan', function () {
+    $nik = '9999990101900099';
+
     $this->post(route('registrasi.simpan'), [
-        'nik' => '9999990101900099',
+        'nik' => $nik,
         'email' => 'pemohon.baru@demo.satuduka.id',
         'kata_sandi' => 'Baru12345',
         'konfirmasi_kata_sandi' => 'Baru12345',
     ])
-        ->assertRedirect()
-        ->assertSessionHasErrors(['nik' => 'NIK tidak ditemukan pada data kependudukan']);
+        ->assertRedirect(route('masuk'))
+        ->assertSessionHas('sukses', 'Registrasi berhasil!');
 
-    expect(Pengguna::count())->toBe(0);
+    $pengguna = Pengguna::cariDenganNik($nik);
+
+    expect($pengguna)->not->toBeNull()
+        ->and($pengguna->nama_lengkap)->toBe('Pemohon')
+        ->and(LogAudit::where('aksi', 'registrasi')->where('id_pengguna', $pengguna->id_pengguna)->exists())->toBeTrue();
 });
 
 // Skenario: Registrasi gagal karena surel sudah terdaftar.
@@ -130,7 +136,7 @@ it('menolak surel yang sudah terdaftar', function () {
     ]);
 
     $this->post(route('registrasi.simpan'), [
-        'nik' => '9999990101900114',
+        'nik' => '3404016511599014',
         'email' => 'pemohon@demo.satuduka.id',
         'kata_sandi' => 'Baru12345',
         'konfirmasi_kata_sandi' => 'Baru12345',
@@ -145,14 +151,14 @@ it('menampilkan pesan kolom kosong dan menandai kolom tersebut', function () {
     $this->get(route('registrasi'));
 
     $this->followRedirects($this->post(route('registrasi.simpan'), [
-        'nik' => '9999990101900114',
+        'nik' => '3404016511599014',
         'email' => 'pemohon.baru@demo.satuduka.id',
         'kata_sandi' => '',
         'konfirmasi_kata_sandi' => '',
     ]))
         ->assertOk()
         ->assertSee('Harap isi semua field yang diperlukan')
-        ->assertSee('border-red-500');
+        ->assertSee('aria-invalid="true"', false);
 
     expect(Pengguna::count())->toBe(0);
 });

@@ -27,6 +27,8 @@ class HasilVerifikasiFactory extends Factory
             'id_pengguna' => Pengguna::factory()->verifikator(),
             'status_verifikasi' => HasilVerifikasi::STATUS_DITERIMA,
             'catatan' => 'Berkas lengkap dan data sesuai dengan data kependudukan.',
+            'deteksi_otomatis' => null,
+            'alasan_override' => null,
             'tanggal_verifikasi' => now(),
             'dibuat_pada' => now(),
             'diperbarui_pada' => now(),

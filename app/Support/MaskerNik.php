@@ -35,4 +35,35 @@ final class MaskerNik
     {
         return preg_replace('/\b(\d{12})(\d{4})\b/', '$1****', $teks) ?? $teks;
     }
+
+    /**
+     * Terapkan masking secara rekursif pada array (mis. detail audit/log).
+     *
+     * Nilai non-string dibiarkan apa adanya agar tipe data tetap utuh.
+     *
+     * @param  array<mixed>  $nilai
+     * @return array<mixed>
+     */
+    public static function terapkanArray(array $nilai): array
+    {
+        $hasil = [];
+
+        foreach ($nilai as $kunci => $isi) {
+            if (is_string($isi)) {
+                $hasil[$kunci] = self::terapkan($isi);
+
+                continue;
+            }
+
+            if (is_array($isi)) {
+                $hasil[$kunci] = self::terapkanArray($isi);
+
+                continue;
+            }
+
+            $hasil[$kunci] = $isi;
+        }
+
+        return $hasil;
+    }
 }

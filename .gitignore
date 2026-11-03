@@ -25,18 +25,28 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
-# File database SQLite lokal (mencegah file 'postgres' atau 'database.sqlite' ter-commit)
 /database/*.sqlite
 /database/*.sqlite-journal
 /postgres
-
-# Cache & Artefak IDE Helper / Testing tambahan
 _ide_helper_models.php
 .phpstorm.meta.php
-
-# Konfigurasi lokal AI Agent / MCP (jika mengandung token/path lokal)
 /.opencode/
 /.aider-desk/
-
-# Artefak hasil generate (repomix)
-repomix-output.xml
+/repomix-output*.xml
+/postgres*
+/AGENTS.md
+/PHASES.md
+/PHASES_VERIFIKASI.md
+/RUNBOOK_OPENCODE.md
+/README_KIT.md
+/PROGRESS.md
+/docs/SRS_clean.md
+/docs/PETA_SRS.md
+/docs/DATABASE.md
+/docs/ATURAN_VERIFIKASI.md
+/docs/data_kecamatan_2020.csv
+/docs/gui/
+/docs/diagram/
+/claude-memory-*
+/*.zip
+/repomix-output*.xml

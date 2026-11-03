@@ -2,9 +2,10 @@
 # Penyesuaian dari naskah SRS:
 #   - Kolom "Alamat Surel" WAJIB diisi (pengguna.email NOT NULL UNIQUE dan
 #     dipakai untuk pengaturan ulang kata sandi).
-#   - Nama lengkap tidak diminta karena diambil dari data kependudukan (SIAK).
-# Setiap skenario dipetakan ke tests/Feature/Autentikasi/DaftarTest.php karena
-# integrasi Behat-Mink diganti Pest.
+#   - Nama lengkap tidak diminta; diambil dari SIAK bila tersedia dan memakai
+#     nama bawaan bila NIK belum ada pada data kependudukan.
+# Skenario ini dijalankan oleh Behat melalui features/bootstrap/FeatureContext.php.
+# Tes Pest terkait tersedia sebagai cakupan regresi tambahan.
 
 Feature: Register
   In order to submit a request for death registration and administration
@@ -63,14 +64,15 @@ Feature: Register
     And saya menekan tombol "Daftar"
     Then saya melihat pesan galat "NIK sudah terdaftar"
 
-  Scenario: Registrasi gagal karena NIK tidak ditemukan pada data kependudukan
+  Scenario: Berhasil registrasi dengan NIK 16 digit yang tidak ditemukan pada data kependudukan
     Given saya melihat halaman "Registrasi"
     When saya mengisi "9999990101900099" pada kolom "NIK"
     And saya mengisi "pemohon.baru@demo.satuduka.id" pada kolom "Alamat Surel"
     And saya mengisi "Baru12345" pada kolom "Kata Sandi"
     And saya mengisi "Baru12345" pada kolom "Konfirmasi Kata Sandi"
     And saya menekan tombol "Daftar"
-    Then saya melihat pesan galat "NIK tidak ditemukan pada data kependudukan"
+    Then saya melihat notifikasi "Registrasi berhasil!"
+    And saya melihat halaman "Masuk"
 
   Scenario: Registrasi gagal karena surel sudah terdaftar
     Given akun dengan surel "pemohon@demo.satuduka.id" sudah ada

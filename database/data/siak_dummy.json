@@ -1,122 +1,272 @@
 [
     {
-        "nik": "9999990101900101",
+        "nik": "3471031203559001",
         "nama_lengkap": "Suharto Wiryo",
         "tanggal_lahir": "1955-03-12",
         "tempat_lahir": "Yogyakarta",
         "alamat": "Jl. Malioboro No. 12, Gondokusuman, Yogyakarta",
-        "jenis_kelamin": "L"
+        "jenis_kelamin": "L",
+        "status_kependudukan": "Hidup"
     },
     {
-        "nik": "9999990101900102",
+        "nik": "3471036407609002",
         "nama_lengkap": "Siti Aminah",
         "tanggal_lahir": "1960-07-24",
         "tempat_lahir": "Yogyakarta",
         "alamat": "Jl. Malioboro No. 14, Gondokusuman, Yogyakarta",
-        "jenis_kelamin": "P"
+        "jenis_kelamin": "P",
+        "status_kependudukan": "Hidup"
     },
     {
-        "nik": "9999990101900103",
+        "nik": "3404010511489003",
         "nama_lengkap": "Budi Santoso",
         "tanggal_lahir": "1948-11-05",
         "tempat_lahir": "Sleman",
         "alamat": "Jl. Kaliurang KM 5, Ngemplak, Sleman",
-        "jenis_kelamin": "L"
+        "jenis_kelamin": "L",
+        "status_kependudukan": "Hidup"
     },
     {
-        "nik": "9999990101900104",
+        "nik": "3402045809559004",
         "nama_lengkap": "Sri Wahyuni",
         "tanggal_lahir": "1955-09-18",
         "tempat_lahir": "Bantul",
         "alamat": "Jl.oho No. 3, Pundong, Bantul",
-        "jenis_kelamin": "P"
+        "jenis_kelamin": "P",
+        "status_kependudukan": "Hidup"
     },
     {
-        "nik": "9999990101900105",
+        "nik": "3402013001429005",
         "nama_lengkap": "Warjo Darto",
         "tanggal_lahir": "1942-01-30",
         "tempat_lahir": "Yogyakarta",
         "alamat": "Jl. Kaliurang KM 8, Sewon, Bantul",
-        "jenis_kelamin": "L"
+        "jenis_kelamin": "L",
+        "status_kependudukan": "Hidup"
     },
     {
-        "nik": "9999990101900106",
+        "nik": "3401076205639006",
         "nama_lengkap": "Ratna Kumala",
         "tanggal_lahir": "1963-05-22",
         "tempat_lahir": "Kulon Progo",
         "alamat": "Jl. Surokonto No. 21, Wates, Kulon Progo",
-        "jenis_kelamin": "P"
+        "jenis_kelamin": "P",
+        "status_kependudukan": "Hidup"
     },
     {
-        "nik": "9999990101900107",
+        "nik": "3471130912509007",
         "nama_lengkap": "Haryanto",
         "tanggal_lahir": "1950-12-09",
         "tempat_lahir": "Yogyakarta",
         "alamat": "Jl. Kusumanegara No. 5, Kem-buyakan, Yogyakarta",
-        "jenis_kelamin": "L"
+        "jenis_kelamin": "L",
+        "status_kependudukan": "Hidup"
     },
     {
-        "nik": "9999990101900108",
+        "nik": "3403015408589008",
         "nama_lengkap": "Endang Wahyuni",
         "tanggal_lahir": "1958-08-14",
         "tempat_lahir": "Gunung Kidul",
         "alamat": "Jl. Sandang No. 2, Wonosari, Gunung Kidul",
-        "jenis_kelamin": "P"
+        "jenis_kelamin": "P",
+        "status_kependudukan": "Hidup"
     },
     {
-        "nik": "9999990101900109",
+        "nik": "3404012702469009",
         "nama_lengkap": "Sukamto",
         "tanggal_lahir": "1946-02-27",
         "tempat_lahir": "Sleman",
         "alamat": "Jl. Magelang KM 12, Ngaglik, Sleman",
-        "jenis_kelamin": "L"
+        "jenis_kelamin": "L",
+        "status_kependudukan": "Hidup"
     },
     {
-        "nik": "9999990101900110",
+        "nik": "3471144306539010",
         "nama_lengkap": "Karsih",
         "tanggal_lahir": "1953-06-03",
         "tempat_lahir": "Yogyakarta",
         "alamat": "Jl. Kotagede No. 30, Kotagede, Yogyakarta",
-        "jenis_kelamin": "P"
+        "jenis_kelamin": "P",
+        "status_kependudukan": "Hidup"
     },
     {
-        "nik": "9999990101900111",
+        "nik": "3402011610409011",
         "nama_lengkap": "Sudarmo",
         "tanggal_lahir": "1940-10-16",
         "tempat_lahir": "Bantul",
         "alamat": "Jl. Imogiri KM 7, Banguntapan, Bantul",
-        "jenis_kelamin": "L"
+        "jenis_kelamin": "L",
+        "status_kependudukan": "Hidup"
     },
     {
-        "nik": "9999990101900112",
+        "nik": "3471085104659012",
         "nama_lengkap": "Nurhayati",
         "tanggal_lahir": "1965-04-11",
         "tempat_lahir": "Yogyakarta",
         "alamat": "Jl. Nagan Lor No. 1, Mantrijeron, Yogyakarta",
-        "jenis_kelamin": "P"
+        "jenis_kelamin": "P",
+        "status_kependudukan": "Hidup"
     },
     {
-        "nik": "9999990101900113",
+        "nik": "3401070803519013",
         "nama_lengkap": "Mulyadi",
         "tanggal_lahir": "1951-03-08",
         "tempat_lahir": "Kulon Progo",
         "alamat": "Jl. Canggaharu No. 4, Sentolo, Kulon Progo",
-        "jenis_kelamin": "L"
+        "jenis_kelamin": "L",
+        "status_kependudukan": "Hidup"
     },
     {
-        "nik": "9999990101900114",
+        "nik": "3404016511599014",
         "nama_lengkap": "Yatmiati",
         "tanggal_lahir": "1959-11-25",
         "tempat_lahir": "Sleman",
         "alamat": "Jl. Pandeglang No. 9, Ngaglik, Sleman",
-        "jenis_kelamin": "P"
+        "jenis_kelamin": "P",
+        "status_kependudukan": "Hidup"
     },
     {
-        "nik": "9999990101900115",
+        "nik": "3471031907459015",
         "nama_lengkap": "Wardiman",
         "tanggal_lahir": "1945-07-19",
         "tempat_lahir": "Yogyakarta",
         "alamat": "Jl. Colombo No. 8, Gondokusuman, Yogyakarta",
-        "jenis_kelamin": "L"
+        "jenis_kelamin": "L",
+        "status_kependudukan": "Hidup"
+    },
+    {
+        "nik": "3471136204709016",
+        "nama_lengkap": "dr. Retno Wulandari",
+        "tanggal_lahir": "1970-04-22",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Veteran No. 17, Umbulharjo, Yogyakarta",
+        "jenis_kelamin": "P",
+        "status_kependudukan": "Meninggal"
+    },
+    {
+        "nik": "3404011708629017",
+        "nama_lengkap": "Ir. Bambang Sutrisno",
+        "tanggal_lahir": "1962-08-17",
+        "tempat_lahir": "Sleman",
+        "alamat": "Jl. Kaliurang KM 7, Depok, Sleman",
+        "jenis_kelamin": "L",
+        "status_kependudukan": "Meninggal"
+    },
+    {
+        "nik": "3471094501509018",
+        "nama_lengkap": "Hj. Siti Maryam",
+        "tanggal_lahir": "1950-01-05",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Patehan No. 6, Kraton, Yogyakarta",
+        "jenis_kelamin": "P",
+        "status_kependudukan": "Meninggal"
+    },
+    {
+        "nik": "3402011206489019",
+        "nama_lengkap": "Sukarni",
+        "tanggal_lahir": "1948-06-12",
+        "tempat_lahir": "Bantul",
+        "alamat": "Jl. Imogiri No. 19, Imogiri, Bantul",
+        "jenis_kelamin": "L",
+        "status_kependudukan": "Hidup"
+    },
+    {
+        "nik": "3471047009579020",
+        "nama_lengkap": "Ningsih",
+        "tanggal_lahir": "1957-09-30",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Suryatmajan No. 4, Danurejan, Yogyakarta",
+        "jenis_kelamin": "P",
+        "status_kependudukan": "Hidup"
+    },
+    {
+        "nik": "3471011402809021",
+        "nama_lengkap": "Agus Prasetyo",
+        "tanggal_lahir": "1980-02-14",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Bener No. 11, Tegalrejo, Yogyakarta",
+        "jenis_kelamin": "L",
+        "status_kependudukan": "Hidup"
+    },
+    {
+        "nik": "3471024112859022",
+        "nama_lengkap": "Dewi Lestari",
+        "tanggal_lahir": "1985-12-01",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. AM Sangaji No. 22, Jetis, Yogyakarta",
+        "jenis_kelamin": "P",
+        "status_kependudukan": "Hidup"
+    },
+    {
+        "nik": "3471050905759023",
+        "nama_lengkap": "Slamet Riyadi",
+        "tanggal_lahir": "1975-05-09",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Bhayangkara No. 3, Gedongtengen, Yogyakarta",
+        "jenis_kelamin": "L",
+        "status_kependudukan": "Hidup"
+    },
+    {
+        "nik": "3471065907789024",
+        "nama_lengkap": "Tri Wahyuni",
+        "tanggal_lahir": "1978-07-19",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Ngampilan No. 8, Ngampilan, Yogyakarta",
+        "jenis_kelamin": "P",
+        "status_kependudukan": "Hidup"
+    },
+    {
+        "nik": "3471072503689025",
+        "nama_lengkap": "Bambang Hermawan",
+        "tanggal_lahir": "1968-03-25",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Wirobrajan No. 14, Wirobrajan, Yogyakarta",
+        "jenis_kelamin": "L",
+        "status_kependudukan": "Hidup"
+    },
+    {
+        "nik": "3471114810729026",
+        "nama_lengkap": "Siti Fatimah",
+        "tanggal_lahir": "1972-10-08",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Pakualaman No. 2, Pakualaman, Yogyakarta",
+        "jenis_kelamin": "P",
+        "status_kependudukan": "Hidup"
+    },
+    {
+        "nik": "3471121111659027",
+        "nama_lengkap": "Joko Susilo",
+        "tanggal_lahir": "1965-11-11",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Mergangsan No. 5, Mergangsan, Yogyakarta",
+        "jenis_kelamin": "L",
+        "status_kependudukan": "Hidup"
+    },
+    {
+        "nik": "3471105701829028",
+        "nama_lengkap": "Retno Palupi",
+        "tanggal_lahir": "1982-01-17",
+        "tempat_lahir": "Yogyakarta",
+        "alamat": "Jl. Gondomanan No. 9, Gondomanan, Yogyakarta",
+        "jenis_kelamin": "P",
+        "status_kependudukan": "Hidup"
+    },
+    {
+        "nik": "3404010404909029",
+        "nama_lengkap": "Ahmad Fauzi",
+        "tanggal_lahir": "1990-04-04",
+        "tempat_lahir": "Sleman",
+        "alamat": "Jl. Magelang KM 6, Mlati, Sleman",
+        "jenis_kelamin": "L",
+        "status_kependudukan": "Hidup"
+    },
+    {
+        "nik": "3402016308929030",
+        "nama_lengkap": "Kartika Sari",
+        "tanggal_lahir": "1992-08-23",
+        "tempat_lahir": "Bantul",
+        "alamat": "Jl. Parangtritis KM 6, Sewon, Bantul",
+        "jenis_kelamin": "P",
+        "status_kependudukan": "Hidup"
     }
 ]

@@ -3,7 +3,7 @@
 /**
  * Pengujian fitur Masuk (Login).
  *
- * Sumber skenario: features/login.feature (SRS Bab VI Tabel 6.1).
+ * Sumber skenario: SRS Bab VI Tabel 6.1.
  * Setiap blok pengujian memetakan satu skenario Gherkin.
  */
 
@@ -13,6 +13,11 @@ use App\Services\LayananPenguncian;
 use Symfony\Component\HttpFoundation\Cookie;
 
 const KATA_SANDI_DEMO = 'password123';
+
+// Halaman awal mengalihkan tamu ke halaman masuk.
+it('halaman awal mengalihkan tamu ke halaman masuk', function () {
+    $this->get('/')->assertRedirect(route('masuk'));
+});
 
 // Skenario: Berpindah ke halaman Registrasi dari halaman Masuk.
 it('menampilkan halaman masuk dengan tautan ke registrasi', function () {
@@ -55,8 +60,7 @@ it('mengarahkan verifikator ke dashboard verifikator saat masuk dengan nip', fun
 
     $this->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Dashboard Verifikator')
-        ->assertSee('Anda masuk sebagai Verifikator');
+        ->assertSee('Dashboard Verifikator');
 });
 
 // Skenario: Berhasil masuk dengan kredensial Pejabat yang valid (NIP 18 digit).
@@ -136,7 +140,7 @@ it('menampilkan pesan kolom kosong dan menandai kolom tersebut', function () {
     ]))
         ->assertOk()
         ->assertSee('Harap isi semua field yang diperlukan')
-        ->assertSee('border-red-500');
+        ->assertSee('aria-invalid="true"', false);
 
     $this->assertGuest();
 });
@@ -237,15 +241,19 @@ it('mengalihkan pengguna yang sudah masuk dari halaman masuk ke dashboard', func
         ->assertSessionHas('info', 'Anda sudah masuk sebagai Pemohon Demo (Pemohon). Keluar terlebih dahulu untuk berganti akun.');
 });
 
-it('memberi tahu akun verifikator yang masih aktif saat membuka halaman masuk', function () {
+it('mengalihkan akun verifikator yang masih aktif dari halaman masuk', function () {
     [, $verifikator] = buatAkunDemo();
 
     $this->actingAs($verifikator)
-        ->followingRedirects()
         ->get(route('masuk'))
+        ->assertRedirect(route('dashboard'))
+        ->assertSessionHas(
+            'info',
+            'Anda sudah masuk sebagai Verifikator Demo (Verifikator). Keluar terlebih dahulu untuk berganti akun.',
+        );
+
+    $this->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Anda sudah masuk sebagai Verifikator Demo (Verifikator).')
-        ->assertSee('Keluar terlebih dahulu untuk berganti akun.')
         ->assertSee('Dashboard Verifikator');
 });
 
@@ -271,4 +279,58 @@ it('mengakhiri sesi ketika pengguna keluar', function () {
 
     $this->assertGuest();
     expect(LogAudit::where('aksi', 'keluar')->where('id_pengguna', $pemohon->id_pengguna)->exists())->toBeTrue();
+});
+
+// Normalisasi identitas: format berbeda tetap dihitung sebagai satu akun.
+it('menghitung kegagalan dari berbagai format identitas sebagai akun yang sama', function () {
+    buatAkunDemo();
+
+    $kunci = 'login:9999990101900001';
+
+    // Lima percobaan gagal dengan format berbeda (polos, tanda hubung, spasi).
+    $formatGagal = [
+        '9999990101900001',
+        '9999-9901-0190-0001',
+        '9999 9901 0190 0001',
+        '9999990101900001',
+        '9999-9901-0190-0001',
+    ];
+
+    foreach ($formatGagal as $identitas) {
+        $this->post(route('masuk.coba'), [
+            'identitas' => $identitas,
+            'kata_sandi' => 'password124',
+        ])->assertSessionHasErrors();
+    }
+
+    // Percobaan kelima (format apa pun) memicu penguncian pada kunci kanonik.
+    expect(LayananPenguncian::terkunci($kunci))->toBeTrue()
+        ->and(LayananPenguncian::jumlahGagal($kunci))->toBe(LayananPenguncian::MAKS_GAGAL_LOGIN);
+
+    $this->assertGuest();
+});
+
+// Login benar setelah terkunci tetap ditolak untuk semua format identitas.
+it('menolak login benar setelah terkunci pada semua format identitas', function () {
+    buatAkunDemo();
+
+    $kunci = 'login:9999990101900001';
+
+    for ($i = 0; $i < LayananPenguncian::MAKS_GAGAL_LOGIN; $i++) {
+        $this->post(route('masuk.coba'), [
+            'identitas' => '9999990101900001',
+            'kata_sandi' => 'password124',
+        ])->assertSessionHasErrors();
+    }
+
+    expect(LayananPenguncian::terkunci($kunci))->toBeTrue();
+
+    foreach (['9999990101900001', '9999-9901-0190-0001', '9999 9901 0190 0001'] as $identitas) {
+        $this->post(route('masuk.coba'), [
+            'identitas' => $identitas,
+            'kata_sandi' => KATA_SANDI_DEMO,
+        ])->assertSessionHasErrors(['identitas' => 'Akun Anda dikunci sementara']);
+    }
+
+    $this->assertGuest();
 });

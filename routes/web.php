@@ -6,16 +6,18 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\RegistrasiController;
+use App\Http\Controllers\RekonsiliasiController;
 use App\Http\Controllers\StatusPengajuanController;
-use App\Http\Controllers\VerifikasiController;
-use App\Http\Controllers\LaporanKematianController;
+use App\Http\Controllers\TandaTanganController;
 use App\Http\Controllers\VerifikasiBerkasController;
+use App\Models\BerkasPendukung;
+use App\Models\LaporanKematian;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-
 
 // Halaman awal.
 Route::get('/', function () {
-    return \Illuminate\Support\Facades\Auth::check()
+    return Auth::check()
         ? redirect()->route('dashboard')
         : redirect()->route('masuk');
 })->name('beranda');
@@ -27,6 +29,7 @@ Route::middleware('guest')->group(function () {
         ->name('registrasi');
 
     Route::post('/registrasi', [RegistrasiController::class, 'daftar'])
+        ->middleware('throttle:registrasi')
         ->name('registrasi.simpan');
 
     // Login.
@@ -34,6 +37,7 @@ Route::middleware('guest')->group(function () {
         ->name('masuk');
 
     Route::post('/masuk', [LoginController::class, 'masuk'])
+        ->middleware(['throttle:masuk', 'throttle:masuk-ip'])
         ->name('masuk.coba');
 
     // Permintaan pengaturan ulang kata sandi.
@@ -45,7 +49,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/lupa-kata-sandi', [
         AturUlangKataSandiController::class,
         'kirimTautan',
-    ])->name('lupa_kata_sandi.kirim');
+    ])->middleware('throttle:lupa-kata-sandi')->name('lupa_kata_sandi.kirim');
 
     // Form pengaturan ulang kata sandi.
     Route::get('/atur-ulang-kata-sandi/{token}', [
@@ -56,7 +60,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/atur-ulang-kata-sandi', [
         AturUlangKataSandiController::class,
         'aturUlang',
-    ])->name('atur_ulang_kata_sandi.simpan');
+    ])->middleware('throttle:atur-ulang-kata-sandi')->name('atur_ulang_kata_sandi.simpan');
 });
 
 // Keluar dari sistem.
@@ -85,9 +89,11 @@ Route::middleware(['auth', 'peran:pemohon'])->group(function () {
 
     Route::get('/laporan/{laporan}/ubah', [LaporanController::class, 'tampilkanUbah'])->name('laporan.ubah');
     Route::post('/laporan/{laporan}/draf', [LaporanController::class, 'simpanDraf'])->name('laporan.draf.ubah');
-    Route::post('/laporan/{laporan}/periksa-ai', [LaporanController::class, 'periksaAi'])->name('laporan.periksa_ai');
+    Route::post('/laporan/{laporan}/periksa-ai', [LaporanController::class, 'periksaAi'])
+        ->middleware('throttle:analisis-ai')->name('laporan.periksa_ai');
     Route::post('/laporan/{laporan}/kirim', [LaporanController::class, 'kirim'])->name('laporan.kirim');
-    Route::post('/laporan/{laporan}/berkas', [LaporanController::class, 'unggahBerkas'])->name('laporan.berkas.unggah');
+    Route::post('/laporan/{laporan}/berkas', [LaporanController::class, 'unggahBerkas'])
+        ->middleware('throttle:unggah-berkas')->name('laporan.berkas.unggah');
     Route::get('/laporan/{laporan}/berkas/{berkas}', [LaporanController::class, 'pratinjauBerkas'])->name('laporan.berkas');
     Route::get('/laporan/{laporan}', [LaporanController::class, 'lihat'])->name('laporan.lihat');
 
@@ -97,19 +103,16 @@ Route::middleware(['auth', 'peran:pemohon'])->group(function () {
     Route::get('/pengajuan/{laporan}/dokumen', [StatusPengajuanController::class, 'unduh'])->name('pengajuan.unduh');
 });
 
-// Verifikasi berkas versi baca saja untuk Verifikator.
+// Pengalihan rute verifikasi lama ke alur verifikasi-berkas.
 Route::middleware(['auth', 'peran:verifikator'])->group(function () {
-    Route::get('/verifikasi', [VerifikasiController::class, 'daftar'])->name('verifikasi.daftar');
-    Route::get('/verifikasi/{laporan}/berkas/{berkas}', [VerifikasiController::class, 'pratinjauBerkas'])
-        ->name('verifikasi.berkas');
-    Route::post('/verifikasi/{laporan}/analisis-ai', [VerifikasiController::class, 'analisis'])
-        ->name('verifikasi.analisis_ai');
-    Route::post('/verifikasi/{laporan}/ringkasan-ai', [VerifikasiController::class, 'ringkasanAi'])
-        ->name('verifikasi.ringkasan_ai');
-    Route::get('/verifikasi/{laporan}', [VerifikasiController::class, 'detail'])->name('verifikasi.detail');
+    Route::get('/verifikasi', fn () => redirect()->route('verifikasi.index'));
+    Route::get('/verifikasi/{laporan}/berkas/{berkas}', fn (LaporanKematian $laporan, BerkasPendukung $berkas) => redirect()->route('verifikasi.pratinjau', [$laporan, $berkas]));
+    Route::post('/verifikasi/{laporan}/analisis-ai', fn (LaporanKematian $laporan) => redirect()->route('verifikasi.show', $laporan));
+    Route::post('/verifikasi/{laporan}/ringkasan-ai', fn (LaporanKematian $laporan) => redirect()->route('verifikasi.show', $laporan));
+    Route::get('/verifikasi/{laporan}', fn (LaporanKematian $laporan) => redirect()->route('verifikasi.show', $laporan));
 });
 
-// Fitur verifikasi berkas dengan persetujuan, revisi, dan anomali (branch verifikasi-berkas-pengajuan).
+// Alur utama verifikasi berkas: persetujuan, perbaikan, revisi, dan anomali.
 Route::middleware(['auth', 'peran:verifikator'])
     ->prefix('verifikasi-berkas')
     ->name('verifikasi.')
@@ -118,9 +121,43 @@ Route::middleware(['auth', 'peran:verifikator'])
         Route::get('/{laporan}', [VerifikasiBerkasController::class, 'show'])->name('show');
         Route::get('/{laporan}/berkas/{berkas}', [VerifikasiBerkasController::class, 'pratinjau'])->name('pratinjau');
         Route::get('/{laporan}/berkas/{berkas}/unduh', [VerifikasiBerkasController::class, 'unduh'])->name('unduh');
+        Route::post('/{laporan}/analisis-ai', [VerifikasiBerkasController::class, 'analisis'])
+            ->middleware('throttle:analisis-ai')->name('analisis_ai');
+        Route::post('/{laporan}/ringkasan-ai', [VerifikasiBerkasController::class, 'ringkasanAi'])
+            ->middleware('throttle:analisis-ai')->name('ringkasan_ai');
         Route::post('/{laporan}/setujui', [VerifikasiBerkasController::class, 'setujui'])->name('setujui');
+        Route::post('/{laporan}/perbaikan', [VerifikasiBerkasController::class, 'mintaPerbaikan'])->name('perbaikan');
         Route::post('/{laporan}/revisi', [VerifikasiBerkasController::class, 'mintaRevisi'])->name('revisi');
         Route::post('/{laporan}/anomali', [VerifikasiBerkasController::class, 'tandaiAnomali'])->name('anomali');
+        Route::post('/{laporan}/tolak-fatal', [VerifikasiBerkasController::class, 'tolakFatal'])->name('tolak_fatal');
+    });
+
+// Rekonsiliasi anomali data kependudukan (use case 5.2.7 dan user story 6.2.7).
+Route::middleware(['auth', 'peran:verifikator'])
+    ->prefix('rekonsiliasi')
+    ->name('rekonsiliasi.')
+    ->group(function () {
+        Route::get('/', [RekonsiliasiController::class, 'index'])->name('index');
+        Route::get('/{laporan}', [RekonsiliasiController::class, 'show'])->name('show');
+        Route::post('/{laporan}/selesaikan', [RekonsiliasiController::class, 'selesaikan'])->name('selesaikan');
+        Route::post('/{laporan}/tolak-fatal', [RekonsiliasiController::class, 'tolakFatal'])->name('tolak_fatal');
+    });
+
+// Penandatanganan dokumen dengan TTE oleh Pejabat (use case 5.2.8).
+Route::middleware(['auth', 'peran:pejabat'])
+    ->prefix('tanda-tangan')
+    ->name('tanda_tangan.')
+    ->group(function () {
+        Route::get('/', [TandaTanganController::class, 'index'])->name('index');
+        Route::get('/{laporan}', [TandaTanganController::class, 'show'])->name('show');
+        Route::get('/{laporan}/unduh', [TandaTanganController::class, 'unduh'])->name('unduh');
+        Route::post('/{laporan}/tandatangani', [TandaTanganController::class, 'tandatangani'])
+            ->middleware('throttle:tandatangani')
+            ->name('tandatangani');
+        Route::post('/{laporan}/kembalikan', [TandaTanganController::class, 'kembalikan'])->name('kembalikan');
+        Route::post('/{laporan}/terbitkan', [TandaTanganController::class, 'terbitkan'])
+            ->middleware('throttle:terbitkan')
+            ->name('terbitkan');
     });
 
 Route::redirect('/pengajuan-laporan', '/laporan/baru');

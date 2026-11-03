@@ -15,6 +15,7 @@
         "laravel/tinker": "^3.0"
     },
     "require-dev": {
+        "behat/behat": "^4.0",
         "fakerphp/faker": "^1.23",
         "laravel/pail": "^1.2.5",
         "laravel/pint": "^1.27",
@@ -43,6 +44,10 @@
             "@php artisan migrate --force",
             "npm install --ignore-scripts",
             "npm run build"
+        ],
+        "db:sqlite": [
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "@php artisan migrate:fresh --seed --database=sqlite"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",

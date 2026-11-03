@@ -1,0 +1,2392 @@
+{
+    "versi": 1,
+    "sumber": "Kasus fiktif untuk evaluasi MesinRekonsiliasi Fase 6.8. Sebaran kecamatan mengikuti docs/data_kecamatan_2020.csv.",
+    "jumlah_kasus": 62,
+    "sebaran_kecamatan": {
+        "Tegalrejo": 4,
+        "Jetis": 5,
+        "Gondokusuman": 6,
+        "Danurejan": 4,
+        "Gedongtengen": 3,
+        "Ngampilan": 3,
+        "Wirobrajan": 4,
+        "Mantrijeron": 4,
+        "Kraton": 3,
+        "Gondomanan": 2,
+        "Pakualaman": 2,
+        "Mergangsan": 5,
+        "Umbulharjo": 8,
+        "Luar Kota Yogyakarta": 4,
+        "Kotagede": 5
+    },
+    "kasus": [
+        {
+            "id": "UJI-001",
+            "kategori": "bersih",
+            "deskripsi": "Data lengkap, nama dan NIK sesuai SIAK, alamat dalam Kota Yogyakarta.",
+            "kecamatan_alamat": "Tegalrejo",
+            "pengajuan": {
+                "nama_almarhum": "Suharto Wiryo",
+                "nik_almarhum": "3471991203559001",
+                "tanggal_kematian": "2026-09-01",
+                "tanggal_pengajuan": "2026-09-06",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991203559001",
+                "nama_lengkap": "Suharto Wiryo",
+                "tanggal_lahir": "1955-03-12",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 1, Tegalrejo, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-002",
+            "kategori": "bersih",
+            "deskripsi": "Data lengkap, nama dan NIK sesuai SIAK, alamat dalam Kota Yogyakarta.",
+            "kecamatan_alamat": "Tegalrejo",
+            "pengajuan": {
+                "nama_almarhum": "Siti Aminah",
+                "nik_almarhum": "3471996407609002",
+                "tanggal_kematian": "2026-09-02",
+                "tanggal_pengajuan": "2026-09-08",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471996407609002",
+                "nama_lengkap": "Siti Aminah",
+                "tanggal_lahir": "1960-07-24",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 2, Tegalrejo, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-003",
+            "kategori": "bersih",
+            "deskripsi": "Data lengkap, nama dan NIK sesuai SIAK, alamat dalam Kota Yogyakarta.",
+            "kecamatan_alamat": "Tegalrejo",
+            "pengajuan": {
+                "nama_almarhum": "Karsih",
+                "nik_almarhum": "3471994306539003",
+                "tanggal_kematian": "2026-09-03",
+                "tanggal_pengajuan": "2026-09-10",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471994306539003",
+                "nama_lengkap": "Karsih",
+                "tanggal_lahir": "1953-06-03",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 3, Tegalrejo, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-004",
+            "kategori": "bersih",
+            "deskripsi": "Data lengkap, nama dan NIK sesuai SIAK, alamat dalam Kota Yogyakarta.",
+            "kecamatan_alamat": "Tegalrejo",
+            "pengajuan": {
+                "nama_almarhum": "Nurhayati",
+                "nik_almarhum": "3471995104659004",
+                "tanggal_kematian": "2026-09-04",
+                "tanggal_pengajuan": "2026-09-12",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471995104659004",
+                "nama_lengkap": "Nurhayati",
+                "tanggal_lahir": "1965-04-11",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 4, Tegalrejo, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-005",
+            "kategori": "bersih",
+            "deskripsi": "Data lengkap, nama dan NIK sesuai SIAK, alamat dalam Kota Yogyakarta.",
+            "kecamatan_alamat": "Jetis",
+            "pengajuan": {
+                "nama_almarhum": "Wardiman",
+                "nik_almarhum": "3471991907459005",
+                "tanggal_kematian": "2026-09-05",
+                "tanggal_pengajuan": "2026-09-14",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991907459005",
+                "nama_lengkap": "Wardiman",
+                "tanggal_lahir": "1945-07-19",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 5, Jetis, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-006",
+            "kategori": "bersih",
+            "deskripsi": "Data lengkap, nama dan NIK sesuai SIAK, alamat dalam Kota Yogyakarta.",
+            "kecamatan_alamat": "Jetis",
+            "pengajuan": {
+                "nama_almarhum": "Ningsih",
+                "nik_almarhum": "3471997009579006",
+                "tanggal_kematian": "2026-09-06",
+                "tanggal_pengajuan": "2026-09-16",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471997009579006",
+                "nama_lengkap": "Ningsih",
+                "tanggal_lahir": "1957-09-30",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 6, Jetis, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-007",
+            "kategori": "bersih",
+            "deskripsi": "Data lengkap, nama dan NIK sesuai SIAK, alamat dalam Kota Yogyakarta.",
+            "kecamatan_alamat": "Jetis",
+            "pengajuan": {
+                "nama_almarhum": "Agus Prasetyo",
+                "nik_almarhum": "3471991402809007",
+                "tanggal_kematian": "2026-09-07",
+                "tanggal_pengajuan": "2026-09-18",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991402809007",
+                "nama_lengkap": "Agus Prasetyo",
+                "tanggal_lahir": "1980-02-14",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 7, Jetis, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-008",
+            "kategori": "bersih",
+            "deskripsi": "Data lengkap, nama dan NIK sesuai SIAK, alamat dalam Kota Yogyakarta.",
+            "kecamatan_alamat": "Jetis",
+            "pengajuan": {
+                "nama_almarhum": "Dewi Lestari",
+                "nik_almarhum": "3471994112859008",
+                "tanggal_kematian": "2026-09-08",
+                "tanggal_pengajuan": "2026-09-20",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471994112859008",
+                "nama_lengkap": "Dewi Lestari",
+                "tanggal_lahir": "1985-12-01",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 8, Jetis, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-009",
+            "kategori": "bersih",
+            "deskripsi": "Data lengkap, nama dan NIK sesuai SIAK, alamat dalam Kota Yogyakarta.",
+            "kecamatan_alamat": "Jetis",
+            "pengajuan": {
+                "nama_almarhum": "Slamet Riyadi",
+                "nik_almarhum": "3471990905759009",
+                "tanggal_kematian": "2026-09-09",
+                "tanggal_pengajuan": "2026-09-22",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471990905759009",
+                "nama_lengkap": "Slamet Riyadi",
+                "tanggal_lahir": "1975-05-09",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 9, Jetis, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-010",
+            "kategori": "bersih",
+            "deskripsi": "Data lengkap, nama dan NIK sesuai SIAK, alamat dalam Kota Yogyakarta.",
+            "kecamatan_alamat": "Gondokusuman",
+            "pengajuan": {
+                "nama_almarhum": "Tri Wahyuni",
+                "nik_almarhum": "3471995907789010",
+                "tanggal_kematian": "2026-09-10",
+                "tanggal_pengajuan": "2026-09-24",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471995907789010",
+                "nama_lengkap": "Tri Wahyuni",
+                "tanggal_lahir": "1978-07-19",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 10, Gondokusuman, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-011",
+            "kategori": "bersih",
+            "deskripsi": "Data lengkap, nama dan NIK sesuai SIAK, alamat dalam Kota Yogyakarta.",
+            "kecamatan_alamat": "Gondokusuman",
+            "pengajuan": {
+                "nama_almarhum": "Bambang Hermawan",
+                "nik_almarhum": "3471992503689011",
+                "tanggal_kematian": "2026-09-11",
+                "tanggal_pengajuan": "2026-09-26",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471992503689011",
+                "nama_lengkap": "Bambang Hermawan",
+                "tanggal_lahir": "1968-03-25",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 11, Gondokusuman, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-012",
+            "kategori": "bersih",
+            "deskripsi": "Data lengkap, nama dan NIK sesuai SIAK, alamat dalam Kota Yogyakarta.",
+            "kecamatan_alamat": "Gondokusuman",
+            "pengajuan": {
+                "nama_almarhum": "Siti Fatimah",
+                "nik_almarhum": "3471994810729012",
+                "tanggal_kematian": "2026-09-12",
+                "tanggal_pengajuan": "2026-09-28",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471994810729012",
+                "nama_lengkap": "Siti Fatimah",
+                "tanggal_lahir": "1972-10-08",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 12, Gondokusuman, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-013",
+            "kategori": "bersih",
+            "deskripsi": "Data lengkap, nama dan NIK sesuai SIAK, alamat dalam Kota Yogyakarta.",
+            "kecamatan_alamat": "Gondokusuman",
+            "pengajuan": {
+                "nama_almarhum": "Joko Susilo",
+                "nik_almarhum": "3471991111659013",
+                "tanggal_kematian": "2026-09-13",
+                "tanggal_pengajuan": "2026-09-30",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991111659013",
+                "nama_lengkap": "Joko Susilo",
+                "tanggal_lahir": "1965-11-11",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 13, Gondokusuman, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-014",
+            "kategori": "bersih",
+            "deskripsi": "Data lengkap, nama dan NIK sesuai SIAK, alamat dalam Kota Yogyakarta.",
+            "kecamatan_alamat": "Gondokusuman",
+            "pengajuan": {
+                "nama_almarhum": "Retno Palupi",
+                "nik_almarhum": "3471995701829014",
+                "tanggal_kematian": "2026-09-14",
+                "tanggal_pengajuan": "2026-10-02",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471995701829014",
+                "nama_lengkap": "Retno Palupi",
+                "tanggal_lahir": "1982-01-17",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 14, Gondokusuman, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-015",
+            "kategori": "bersih",
+            "deskripsi": "Data lengkap, nama dan NIK sesuai SIAK, alamat dalam Kota Yogyakarta.",
+            "kecamatan_alamat": "Gondokusuman",
+            "pengajuan": {
+                "nama_almarhum": "Raden Mas Suroso",
+                "nik_almarhum": "3471990101509015",
+                "tanggal_kematian": "2026-09-15",
+                "tanggal_pengajuan": "2026-10-04",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471990101509015",
+                "nama_lengkap": "Raden Mas Suroso",
+                "tanggal_lahir": "1950-01-01",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 15, Gondokusuman, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-016",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode PENGAJUAN_GANDA.",
+            "kecamatan_alamat": "Danurejan",
+            "pengajuan": {
+                "nama_almarhum": "Suharto Wiryo",
+                "nik_almarhum": "3471991203559001",
+                "tanggal_kematian": "2026-09-01",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991203559001",
+                "nama_lengkap": "Suharto Wiryo",
+                "tanggal_lahir": "1955-03-12",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 16, Danurejan, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": true,
+            "kode_harus_muncul": [
+                "PENGAJUAN_GANDA"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-017",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode PENGAJUAN_GANDA.",
+            "kecamatan_alamat": "Danurejan",
+            "pengajuan": {
+                "nama_almarhum": "Siti Aminah",
+                "nik_almarhum": "3471996407609002",
+                "tanggal_kematian": "2026-09-02",
+                "tanggal_pengajuan": "2026-10-02",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471996407609002",
+                "nama_lengkap": "Siti Aminah",
+                "tanggal_lahir": "1960-07-24",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 17, Danurejan, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": true,
+            "kode_harus_muncul": [
+                "PENGAJUAN_GANDA"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-018",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode PENGAJUAN_GANDA.",
+            "kecamatan_alamat": "Danurejan",
+            "pengajuan": {
+                "nama_almarhum": "Karsih",
+                "nik_almarhum": "3471994306539003",
+                "tanggal_kematian": "2026-09-03",
+                "tanggal_pengajuan": "2026-10-03",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471994306539003",
+                "nama_lengkap": "Karsih",
+                "tanggal_lahir": "1953-06-03",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 18, Danurejan, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": true,
+            "kode_harus_muncul": [
+                "PENGAJUAN_GANDA"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-019",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode SIAK_SUDAH_MENINGGAL.",
+            "kecamatan_alamat": "Danurejan",
+            "pengajuan": {
+                "nama_almarhum": "Nurhayati",
+                "nik_almarhum": "3471995104659004",
+                "tanggal_kematian": "2026-09-01",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471995104659004",
+                "nama_lengkap": "Nurhayati",
+                "tanggal_lahir": "1965-04-11",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 19, Danurejan, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Meninggal"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "SIAK_SUDAH_MENINGGAL"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-020",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode SIAK_SUDAH_MENINGGAL.",
+            "kecamatan_alamat": "Gedongtengen",
+            "pengajuan": {
+                "nama_almarhum": "Wardiman",
+                "nik_almarhum": "3471991907459005",
+                "tanggal_kematian": "2026-09-02",
+                "tanggal_pengajuan": "2026-10-02",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991907459005",
+                "nama_lengkap": "Wardiman",
+                "tanggal_lahir": "1945-07-19",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 20, Gedongtengen, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Meninggal"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "SIAK_SUDAH_MENINGGAL"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-021",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode SIAK_SUDAH_MENINGGAL.",
+            "kecamatan_alamat": "Gedongtengen",
+            "pengajuan": {
+                "nama_almarhum": "Ningsih",
+                "nik_almarhum": "3471997009579006",
+                "tanggal_kematian": "2026-09-03",
+                "tanggal_pengajuan": "2026-10-03",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471997009579006",
+                "nama_lengkap": "Ningsih",
+                "tanggal_lahir": "1957-09-30",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 21, Gedongtengen, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Meninggal"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "SIAK_SUDAH_MENINGGAL"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-022",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode KASUS_KHUSUS.",
+            "kecamatan_alamat": "Gedongtengen",
+            "pengajuan": {
+                "nama_almarhum": "Agus Prasetyo",
+                "nik_almarhum": "3471991402809007",
+                "tanggal_kematian": "2026-09-01",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Jenazah Tidak Dikenal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991402809007",
+                "nama_lengkap": "Agus Prasetyo",
+                "tanggal_lahir": "1980-02-14",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 22, Gedongtengen, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor",
+                "Surat Keterangan Kepolisian"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "KASUS_KHUSUS"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-023",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode KASUS_KHUSUS.",
+            "kecamatan_alamat": "Ngampilan",
+            "pengajuan": {
+                "nama_almarhum": "Dewi Lestari",
+                "nik_almarhum": "3471994112859008",
+                "tanggal_kematian": "2026-09-02",
+                "tanggal_pengajuan": "2026-10-02",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Jenazah Tidak Ditemukan",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471994112859008",
+                "nama_lengkap": "Dewi Lestari",
+                "tanggal_lahir": "1985-12-01",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 23, Ngampilan, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor",
+                "Surat Keterangan Kepolisian"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "KASUS_KHUSUS"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-024",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode KASUS_KHUSUS.",
+            "kecamatan_alamat": "Ngampilan",
+            "pengajuan": {
+                "nama_almarhum": "Slamet Riyadi",
+                "nik_almarhum": "3471990905759009",
+                "tanggal_kematian": "2026-09-03",
+                "tanggal_pengajuan": "2026-10-03",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Jenazah Tidak Ditemukan",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471990905759009",
+                "nama_lengkap": "Slamet Riyadi",
+                "tanggal_lahir": "1975-05-09",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 24, Ngampilan, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor",
+                "Surat Keterangan Kepolisian"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "KASUS_KHUSUS"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-025",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode NIK_TIDAK_VALID.",
+            "kecamatan_alamat": "Ngampilan",
+            "pengajuan": {
+                "nama_almarhum": "Tri Wahyuni",
+                "nik_almarhum": "8871995907789010",
+                "tanggal_kematian": "2026-09-01",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "8871995907789010",
+                "nama_lengkap": "Tri Wahyuni",
+                "tanggal_lahir": "1978-07-19",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 25, Ngampilan, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "NIK_TIDAK_VALID"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-026",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode NIK_TIDAK_VALID.",
+            "kecamatan_alamat": "Wirobrajan",
+            "pengajuan": {
+                "nama_almarhum": "Bambang Hermawan",
+                "nik_almarhum": "8871992503689011",
+                "tanggal_kematian": "2026-09-02",
+                "tanggal_pengajuan": "2026-10-02",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "8871992503689011",
+                "nama_lengkap": "Bambang Hermawan",
+                "tanggal_lahir": "1968-03-25",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 26, Wirobrajan, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "NIK_TIDAK_VALID"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-027",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode NIK_TIDAK_VALID.",
+            "kecamatan_alamat": "Wirobrajan",
+            "pengajuan": {
+                "nama_almarhum": "Siti Fatimah",
+                "nik_almarhum": "8871994810729012",
+                "tanggal_kematian": "2026-09-03",
+                "tanggal_pengajuan": "2026-10-03",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "8871994810729012",
+                "nama_lengkap": "Siti Fatimah",
+                "tanggal_lahir": "1972-10-08",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 27, Wirobrajan, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "NIK_TIDAK_VALID"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-028",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode NIK_TIDAK_DITEMUKAN.",
+            "kecamatan_alamat": "Wirobrajan",
+            "pengajuan": {
+                "nama_almarhum": "Joko Susilo",
+                "nik_almarhum": "3471991111659013",
+                "tanggal_kematian": "2026-09-01",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": null,
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "NIK_TIDAK_DITEMUKAN"
+            ],
+            "kategori_nama_harapan": "NA"
+        },
+        {
+            "id": "UJI-029",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode NIK_TIDAK_DITEMUKAN.",
+            "kecamatan_alamat": "Wirobrajan",
+            "pengajuan": {
+                "nama_almarhum": "Retno Palupi",
+                "nik_almarhum": "3471995701829014",
+                "tanggal_kematian": "2026-09-02",
+                "tanggal_pengajuan": "2026-10-02",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": null,
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "NIK_TIDAK_DITEMUKAN"
+            ],
+            "kategori_nama_harapan": "NA"
+        },
+        {
+            "id": "UJI-030",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode NIK_TIDAK_DITEMUKAN.",
+            "kecamatan_alamat": "Mantrijeron",
+            "pengajuan": {
+                "nama_almarhum": "Raden Mas Suroso",
+                "nik_almarhum": "3471990101509015",
+                "tanggal_kematian": "2026-09-03",
+                "tanggal_pengajuan": "2026-10-03",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": null,
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "NIK_TIDAK_DITEMUKAN"
+            ],
+            "kategori_nama_harapan": "NA"
+        },
+        {
+            "id": "UJI-031",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode JENIS_KELAMIN_TIDAK_COCOK.",
+            "kecamatan_alamat": "Mantrijeron",
+            "pengajuan": {
+                "nama_almarhum": "Suharto Wiryo",
+                "nik_almarhum": "3471991203559001",
+                "tanggal_kematian": "2026-09-01",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991203559001",
+                "nama_lengkap": "Suharto Wiryo",
+                "tanggal_lahir": "1955-03-12",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 31, Mantrijeron, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "JENIS_KELAMIN_TIDAK_COCOK"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-032",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode JENIS_KELAMIN_TIDAK_COCOK.",
+            "kecamatan_alamat": "Mantrijeron",
+            "pengajuan": {
+                "nama_almarhum": "Siti Aminah",
+                "nik_almarhum": "3471996407609002",
+                "tanggal_kematian": "2026-09-02",
+                "tanggal_pengajuan": "2026-10-02",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471996407609002",
+                "nama_lengkap": "Siti Aminah",
+                "tanggal_lahir": "1960-07-24",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 32, Mantrijeron, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "JENIS_KELAMIN_TIDAK_COCOK"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-033",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode JENIS_KELAMIN_TIDAK_COCOK.",
+            "kecamatan_alamat": "Mantrijeron",
+            "pengajuan": {
+                "nama_almarhum": "Karsih",
+                "nik_almarhum": "3471994306539003",
+                "tanggal_kematian": "2026-09-03",
+                "tanggal_pengajuan": "2026-10-03",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471994306539003",
+                "nama_lengkap": "Karsih",
+                "tanggal_lahir": "1953-06-03",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 33, Mantrijeron, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "JENIS_KELAMIN_TIDAK_COCOK"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-034",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode TANGGAL_TIDAK_KONSISTEN.",
+            "kecamatan_alamat": "Kraton",
+            "pengajuan": {
+                "nama_almarhum": "Nurhayati",
+                "nik_almarhum": "3471995104659004",
+                "tanggal_kematian": "2026-10-20",
+                "tanggal_pengajuan": "2026-10-10",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471995104659004",
+                "nama_lengkap": "Nurhayati",
+                "tanggal_lahir": "1965-04-11",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 34, Kraton, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "TANGGAL_TIDAK_KONSISTEN"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-035",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode TANGGAL_TIDAK_KONSISTEN.",
+            "kecamatan_alamat": "Kraton",
+            "pengajuan": {
+                "nama_almarhum": "Wardiman",
+                "nik_almarhum": "3471991907459005",
+                "tanggal_kematian": "2026-10-20",
+                "tanggal_pengajuan": "2026-10-10",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991907459005",
+                "nama_lengkap": "Wardiman",
+                "tanggal_lahir": "1945-07-19",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 35, Kraton, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "TANGGAL_TIDAK_KONSISTEN"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-036",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode TANGGAL_TIDAK_KONSISTEN.",
+            "kecamatan_alamat": "Kraton",
+            "pengajuan": {
+                "nama_almarhum": "Ningsih",
+                "nik_almarhum": "3471997009579006",
+                "tanggal_kematian": "2026-10-20",
+                "tanggal_pengajuan": "2026-10-10",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471997009579006",
+                "nama_lengkap": "Ningsih",
+                "tanggal_lahir": "1957-09-30",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 36, Kraton, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "TANGGAL_TIDAK_KONSISTEN"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-037",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode NAMA_TIDAK_COCOK.",
+            "kecamatan_alamat": "Gondomanan",
+            "pengajuan": {
+                "nama_almarhum": "Agus Prasetyo",
+                "nik_almarhum": "3471991402809007",
+                "tanggal_kematian": "2026-09-01",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991402809007",
+                "nama_lengkap": "Budi Santoso",
+                "tanggal_lahir": "1980-02-14",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 37, Gondomanan, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "NAMA_TIDAK_COCOK"
+            ],
+            "kategori_nama_harapan": "TIDAK_COCOK"
+        },
+        {
+            "id": "UJI-038",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode NAMA_TIDAK_COCOK.",
+            "kecamatan_alamat": "Gondomanan",
+            "pengajuan": {
+                "nama_almarhum": "Dewi Lestari",
+                "nik_almarhum": "3471994112859008",
+                "tanggal_kematian": "2026-09-02",
+                "tanggal_pengajuan": "2026-10-02",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471994112859008",
+                "nama_lengkap": "Budi Santoso",
+                "tanggal_lahir": "1985-12-01",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 38, Gondomanan, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "NAMA_TIDAK_COCOK"
+            ],
+            "kategori_nama_harapan": "TIDAK_COCOK"
+        },
+        {
+            "id": "UJI-039",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode NAMA_TIDAK_COCOK.",
+            "kecamatan_alamat": "Pakualaman",
+            "pengajuan": {
+                "nama_almarhum": "Slamet Riyadi",
+                "nik_almarhum": "3471990905759009",
+                "tanggal_kematian": "2026-09-03",
+                "tanggal_pengajuan": "2026-10-03",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471990905759009",
+                "nama_lengkap": "Budi Santoso",
+                "tanggal_lahir": "1975-05-09",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 39, Pakualaman, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "NAMA_TIDAK_COCOK"
+            ],
+            "kategori_nama_harapan": "TIDAK_COCOK"
+        },
+        {
+            "id": "UJI-040",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode TERLAMBAT_TANPA_SPTJM.",
+            "kecamatan_alamat": "Pakualaman",
+            "pengajuan": {
+                "nama_almarhum": "Tri Wahyuni",
+                "nik_almarhum": "3471995907789010",
+                "tanggal_kematian": "2026-06-01",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471995907789010",
+                "nama_lengkap": "Tri Wahyuni",
+                "tanggal_lahir": "1978-07-19",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 40, Pakualaman, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "TERLAMBAT_TANPA_SPTJM"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-041",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode TERLAMBAT_TANPA_SPTJM.",
+            "kecamatan_alamat": "Mergangsan",
+            "pengajuan": {
+                "nama_almarhum": "Bambang Hermawan",
+                "nik_almarhum": "3471992503689011",
+                "tanggal_kematian": "2026-06-02",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471992503689011",
+                "nama_lengkap": "Bambang Hermawan",
+                "tanggal_lahir": "1968-03-25",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 41, Mergangsan, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "TERLAMBAT_TANPA_SPTJM"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-042",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode TERLAMBAT_TANPA_SPTJM.",
+            "kecamatan_alamat": "Mergangsan",
+            "pengajuan": {
+                "nama_almarhum": "Siti Fatimah",
+                "nik_almarhum": "3471994810729012",
+                "tanggal_kematian": "2026-06-03",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471994810729012",
+                "nama_lengkap": "Siti Fatimah",
+                "tanggal_lahir": "1972-10-08",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 42, Mergangsan, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "TERLAMBAT_TANPA_SPTJM"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-043",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode BERKAS_TIDAK_LENGKAP.",
+            "kecamatan_alamat": "Mergangsan",
+            "pengajuan": {
+                "nama_almarhum": "Joko Susilo",
+                "nik_almarhum": "3471991111659013",
+                "tanggal_kematian": "2026-09-01",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991111659013",
+                "nama_lengkap": "Joko Susilo",
+                "tanggal_lahir": "1965-11-11",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 43, Mergangsan, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "BERKAS_TIDAK_LENGKAP"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-044",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode BERKAS_TIDAK_LENGKAP.",
+            "kecamatan_alamat": "Mergangsan",
+            "pengajuan": {
+                "nama_almarhum": "Retno Palupi",
+                "nik_almarhum": "3471995701829014",
+                "tanggal_kematian": "2026-09-02",
+                "tanggal_pengajuan": "2026-10-02",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471995701829014",
+                "nama_lengkap": "Retno Palupi",
+                "tanggal_lahir": "1982-01-17",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 44, Mergangsan, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "BERKAS_TIDAK_LENGKAP"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-045",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode BERKAS_TIDAK_LENGKAP.",
+            "kecamatan_alamat": "Mergangsan",
+            "pengajuan": {
+                "nama_almarhum": "Raden Mas Suroso",
+                "nik_almarhum": "3471990101509015",
+                "tanggal_kematian": "2026-09-03",
+                "tanggal_pengajuan": "2026-10-03",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471990101509015",
+                "nama_lengkap": "Raden Mas Suroso",
+                "tanggal_lahir": "1950-01-01",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 45, Mergangsan, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "BERKAS_TIDAK_LENGKAP"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-046",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode DOKUMEN_TIDAK_TERBACA.",
+            "kecamatan_alamat": "Umbulharjo",
+            "pengajuan": {
+                "nama_almarhum": "Suharto Wiryo",
+                "nik_almarhum": "3471991203559001",
+                "tanggal_kematian": "2026-09-01",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991203559001",
+                "nama_lengkap": "Suharto Wiryo",
+                "tanggal_lahir": "1955-03-12",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 46, Umbulharjo, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": {
+                "jenis": "perbandingan",
+                "status": "berhasil",
+                "kolom": [
+                    {
+                        "kunci": "nama_almarhum",
+                        "label": "Nama Almarhum",
+                        "status": "tidak terbaca"
+                    }
+                ]
+            },
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "DOKUMEN_TIDAK_TERBACA"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-047",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode DOKUMEN_TIDAK_TERBACA.",
+            "kecamatan_alamat": "Umbulharjo",
+            "pengajuan": {
+                "nama_almarhum": "Siti Aminah",
+                "nik_almarhum": "3471996407609002",
+                "tanggal_kematian": "2026-09-02",
+                "tanggal_pengajuan": "2026-10-02",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471996407609002",
+                "nama_lengkap": "Siti Aminah",
+                "tanggal_lahir": "1960-07-24",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 47, Umbulharjo, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": {
+                "jenis": "perbandingan",
+                "status": "berhasil",
+                "kolom": [
+                    {
+                        "kunci": "nama_almarhum",
+                        "label": "Nama Almarhum",
+                        "status": "tidak terbaca"
+                    }
+                ]
+            },
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "DOKUMEN_TIDAK_TERBACA"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-048",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode DOKUMEN_TIDAK_TERBACA.",
+            "kecamatan_alamat": "Umbulharjo",
+            "pengajuan": {
+                "nama_almarhum": "Karsih",
+                "nik_almarhum": "3471994306539003",
+                "tanggal_kematian": "2026-09-03",
+                "tanggal_pengajuan": "2026-10-03",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471994306539003",
+                "nama_lengkap": "Karsih",
+                "tanggal_lahir": "1953-06-03",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 48, Umbulharjo, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": {
+                "jenis": "perbandingan",
+                "status": "berhasil",
+                "kolom": [
+                    {
+                        "kunci": "nama_almarhum",
+                        "label": "Nama Almarhum",
+                        "status": "tidak terbaca"
+                    }
+                ]
+            },
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "DOKUMEN_TIDAK_TERBACA"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-049",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode NAMA_BEDA_TIPIS.",
+            "kecamatan_alamat": "Umbulharjo",
+            "pengajuan": {
+                "nama_almarhum": "Muhammad Farhan",
+                "nik_almarhum": "3471995104659004",
+                "tanggal_kematian": "2026-09-01",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471995104659004",
+                "nama_lengkap": "Mohamad Farhan",
+                "tanggal_lahir": "1965-04-11",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 49, Umbulharjo, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "NAMA_BEDA_TIPIS"
+            ],
+            "kategori_nama_harapan": "BEDA_TIPIS"
+        },
+        {
+            "id": "UJI-050",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode NAMA_BEDA_TIPIS.",
+            "kecamatan_alamat": "Umbulharjo",
+            "pengajuan": {
+                "nama_almarhum": "Muhammad Farhan",
+                "nik_almarhum": "3471991907459005",
+                "tanggal_kematian": "2026-09-02",
+                "tanggal_pengajuan": "2026-10-02",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991907459005",
+                "nama_lengkap": "Mohamad Farhan",
+                "tanggal_lahir": "1945-07-19",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 50, Umbulharjo, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "NAMA_BEDA_TIPIS"
+            ],
+            "kategori_nama_harapan": "BEDA_TIPIS"
+        },
+        {
+            "id": "UJI-051",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode NAMA_BEDA_TIPIS.",
+            "kecamatan_alamat": "Umbulharjo",
+            "pengajuan": {
+                "nama_almarhum": "Muhammad Farhan",
+                "nik_almarhum": "3471997009579006",
+                "tanggal_kematian": "2026-09-03",
+                "tanggal_pengajuan": "2026-10-03",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471997009579006",
+                "nama_lengkap": "Mohamad Farhan",
+                "tanggal_lahir": "1957-09-30",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 51, Umbulharjo, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "NAMA_BEDA_TIPIS"
+            ],
+            "kategori_nama_harapan": "BEDA_TIPIS"
+        },
+        {
+            "id": "UJI-052",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode ALAMAT_DI_LUAR_WILAYAH.",
+            "kecamatan_alamat": "Luar Kota Yogyakarta",
+            "pengajuan": {
+                "nama_almarhum": "Agus Prasetyo",
+                "nik_almarhum": "3471991402809007",
+                "tanggal_kematian": "2026-09-01",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991402809007",
+                "nama_lengkap": "Agus Prasetyo",
+                "tanggal_lahir": "1980-02-14",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Kaliurang KM 5, Sleman",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "ALAMAT_DI_LUAR_WILAYAH"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-053",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode ALAMAT_DI_LUAR_WILAYAH.",
+            "kecamatan_alamat": "Luar Kota Yogyakarta",
+            "pengajuan": {
+                "nama_almarhum": "Dewi Lestari",
+                "nik_almarhum": "3471994112859008",
+                "tanggal_kematian": "2026-09-02",
+                "tanggal_pengajuan": "2026-10-02",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471994112859008",
+                "nama_lengkap": "Dewi Lestari",
+                "tanggal_lahir": "1985-12-01",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Kaliurang KM 5, Sleman",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "ALAMAT_DI_LUAR_WILAYAH"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-054",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode ALAMAT_DI_LUAR_WILAYAH.",
+            "kecamatan_alamat": "Luar Kota Yogyakarta",
+            "pengajuan": {
+                "nama_almarhum": "Slamet Riyadi",
+                "nik_almarhum": "3471990905759009",
+                "tanggal_kematian": "2026-09-03",
+                "tanggal_pengajuan": "2026-10-03",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471990905759009",
+                "nama_lengkap": "Slamet Riyadi",
+                "tanggal_lahir": "1975-05-09",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Kaliurang KM 5, Sleman",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "ALAMAT_DI_LUAR_WILAYAH"
+            ],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-055",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode LAYANAN_TIDAK_TERSEDIA.",
+            "kecamatan_alamat": "Umbulharjo",
+            "pengajuan": {
+                "nama_almarhum": "Tri Wahyuni",
+                "nik_almarhum": "3471995907789010",
+                "tanggal_kematian": "2026-09-01",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": null,
+            "siak_tersedia": false,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "LAYANAN_TIDAK_TERSEDIA"
+            ],
+            "kategori_nama_harapan": "NA"
+        },
+        {
+            "id": "UJI-056",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode LAYANAN_TIDAK_TERSEDIA.",
+            "kecamatan_alamat": "Umbulharjo",
+            "pengajuan": {
+                "nama_almarhum": "Bambang Hermawan",
+                "nik_almarhum": "3471992503689011",
+                "tanggal_kematian": "2026-09-02",
+                "tanggal_pengajuan": "2026-10-02",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": null,
+            "siak_tersedia": false,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "LAYANAN_TIDAK_TERSEDIA"
+            ],
+            "kategori_nama_harapan": "NA"
+        },
+        {
+            "id": "UJI-057",
+            "kategori": "anomali",
+            "deskripsi": "Kasus uji untuk kode LAYANAN_TIDAK_TERSEDIA.",
+            "kecamatan_alamat": "Kotagede",
+            "pengajuan": {
+                "nama_almarhum": "Siti Fatimah",
+                "nik_almarhum": "3471994810729012",
+                "tanggal_kematian": "2026-09-03",
+                "tanggal_pengajuan": "2026-10-03",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": null,
+            "siak_tersedia": false,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "LAYANAN_TIDAK_TERSEDIA"
+            ],
+            "kategori_nama_harapan": "NA"
+        },
+        {
+            "id": "UJI-058",
+            "kategori": "ambigu",
+            "deskripsi": "Inisial ganda vs nama lengkap; skor tepat di ambang beda tipis.",
+            "kecamatan_alamat": "Kotagede",
+            "pengajuan": {
+                "nama_almarhum": "R. M. Farhan",
+                "nik_almarhum": "3471991203559001",
+                "tanggal_kematian": "2026-09-01",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991203559001",
+                "nama_lengkap": "Raden Muhammad Farhan",
+                "tanggal_lahir": "1955-03-12",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 58, Kotagede, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "NAMA_BEDA_TIPIS"
+            ],
+            "kategori_nama_harapan": "BEDA_TIPIS"
+        },
+        {
+            "id": "UJI-059",
+            "kategori": "ambigu",
+            "deskripsi": "Nama tunggal vs nama panjang; batas antara satu orang dan nama berbeda.",
+            "kecamatan_alamat": "Kotagede",
+            "pengajuan": {
+                "nama_almarhum": "Siti",
+                "nik_almarhum": "3471996407609002",
+                "tanggal_kematian": "2026-09-02",
+                "tanggal_pengajuan": "2026-10-02",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471996407609002",
+                "nama_lengkap": "Siti Aminah",
+                "tanggal_lahir": "1960-07-24",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 59, Kotagede, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "NAMA_BEDA_TIPIS"
+            ],
+            "kategori_nama_harapan": "BEDA_TIPIS"
+        },
+        {
+            "id": "UJI-060",
+            "kategori": "ambigu",
+            "deskripsi": "Alamat luar kota dan nama beda tipis sekaligus.",
+            "kecamatan_alamat": "Luar Kota Yogyakarta",
+            "pengajuan": {
+                "nama_almarhum": "Muhammad Farhan",
+                "nik_almarhum": "3471994306539003",
+                "tanggal_kematian": "2026-09-03",
+                "tanggal_pengajuan": "2026-10-03",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471994306539003",
+                "nama_lengkap": "Mohamad Farhan",
+                "tanggal_lahir": "1953-06-03",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Kaliurang KM 7, Sleman",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [
+                "ALAMAT_DI_LUAR_WILAYAH",
+                "NAMA_BEDA_TIPIS"
+            ],
+            "kategori_nama_harapan": "BEDA_TIPIS"
+        },
+        {
+            "id": "UJI-061",
+            "kategori": "ambigu",
+            "deskripsi": "Tepat 30 hari sejak kematian; batas tidak dianggap terlambat.",
+            "kecamatan_alamat": "Kotagede",
+            "pengajuan": {
+                "nama_almarhum": "Nurhayati",
+                "nik_almarhum": "3471995104659004",
+                "tanggal_kematian": "2026-09-01",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "P",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471995104659004",
+                "nama_lengkap": "Nurhayati",
+                "tanggal_lahir": "1965-04-11",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 60, Kotagede, Yogyakarta",
+                "jenis_kelamin": "P",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        },
+        {
+            "id": "UJI-062",
+            "kategori": "ambigu",
+            "deskripsi": "Terlambat 31 hari tetapi SPTJM tersedia; tidak dianggap anomal.",
+            "kecamatan_alamat": "Kotagede",
+            "pengajuan": {
+                "nama_almarhum": "Wardiman",
+                "nik_almarhum": "3471991907459005",
+                "tanggal_kematian": "2026-08-31",
+                "tanggal_pengajuan": "2026-10-01",
+                "jenis_kelamin": "L",
+                "tempat_kematian": "RSUD Kota Yogyakarta",
+                "sebab_kematian": "Sakit",
+                "jenis_kasus": "Normal",
+                "status_pengajuan": "Menunggu Verifikasi"
+            },
+            "siak": {
+                "nik": "3471991907459005",
+                "nama_lengkap": "Wardiman",
+                "tanggal_lahir": "1945-07-19",
+                "tempat_lahir": "Yogyakarta",
+                "alamat": "Jl. Uji No. 61, Kotagede, Yogyakarta",
+                "jenis_kelamin": "L",
+                "status_kependudukan": "Hidup"
+            },
+            "siak_tersedia": true,
+            "berkas": [
+                "Surat Keterangan Kematian",
+                "KTP Almarhum",
+                "Kartu Keluarga",
+                "KTP Pelapor",
+                "SPTJM Kebenaran Data Kematian"
+            ],
+            "analisis_ai": null,
+            "pengajuan_ganda": false,
+            "kode_harus_muncul": [],
+            "kategori_nama_harapan": "PERSIS"
+        }
+    ]
+}

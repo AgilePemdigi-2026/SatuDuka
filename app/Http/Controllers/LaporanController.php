@@ -8,7 +8,9 @@ use App\Models\Pengguna;
 use App\Services\Ai\LayananAnalisisAi;
 use App\Services\LayananAudit;
 use App\Services\LayananNomorPengajuan;
+use App\Services\Verifikasi\LayananAturanBerkas;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -19,9 +21,10 @@ use Illuminate\Validation\ValidationException;
 /**
  * Controller pengajuan laporan kematian (use case 5.2.3).
  *
- * Pemohon mengisi data pelapor, data almarhum, dan mengunggah empat berkas
- * pendukung. Pengajuan dapat disimpan sebagai draf, lalu dikirim sehingga
- * memperoleh nomor pengajuan dan berstatus Menunggu Verifikasi.
+ * Pemohon mengisi data pelapor, data almarhum, dan mengunggah berkas
+ * pendukung sesuai aturan verifikasi. Pengajuan dapat disimpan sebagai draf,
+ * lalu dikirim sehingga memperoleh nomor pengajuan dan berstatus Menunggu
+ * Verifikasi.
  */
 class LaporanController extends Controller
 {
@@ -36,6 +39,11 @@ class LaporanController extends Controller
     public const MAKS_UKURAN_KB = 5120;
 
     /**
+     * Pesan penolakan pengajuan ganda saat pengiriman.
+     */
+    public const PESAN_PENGAJUAN_GANDA = 'NIK almarhum sudah terdaftar pada pengajuan lain yang masih aktif atau sudah selesai. Satu almarhum hanya dapat diajukan satu kali.';
+
+    /**
      * Pemetaan jenis dokumen ke nama kolom unggahan pada formulir.
      *
      * @var array<string, string>
@@ -45,12 +53,22 @@ class LaporanController extends Controller
         BerkasPendukung::JENIS_KTP_ALMARHUM => 'berkas_ktp_almarhum',
         BerkasPendukung::JENIS_KTP_PELAPOR => 'berkas_ktp_pelapor',
         BerkasPendukung::JENIS_KARTU_KELUARGA => 'berkas_kartu_keluarga',
+        BerkasPendukung::JENIS_SURAT_KETERANGAN_KELURAHAN => 'berkas_surat_keterangan_kelurahan',
+        BerkasPendukung::JENIS_SPTJM_KEBENARAN_DATA_KEMATIAN => 'berkas_sptjm',
+        BerkasPendukung::JENIS_SURAT_KETERANGAN_KEPOLISIAN => 'berkas_surat_keterangan_kepolisian',
+        BerkasPendukung::JENIS_KTP_SAKSI_1 => 'berkas_ktp_saksi_1',
+        BerkasPendukung::JENIS_KTP_SAKSI_2 => 'berkas_ktp_saksi_2',
     ];
 
     /**
      * Jenis ekstensi berkas yang diterima, diperiksa dari MIME.
      */
     private const EKSTENSI_BERKAS = 'pdf,jpg,jpeg,png';
+
+    /**
+     * MIME sebenarnya yang diterima (dibaca dari isi berkas, bukan ekstensi).
+     */
+    private const MIME_BERKAS = 'application/pdf,image/jpeg,image/png';
 
     /**
      * Pilihan hubungan pelapor dengan almarhum.
@@ -76,6 +94,7 @@ class LaporanController extends Controller
         'nama_almarhum',
         'nik_almarhum',
         'tanggal_kematian',
+        'jenis_kasus',
         'tempat_kematian',
         'sebab_kematian',
     ];
@@ -147,7 +166,7 @@ class LaporanController extends Controller
     /**
      * Mengirim draf atau mengirim ulang pengajuan berstatus revisi.
      */
-    public function kirim(Request $request, LaporanKematian $laporan)
+    public function kirim(Request $request, LaporanKematian $laporan, LayananAturanBerkas $aturanBerkas)
     {
         $laporan = $this->laporanMilik($request, $laporan);
         $this->pastikanBolehDiubah($laporan);
@@ -168,15 +187,21 @@ class LaporanController extends Controller
         unset($data['pernyataan']);
         $data = $this->rapikan($data);
 
-        $this->pastikanBerkasLengkap($laporan);
+        $this->pastikanBerkasLengkap($laporan, $data);
 
-        $hasil = DB::transaction(function () use ($laporan, $data) {
+        $hasil = DB::transaction(function () use ($laporan, $data, $aturanBerkas) {
             $terkunci = LaporanKematian::query()
                 ->whereKey($laporan->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
 
             abort_unless($terkunci->bolehDiubah(), 403, 'Pengajuan dengan status ini tidak dapat diubah.');
+
+            if ($aturanBerkas->adaPengajuanGanda((string) $data['nik_almarhum'], (int) $terkunci->id_laporan)) {
+                throw ValidationException::withMessages([
+                    'nik_almarhum' => self::PESAN_PENGAJUAN_GANDA,
+                ])->redirectTo($this->alamatLangkah($terkunci, 2));
+            }
 
             $statusSebelumnya = $terkunci->status_pengajuan;
             $kirimUlang = ! $terkunci->adalahDraf();
@@ -245,7 +270,7 @@ class LaporanController extends Controller
         $namaInput = self::INPUT_BERKAS[$jenis];
 
         $request->validate([
-            $namaInput => ['required', 'file', 'max:'.self::MAKS_UKURAN_KB, 'mimes:'.self::EKSTENSI_BERKAS],
+            $namaInput => ['required', 'file', 'max:'.self::MAKS_UKURAN_KB, 'mimes:'.self::EKSTENSI_BERKAS, 'mimetypes:'.self::MIME_BERKAS],
         ], [
             $namaInput.'.required' => self::PESAN_BERKAS,
             $namaInput.'.file' => self::PESAN_BERKAS,
@@ -305,7 +330,10 @@ class LaporanController extends Controller
         abort_unless((int) $berkas->id_laporan === (int) $laporan->id_laporan, 404);
         abort_unless($berkas->path_file !== '' && Storage::disk('local')->exists($berkas->path_file), 404);
 
-        return Storage::disk('local')->response($berkas->path_file, $berkas->nama_file);
+        return Storage::disk('local')->response($berkas->path_file, $berkas->nama_file, [
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     /**
@@ -356,6 +384,8 @@ class LaporanController extends Controller
         return view('laporan.lihat', [
             'laporan' => $laporan->load('berkasPendukung'),
             'pengguna' => $request->user(),
+            'daftarJenis' => $this->daftarJenisTampil($laporan),
+            'daftarJenisWajib' => BerkasPendukung::DAFTAR_JENIS_WAJIB,
             'inputBerkas' => self::INPUT_BERKAS,
         ]);
     }
@@ -372,9 +402,150 @@ class LaporanController extends Controller
             'laporan' => $laporan,
             'langkah' => $langkah,
             'daftarHubungan' => self::DAFTAR_HUBUNGAN,
-            'daftarJenis' => BerkasPendukung::DAFTAR_JENIS,
+            'daftarJenis' => $this->daftarJenisTampil($laporan),
+            'daftarJenisWajib' => BerkasPendukung::DAFTAR_JENIS_WAJIB,
+            'kelompokBerkas' => $this->kelompokBerkasTampil($laporan),
+            'daftarJenisKasus' => LaporanKematian::DAFTAR_JENIS_KASUS,
             'inputBerkas' => self::INPUT_BERKAS,
         ];
+    }
+
+    /**
+     * Berkas yang ditampilkan pada formulir sesuai kondisi pengajuan.
+     *
+     * SPTJM selalu tampil sebagai salah satu bukti kematian, sedangkan
+     * surat kepolisian hanya untuk jenazah tidak dikenal/tidak ditemukan.
+     *
+     * @return list<string>
+     */
+    private function daftarJenisTampil(?LaporanKematian $laporan): array
+    {
+        $jenisKasus = $laporan?->jenis_kasus ?? LaporanKematian::JENIS_KASUS_NORMAL;
+        $terlambat = $this->terlambat($laporan);
+        $buktiKematian = (array) config('verifikasi.berkas_wajib.bukti_kematian.jenis', []);
+        $berkasKeterlambatan = (array) config('verifikasi.berkas_bersyarat.keterlambatan', []);
+        $berkasKasusKhusus = (array) config('verifikasi.berkas_bersyarat.jenis_kasus_khusus', []);
+
+        return array_values(array_filter(
+            BerkasPendukung::DAFTAR_JENIS,
+            static function (string $jenis) use ($jenisKasus, $terlambat, $buktiKematian, $berkasKeterlambatan, $berkasKasusKhusus): bool {
+                if (in_array($jenis, $buktiKematian, true)) {
+                    return true;
+                }
+
+                if (in_array($jenis, $berkasKeterlambatan, true)) {
+                    return $terlambat;
+                }
+
+                if (in_array($jenis, $berkasKasusKhusus, true)) {
+                    return $jenisKasus !== LaporanKematian::JENIS_KASUS_NORMAL;
+                }
+
+                return true;
+            },
+        ));
+    }
+
+    /**
+     * Kelompok unggahan pada langkah 3 beserta penanda bersyaratnya.
+     *
+     * @return array{
+     *     kelompok: list<array{judul: string, petunjuk: string, wajib: bool, pilih_satu: bool, jenis: list<string>}>,
+     *     keterlambatan: list<string>,
+     *     kasus_khusus: list<string>
+     * }
+     */
+    private function kelompokBerkasTampil(?LaporanKematian $laporan): array
+    {
+        $jenisKasus = $laporan?->jenis_kasus ?? LaporanKematian::JENIS_KASUS_NORMAL;
+        $terlambat = $this->terlambat($laporan);
+        $daftarJenis = $this->daftarJenisTampil($laporan);
+
+        $buktiKematian = (array) config('verifikasi.berkas_wajib.bukti_kematian.jenis', []);
+        $lainnya = (array) config('verifikasi.berkas_wajib.lainnya', []);
+        $keterlambatan = $terlambat
+            ? (array) config('verifikasi.berkas_bersyarat.keterlambatan', [])
+            : [];
+        $kasusKhusus = $jenisKasus !== LaporanKematian::JENIS_KASUS_NORMAL
+            ? (array) config('verifikasi.berkas_bersyarat.jenis_kasus_khusus', [])
+            : [];
+
+        $kelompok = [
+            [
+                'judul' => 'Bukti Kematian',
+                'petunjuk' => 'Pilih minimal satu dokumen berikut.',
+                'wajib' => true,
+                'pilih_satu' => true,
+                'jenis' => array_values(array_intersect($daftarJenis, $buktiKematian)),
+            ],
+            [
+                'judul' => 'Berkas Wajib Lainnya',
+                'petunjuk' => 'Unggah seluruh dokumen berikut.',
+                'wajib' => true,
+                'pilih_satu' => false,
+                'jenis' => array_values(array_intersect($daftarJenis, $lainnya)),
+            ],
+        ];
+
+        $keterlambatanTampil = array_values(array_intersect($daftarJenis, array_diff($keterlambatan, $buktiKematian, $lainnya)));
+
+        if ($keterlambatanTampil !== []) {
+            $kelompok[] = [
+                'judul' => 'Berkas Keterlambatan',
+                'petunjuk' => 'Wajib karena pengajuan lebih dari '.(int) config('verifikasi.batas_hari_pelaporan', 30).' hari setelah tanggal kematian.',
+                'wajib' => true,
+                'pilih_satu' => false,
+                'jenis' => $keterlambatanTampil,
+            ];
+        }
+
+        $kasusKhususTampil = array_values(array_intersect($daftarJenis, array_diff($kasusKhusus, $buktiKematian, $lainnya)));
+
+        if ($kasusKhususTampil !== []) {
+            $kelompok[] = [
+                'judul' => 'Berkas Jenis Kasus Khusus',
+                'petunjuk' => 'Wajib karena jenis kasus '.$jenisKasus.'.',
+                'wajib' => true,
+                'pilih_satu' => false,
+                'jenis' => $kasusKhususTampil,
+            ];
+        }
+
+        $opsional = array_values(array_diff($daftarJenis, $buktiKematian, $lainnya, $keterlambatan, $kasusKhusus));
+
+        if ($opsional !== []) {
+            $kelompok[] = [
+                'judul' => 'Berkas Opsional',
+                'petunjuk' => 'Dokumen berikut tidak wajib diunggah.',
+                'wajib' => false,
+                'pilih_satu' => false,
+                'jenis' => $opsional,
+            ];
+        }
+
+        return [
+            'kelompok' => array_values(array_filter($kelompok, static fn (array $item): bool => $item['jenis'] !== [])),
+            'keterlambatan' => array_values($keterlambatan),
+            'kasus_khusus' => array_values($kasusKhusus),
+        ];
+    }
+
+    /**
+     * Apakah selisih tanggal kematian dan tanggal pengajuan melebihi batas.
+     */
+    private function terlambat(?LaporanKematian $laporan, ?string $tanggalKematian = null): bool
+    {
+        $tanggalKematian ??= $laporan?->tanggal_kematian;
+
+        if ($tanggalKematian === null) {
+            return false;
+        }
+
+        $tanggalKematian = Carbon::parse($tanggalKematian)->startOfDay();
+        $tanggalAcuan = ($laporan?->tanggal_pengajuan ?? now())->copy()->startOfDay();
+        $selisihHari = $tanggalKematian->diffInDays($tanggalAcuan, false);
+
+        return $selisihHari > (int) config('verifikasi.batas_hari_pelaporan', 30);
     }
 
     /**
@@ -406,6 +577,7 @@ class LaporanController extends Controller
             'nama_almarhum' => 2,
             'nik_almarhum' => 2,
             'tanggal_kematian' => 2,
+            'jenis_kasus' => 2,
             'tempat_kematian' => 2,
             'sebab_kematian' => 2,
         ];
@@ -438,6 +610,7 @@ class LaporanController extends Controller
             'nama_almarhum' => [$awalan, 'string', 'max:100'],
             'nik_almarhum' => [$awalan, 'digits:16'],
             'tanggal_kematian' => [$awalan, 'date', 'before_or_equal:today'],
+            'jenis_kasus' => ['nullable', 'string', Rule::in(LaporanKematian::DAFTAR_JENIS_KASUS)],
             'tempat_kematian' => [$awalan, 'string', 'max:100'],
             'sebab_kematian' => [$awalan, 'string', 'max:1000'],
         ];
@@ -453,6 +626,7 @@ class LaporanController extends Controller
         return [
             'required' => 'Harap isi semua field yang diperlukan',
             'hubungan_pelapor.in' => 'Hubungan dengan almarhum tidak valid.',
+            'jenis_kasus.in' => 'Jenis kasus tidak valid.',
             'nik_almarhum.digits' => 'NIK almarhum harus terdiri dari 16 digit.',
             'tanggal_kematian.date' => 'Tanggal kematian tidak valid.',
             'tanggal_kematian.before_or_equal' => 'Tanggal kematian tidak boleh di masa depan.',
@@ -478,20 +652,26 @@ class LaporanController extends Controller
     }
 
     /**
-     * Keempat berkas pendukung wajib sudah terunggah.
+     * Berkas pendukung memenuhi aturan wajib dan bersyarat.
+     *
+     * @param  array<string, mixed>  $data
      */
-    private function pastikanBerkasLengkap(LaporanKematian $laporan): void
+    private function pastikanBerkasLengkap(LaporanKematian $laporan, array $data = []): void
     {
         $terunggah = $laporan->berkasPendukung()
             ->where('status_unggahan', BerkasPendukung::STATUS_BERHASIL)
             ->pluck('jenis_dokumen')
             ->all();
 
-        $kurang = array_diff(BerkasPendukung::DAFTAR_JENIS, $terunggah);
+        $kurang = BerkasPendukung::jenisYangKurang(
+            $terunggah,
+            $this->terlambat($laporan, $data['tanggal_kematian'] ?? null),
+            $data['jenis_kasus'] ?? $laporan->jenis_kasus ?? LaporanKematian::JENIS_KASUS_NORMAL,
+        );
 
         if ($kurang !== []) {
             throw ValidationException::withMessages([
-                'berkas' => 'Keempat berkas pendukung wajib diunggah sebelum pengajuan dikirim.',
+                'berkas' => 'Berkas wajib belum lengkap: '.implode(', ', $kurang).'.',
             ])->redirectTo($this->alamatLangkah($laporan, 3));
         }
     }
