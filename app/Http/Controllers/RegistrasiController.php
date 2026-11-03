@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
  * Penyimpangan dari use case 5.2.1: kolom alamat
  * surel WAJIB diisi karena `pengguna.email` NOT NULL UNIQUE dan dipakai untuk
  * pengaturan ulang kata sandi. Nama lengkap diambil dari data kependudukan
- * (SIAK) berdasarkan NIK sehingga tidak perlu diisi manual.
+ * bila tersedia; NIK yang belum ada di data tersebut tetap dapat mendaftar.
  */
 class RegistrasiController extends Controller
 {
@@ -63,19 +63,12 @@ class RegistrasiController extends Controller
             'konfirmasi_kata_sandi.same' => 'Kata sandi tidak cocok',
         ]);
 
-        // Use case 5.2.1 langkah 5: memverifikasi NIK pada data kependudukan.
-        // Sementara memakai pembaca data dummy SIAK; kelak dialihkan ke
-        // SIAKService.
+        // Gunakan nama dari data dummy bila tersedia tanpa mensyaratkan NIK
+        // terdaftar di SIAK untuk membuat akun.
         $dataSiak = DataSIAK::cariNik($valid['nik']);
 
-        if ($dataSiak === null) {
-            return back()
-                ->withErrors(['nik' => 'NIK tidak ditemukan pada data kependudukan'])
-                ->withInput($request->only('nik', 'email'));
-        }
-
         $pengguna = Pengguna::create([
-            'nama_lengkap' => $dataSiak['nama_lengkap'],
+            'nama_lengkap' => $dataSiak['nama_lengkap'] ?? 'Pemohon',
             'nik' => $valid['nik'],
             'email' => $valid['email'],
             'kata_sandi' => $valid['kata_sandi'],
@@ -86,7 +79,7 @@ class RegistrasiController extends Controller
             aksi: 'registrasi',
             objek: 'pengguna',
             idObjek: $pengguna->id_pengguna,
-            detail: ['peran' => $pengguna->peran, 'nama_dari_siak' => true],
+            detail: ['peran' => $pengguna->peran, 'nama_dari_siak' => $dataSiak !== null],
             pengguna: $pengguna,
         );
 
