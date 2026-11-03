@@ -81,6 +81,8 @@
         .btn-brand:hover { background: var(--brand-dark); }
         .btn-green { background: #047857; color: #fff; }
         .btn-green:hover { background: #036649; }
+        .btn-red { background: #b91c1c; color: #fff; }
+        .btn-red:hover { background: #991b1b; }
         .btn-outline { background: #fff; color: #475569; border-color: #cbd5e1; }
         .btn-outline:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
         .btn-block { width: 100%; }
@@ -90,8 +92,11 @@
         .field::placeholder { color: var(--faint); }
         textarea.field { resize: vertical; }
         .field-label { display: block; font-size: 12.5px; font-weight: 600; color: #334155; margin-bottom: 6px; }
-        .search-form { display: flex; align-items: center; gap: 8px; }
-        .search-input { width: 270px; border-radius: 999px; padding: 10px 20px; }
+        .search-form { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+        .search-input { width: 270px; max-width: 100%; border-radius: 999px; padding: 10px 20px; }
+        .dashboard-card-head { flex-wrap: nowrap; }
+        .dashboard-card-head > div { flex: 1; min-width: 0; }
+        .dashboard-card-head .search-form { flex-shrink: 0; }
 
         .table-wrap { overflow-x: auto; }
         .tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -107,6 +112,7 @@
         .badge-brand { background: var(--brand-soft); color: var(--brand); }
         .badge-ok { background: #ecfdf5; color: #065f46; }
         .badge-bad { background: #fef2f2; color: #991b1b; }
+        .badge-warning { background: #fff7ed; color: #c2410c; }
         .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
         .alert { border-radius: 16px; padding: 16px 20px; font-size: 14px; margin-bottom: 24px; }
@@ -147,8 +153,16 @@
             .skd-side { width: 100%; height: auto; position: static; }
             .skd-container { padding: 24px 18px 40px; }
             .info-grid, .decision-grid { grid-template-columns: 1fr; }
+            .dashboard-card-head { align-items: stretch; flex-direction: column; }
+            .dashboard-card-head .search-form { width: 100%; }
+            .dashboard-card-head .search-input { flex: 1; min-width: 0; }
         }
-        @media (max-width: 560px) { .stats { grid-template-columns: 1fr; } }
+        @media (max-width: 560px) {
+            .stats { grid-template-columns: 1fr; }
+            .dashboard-card-head .search-form { flex-wrap: wrap; }
+            .dashboard-card-head .search-form select { flex: 1 1 100%; }
+            .dashboard-card-head .search-input { flex: 1 1 100%; }
+        }
     </style>
 </head>
 <body>
@@ -184,18 +198,13 @@
 
             <div class="skd-topbar">
                 <div>
+                    @yield('aksi_header')
                     <h1 class="skd-title">@yield('judul', 'Verifikasi')</h1>
                     @hasSection('subjudul')
                         <p class="skd-sub">@yield('subjudul')</p>
                     @endif
                 </div>
-                <div class="skd-user">
-                    <div>
-                        <p class="skd-user-name">{{ auth()->user()->nama ?? 'Andi Setiawan' }}</p>
-                        <p class="skd-user-role">Verifikator</p>
-                    </div>
-                    <div class="skd-avatar">{{ strtoupper(mb_substr(auth()->user()->nama ?? 'Andi Setiawan', 0, 1)) }}</div>
-                </div>
+                @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
             </div>
 
             @if (session('sukses') || session('success'))

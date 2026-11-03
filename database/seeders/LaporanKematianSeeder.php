@@ -74,5 +74,23 @@ class LaporanKematianSeeder extends Seeder
                 BerkasPendukung::factory()->create(['id_laporan' => $laporan->id_laporan]);
             }
         }
+
+        $dataSkenarioLengkap = $dataSiak[count(self::SEBARAN_STATUS)] ?? DataSIAK::acak();
+        $laporanLengkap = LaporanKematian::factory()
+            ->denganStatus(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
+            ->create([
+                'id_pengguna' => $pemohonDemo->id_pengguna,
+                'nama_pelapor' => 'Pemohon Demo - Skenario Berkas Lengkap',
+                'nama_almarhum' => $dataSkenarioLengkap['nama_lengkap'] ?? 'Data Demo',
+                'nik_almarhum' => $dataSkenarioLengkap['nik'] ?? '9999990101900999',
+            ]);
+
+        foreach (BerkasPendukung::DAFTAR_JENIS as $jenisDokumen) {
+            BerkasPendukung::factory()->create([
+                'id_laporan' => $laporanLengkap->id_laporan,
+                'jenis_dokumen' => $jenisDokumen,
+                'status_unggahan' => BerkasPendukung::STATUS_BERHASIL,
+            ]);
+        }
     }
 }

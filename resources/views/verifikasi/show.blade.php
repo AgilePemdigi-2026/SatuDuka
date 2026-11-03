@@ -4,6 +4,11 @@
 @section('judul', 'Detail Verifikasi Berkas')
 @section('subjudul', 'Periksa data pemohon, kelengkapan dokumen, dan kesesuaian SIAK sebelum memutuskan.')
 @section('tanpa_error_global', '1')
+@section('aksi_header')
+    <a href="{{ route('verifikasi.index') }}" class="btn btn-outline btn-sm" style="margin-bottom: 12px;">
+        <span aria-hidden="true">←</span> Kembali ke Antrean
+    </a>
+@endsection
 
 @section('konten')
 @php
@@ -19,8 +24,9 @@
 <div class="stack page-narrow">
 
     <div class="toolbar">
-        <a href="{{ route('verifikasi.index') }}" class="btn btn-outline btn-sm"><span aria-hidden="true">←</span> Kembali ke Antrean</a>
-        <span class="badge badge-brand" style="padding: 8px 16px;">No. Pengajuan: {{ $laporan->no_pengajuan }}</span>
+        <span class="badge badge-brand" style="padding: 8px 16px;">
+            No. Pengajuan: {{ $laporan->no_pengajuan }}
+        </span>
     </div>
 
     @if ($errors->any())
@@ -166,69 +172,128 @@
 
     <!-- Keputusan Verifikasi -->
     <section class="card">
-        <div class="card-head">
+        <div class="card-head decision-header">
             <h2 class="card-title">Keputusan Verifikasi</h2>
+            <label for="pilihan-keputusan" class="decision-selector">
+                <span class="field-label">Pilihan Keputusan</span>
+                <select id="pilihan-keputusan" name="keputusan" class="field">
+                    <option value="setujui" @selected(old('keputusan', 'setujui') === 'setujui')>Setujui Berkas</option>
+                    <option value="tolak" @selected(old('keputusan') === 'tolak')>Tolak Berkas</option>
+                    <option value="anomali" @selected(old('keputusan') === 'anomali')>Alihkan ke Rekonsiliasi</option>
+                </select>
+            </label>
         </div>
 
         <div class="card-body">
-            <div class="decision-grid">
+            <form
+                id="form-keputusan"
+                method="POST"
+                action="{{ route('verifikasi.setujui', $laporan) }}"
+                data-action-setujui="{{ route('verifikasi.setujui', $laporan) }}"
+                data-action-tolak="{{ route('verifikasi.revisi', $laporan) }}"
+                data-action-anomali="{{ route('verifikasi.anomali', $laporan) }}"
+                class="decision-box"
+            >
+                @csrf
 
-                <form method="POST" action="{{ route('verifikasi.setujui', $laporan) }}" class="decision-box">
-                    @csrf
+                <div id="kolom-setujui" data-decision-fields>
+                    <h3>Setujui Berkas</h3>
 
-                    <div>
-                        <h3>Setujui Berkas</h3>
-                        <p class="hint">Gunakan jika persyaratan dan data sudah sesuai sepenuhnya.</p>
+                    <p class="hint">
+                        Gunakan jika persyaratan dan data sudah sesuai sepenuhnya.
+                    </p>
 
-                        <label for="catatan" class="field-label">Catatan Persetujuan (Opsional)</label>
-                        <textarea
-                            id="catatan"
-                            name="catatan"
-                            rows="3"
-                            class="field"
-                            placeholder="Tambahkan catatan jika ada..."
-                        ></textarea>
-                    </div>
+                    <label for="catatan" class="field-label">
+                        Catatan Persetujuan (Opsional)
+                    </label>
 
-                    <button type="submit" class="btn btn-green btn-block">Setujui Berkas</button>
-                </form>
+                    <textarea
+                        id="catatan"
+                        name="catatan"
+                        rows="3"
+                        class="field"
+                        placeholder="Tambahkan catatan jika ada..."
+                    >{{ old('catatan') }}</textarea>
+                </div>
 
-                <form method="POST" action="{{ route('verifikasi.anomali', $laporan) }}" class="decision-box">
-                    @csrf
+                <div id="kolom-tolak" data-decision-fields hidden>
+                    <h3>Tolak Berkas</h3>
 
-                    <div>
-                        <h3>Tandai Kasus Anomali</h3>
-                        <p class="hint">Alihkan ke rekonsiliasi jika ditemukan ketidaksesuaian data.</p>
+                    <p class="hint">
+                        Jelaskan alasan penolakan agar pemohon mengetahui berkas yang perlu diperbaiki.
+                    </p>
 
-                        <div class="form-stack">
-                            <div>
-                                <label for="jenis_anomali" class="field-label">Jenis Anomali</label>
-                                <select id="jenis_anomali" name="jenis_anomali" required class="field">
-                                    <option value="">Pilih Jenis Anomali</option>
-                                    <option value="Perbedaan Identitas">Perbedaan Identitas</option>
-                                    <option value="NIK Ganda">NIK Ganda</option>
-                                    <option value="Dokumen Tidak Terbaca">Dokumen Tidak Terbaca</option>
-                                </select>
-                            </div>
+                    <label for="alasan_penolakan" class="field-label">
+                        Alasan Penolakan
+                    </label>
 
-                            <div>
-                                <label for="deskripsi" class="field-label">Deskripsi</label>
-                                <textarea
-                                    id="deskripsi"
-                                    name="deskripsi"
-                                    rows="3"
-                                    required
-                                    class="field"
-                                    placeholder="Jelaskan ketidaksesuaian..."
-                                ></textarea>
-                            </div>
+                    <textarea
+                        id="alasan_penolakan"
+                        name="catatan"
+                        rows="3"
+                        required
+                        minlength="5"
+                        maxlength="2000"
+                        disabled
+                        class="field"
+                        placeholder="Tuliskan alasan penolakan..."
+                    >{{ old('catatan') }}</textarea>
+                </div>
+
+                <div id="kolom-anomali" data-decision-fields hidden>
+                    <h3>Tandai Kasus Anomali</h3>
+
+                    <p class="hint">
+                        Alihkan ke rekonsiliasi jika ditemukan ketidaksesuaian data.
+                    </p>
+
+                    <div class="form-stack">
+                        <div>
+                            <label for="jenis_anomali" class="field-label">
+                                Jenis Anomali
+                            </label>
+
+                            <select
+                                id="jenis_anomali"
+                                name="jenis_anomali"
+                                required
+                                disabled
+                                class="field"
+                            >
+                                <option value="">Pilih Jenis Anomali</option>
+                                <option value="Perbedaan Identitas" @selected(old('jenis_anomali') === 'Perbedaan Identitas')>Perbedaan Identitas</option>
+                                <option value="NIK Ganda" @selected(old('jenis_anomali') === 'NIK Ganda')>NIK Ganda</option>
+                                <option value="Dokumen Tidak Terbaca" @selected(old('jenis_anomali') === 'Dokumen Tidak Terbaca')>Dokumen Tidak Terbaca</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="deskripsi" class="field-label">
+                                Deskripsi
+                            </label>
+
+                            <textarea
+                                id="deskripsi"
+                                name="deskripsi"
+                                rows="3"
+                                required
+                                disabled
+                                class="field"
+                                placeholder="Jelaskan ketidaksesuaian..."
+                            >{{ old('deskripsi') }}</textarea>
                         </div>
                     </div>
+                </div>
 
-                    <button type="submit" class="btn btn-brand btn-block">Dialihkan ke Rekonsiliasi</button>
-                </form>
-
-            </div>
+                <button
+                    id="tombol-keputusan"
+                    type="submit"
+                    class="btn btn-green btn-block"
+                    {{ $jumlahTersedia !== $jumlahWajib ? 'disabled' : '' }}
+                >
+                    Setujui Berkas
+                </button>
+            </form>
         </div>
     </section>
 </div>
@@ -340,6 +405,15 @@
         color: var(--muted);
         text-align: center;
     }
+    .decision-selector { width: min(250px, 100%); }
+    .decision-selector .field-label { margin-bottom: 6px; }
+    .decision-box > [data-decision-fields] > h3 { font-size: 15px; font-weight: 700; color: var(--ink); }
+    .decision-box > [data-decision-fields] > .hint { font-size: 12.5px; color: var(--muted); margin: 4px 0 16px; }
+
+    .decision-box button:disabled {
+        cursor: not-allowed;
+        opacity: .55;
+    }
 </style>
 
 <script>
@@ -385,6 +459,52 @@
         document.getElementById('dlg-tutup').addEventListener('click', function () {
             dlg.close();
         });
+
+        var pilihanKeputusan = document.getElementById('pilihan-keputusan');
+        var formKeputusan = document.getElementById('form-keputusan');
+        var tombolKeputusan = document.getElementById('tombol-keputusan');
+        var konfigurasiKeputusan = {
+            setujui: {
+                action: formKeputusan.dataset.actionSetujui,
+                bagian: 'kolom-setujui',
+                label: 'Setujui Berkas',
+                warna: 'btn-green',
+                disabled: {{ $jumlahTersedia !== $jumlahWajib ? 'true' : 'false' }}
+            },
+            tolak: {
+                action: formKeputusan.dataset.actionTolak,
+                bagian: 'kolom-tolak',
+                label: 'Tolak Berkas',
+                warna: 'btn-red',
+                disabled: false
+            },
+            anomali: {
+                action: formKeputusan.dataset.actionAnomali,
+                bagian: 'kolom-anomali',
+                label: 'Alihkan ke Rekonsiliasi',
+                warna: 'btn-brand',
+                disabled: false
+            }
+        };
+
+        function perbaruiKeputusan() {
+            var keputusan = konfigurasiKeputusan[pilihanKeputusan.value];
+            formKeputusan.action = keputusan.action;
+            tombolKeputusan.textContent = keputusan.label;
+            tombolKeputusan.className = 'btn ' + keputusan.warna + ' btn-block';
+            tombolKeputusan.disabled = keputusan.disabled;
+
+            document.querySelectorAll('[data-decision-fields]').forEach(function (bagian) {
+                var aktif = bagian.id === keputusan.bagian;
+                bagian.hidden = !aktif;
+                bagian.querySelectorAll('input, select, textarea').forEach(function (field) {
+                    field.disabled = !aktif;
+                });
+            });
+        }
+
+        pilihanKeputusan.addEventListener('change', perbaruiKeputusan);
+        perbaruiKeputusan();
 
         dlg.addEventListener('click', function (e) {
             if (e.target === dlg) {

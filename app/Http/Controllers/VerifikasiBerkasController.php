@@ -19,35 +19,65 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class VerifikasiBerkasController extends Controller
 {
     /**
-     * Daftar antrean yang menunggu pemeriksaan.
+     * Daftar seluruh permohonan untuk pemantauan dan pemeriksaan.
      */
     public function index(Request $request): View
     {
+        $filter = $request->validate([
+            'cari' => ['nullable', 'string', 'max:100'],
+            'status' => ['nullable', 'in:semua,disetujui,menunggu,rekonsiliasi,selesai'],
+        ]);
+
+        $statusFilter = $filter['status'] ?? 'semua';
         $query = LaporanKematian::query()
             ->with('pemohon')
-            ->withCount('berkasPendukung')
-            ->where(
-                'status_pengajuan',
-                LaporanKematian::STATUS_MENUNGGU_VERIFIKASI
-            )
-            ->orderBy('tanggal_pengajuan');
+            ->where('status_pengajuan', '!=', LaporanKematian::STATUS_DRAF)
+            ->orderByRaw('CASE WHEN tanggal_pengajuan IS NULL THEN 1 ELSE 0 END')
+            ->orderByDesc('tanggal_pengajuan')
+            ->orderByDesc('dibuat_pada');
+
+        $statusPengajuan = match ($statusFilter) {
+            'disetujui' => LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE,
+            'menunggu' => LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+            'rekonsiliasi' => LaporanKematian::STATUS_DALAM_REKONSILIASI,
+            'selesai' => LaporanKematian::STATUS_SELESAI,
+            default => null,
+        };
+
+        if ($statusPengajuan !== null) {
+            $query->where('status_pengajuan', $statusPengajuan);
+        }
 
         if ($request->filled('cari')) {
             $cari = trim((string) $request->input('cari'));
-            // Escape karakter khusus SQL (% dan _)
-            $escapedCari = addcslashes($cari, '%_');
+            $polaCari = '%'.addcslashes($cari, '\\%_').'%';
+            $driver = DB::connection()->getDriverName();
+            $operatorPencarian = $driver === 'pgsql' ? 'ILIKE' : 'LIKE';
+            $klausaEscape = $driver === 'mysql' ? "ESCAPE '\\\\'" : "ESCAPE '\\'";
 
-            $query->where(function ($subquery) use ($escapedCari) {
+            $query->where(function ($subquery) use ($polaCari, $operatorPencarian, $klausaEscape) {
                 $subquery
-                    ->where('no_pengajuan', 'ilike', "%{$escapedCari}%")
-                    ->orWhere('nama_almarhum', 'ilike', "%{$escapedCari}%")
-                    ->orWhere('nik_almarhum', 'ilike', "%{$escapedCari}%");
+                    ->whereRaw("no_pengajuan {$operatorPencarian} ? {$klausaEscape}", [$polaCari])
+                    ->orWhereRaw("nama_almarhum {$operatorPencarian} ? {$klausaEscape}", [$polaCari])
+                    ->orWhereRaw("nik_almarhum {$operatorPencarian} ? {$klausaEscape}", [$polaCari]);
             });
         }
 
         $pengajuan = $query->paginate(10)->withQueryString();
+        $jumlahPerStatus = LaporanKematian::query()
+            ->where('status_pengajuan', '!=', LaporanKematian::STATUS_DRAF)
+            ->selectRaw('status_pengajuan, COUNT(*) as jumlah')
+            ->groupBy('status_pengajuan')
+            ->pluck('jumlah', 'status_pengajuan');
 
-        return view('verifikasi.index', compact('pengajuan'));
+        $ringkasan = [
+            'total' => $jumlahPerStatus->sum(),
+            'menunggu' => (int) $jumlahPerStatus->get(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI, 0),
+            'rekonsiliasi' => (int) $jumlahPerStatus->get(LaporanKematian::STATUS_DALAM_REKONSILIASI, 0),
+            'selesai' => (int) $jumlahPerStatus->get(LaporanKematian::STATUS_SELESAI, 0),
+        ];
+
+        return view('verifikasi.index', compact('pengajuan', 'ringkasan', 'statusFilter'));
     }
 
     /**

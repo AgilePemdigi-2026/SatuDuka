@@ -5,6 +5,7 @@ use App\Models\BerkasPendukung;
 use App\Models\LaporanKematian;
 use App\Models\LogAudit;
 use App\Models\Pengguna;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -143,6 +144,133 @@ it('menampilkan daftar menunggu verifikasi untuk verifikator', function () {
         ->assertOk()
         ->assertSee($menunggu->no_pengajuan)
         ->assertDontSee($draf->no_pengajuan);
+});
+
+it('menyediakan pengajuan demo dengan semua dokumen wajib untuk disetujui', function () {
+    $this->seed(DatabaseSeeder::class);
+
+    $laporan = LaporanKematian::query()
+        ->where('nama_pelapor', 'Pemohon Demo - Skenario Berkas Lengkap')
+        ->firstOrFail();
+    $verifikator = Pengguna::query()
+        ->where('email', 'verifikator@demo.satuduka.id')
+        ->firstOrFail();
+
+    expect($laporan->status_pengajuan)
+        ->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
+        ->and($laporan->berkasPendukung()
+            ->where('status_unggahan', BerkasPendukung::STATUS_BERHASIL)
+            ->pluck('jenis_dokumen')
+            ->unique()
+            ->all())
+        ->toEqual(BerkasPendukung::DAFTAR_JENIS);
+
+    $respons = $this->actingAs($verifikator)
+        ->get(route('verifikasi.show', $laporan))
+        ->assertOk();
+
+    $respons
+        ->assertSee('4 / 4 lengkap')
+        ->assertSee('Kembali ke Antrean')
+        ->assertSee('Kelola Profil')
+        ->assertSee('Keluar');
+
+    $this->post(route('verifikasi.setujui', $laporan))
+        ->assertRedirect(route('verifikasi.index'));
+
+    expect($laporan->fresh()->status_pengajuan)
+        ->toBe(LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE);
+});
+
+it('mengambil antrean verifikasi berkas dari database dan mendukung pencarian', function () {
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporan = buatLaporanVerifikasi($pemohon);
+    buatLaporanVerifikasi($pemohon, [
+        'nama_almarhum' => 'Nama Lain',
+        'no_pengajuan' => 'PENGAJUAN-LAIN',
+    ]);
+
+    $respons = $this->actingAs($verifikator)
+        ->get(route('verifikasi.index', ['cari' => 'wiryo']))
+        ->assertOk()
+        ->assertSee($laporan->nama_almarhum)
+        ->assertDontSee('Nama Lain');
+
+    expect($respons->viewData('pengajuan')->total())->toBe(1);
+});
+
+it('menampilkan seluruh status dengan ringkasan, filter, dan urutan terbaru', function () {
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $selesai = buatLaporanVerifikasi($pemohon, [
+        'status_pengajuan' => LaporanKematian::STATUS_SELESAI,
+        'tanggal_pengajuan' => now()->subDay(),
+        'nama_almarhum' => 'Pemohon Status Selesai',
+    ]);
+    $menunggu = buatLaporanVerifikasi($pemohon, [
+        'no_pengajuan' => 'PENGAJUAN-TERBARU',
+        'tanggal_pengajuan' => now(),
+        'nama_almarhum' => 'Pemohon Status Menunggu',
+    ]);
+    $dikembalikan = buatLaporanVerifikasi($pemohon, [
+        'status_pengajuan' => LaporanKematian::STATUS_DIKEMBALIKAN,
+        'tanggal_pengajuan' => now()->subHours(2),
+        'nama_almarhum' => 'Pemohon Status Dikembalikan',
+    ]);
+    $draf = buatLaporanVerifikasi($pemohon, [
+        'status_pengajuan' => LaporanKematian::STATUS_DRAF,
+        'tanggal_pengajuan' => null,
+        'nama_almarhum' => 'Pemohon Status Draf',
+    ]);
+
+    $respons = $this->actingAs($verifikator)
+        ->get(route('verifikasi.index'))
+        ->assertOk()
+        ->assertSee($menunggu->nama_almarhum)
+        ->assertSee($dikembalikan->nama_almarhum)
+        ->assertSee($selesai->nama_almarhum)
+        ->assertSee('Total Permohonan')
+        ->assertSee('Anomali Perlu Rekonsiliasi')
+        ->assertSee('Kelola Profil')
+        ->assertSee('Keluar')
+        ->assertDontSee($draf->nama_almarhum);
+
+    $pengajuan = $respons->viewData('pengajuan');
+    expect($pengajuan->items()[0]->id_laporan)->toBe($menunggu->id_laporan)
+        ->and($pengajuan->total())->toBe(3)
+        ->and($respons->viewData('ringkasan')['selesai'])->toBe(1)
+        ->and($respons->viewData('ringkasan')['total'])->toBe(3);
+
+    $this->actingAs($verifikator)
+        ->get(route('verifikasi.index', ['status' => 'menunggu']))
+        ->assertOk()
+        ->assertSee($menunggu->nama_almarhum)
+        ->assertDontSee($dikembalikan->nama_almarhum);
+});
+
+it('menampilkan dan menerima alasan saat menolak berkas', function () {
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporan = buatLaporanVerifikasi($pemohon);
+
+    $this->actingAs($verifikator)
+        ->get(route('verifikasi.show', $laporan))
+        ->assertOk()
+        ->assertSee('Alasan Penolakan')
+        ->assertSee('Tolak Berkas')
+        ->assertSee('<option value="setujui" selected>Setujui Berkas</option>', false)
+        ->assertSee('data-action-setujui="'.route('verifikasi.setujui', $laporan).'"', false)
+        ->assertSee('data-action-tolak="'.route('verifikasi.revisi', $laporan).'"', false)
+        ->assertSee('data-action-anomali="'.route('verifikasi.anomali', $laporan).'"', false);
+
+    $this->actingAs($verifikator)
+        ->post(route('verifikasi.revisi', $laporan), [
+            'catatan' => 'Dokumen identitas tidak terbaca.',
+        ])
+        ->assertRedirect(route('verifikasi.index'));
+
+    expect($laporan->fresh()->status_pengajuan)
+        ->toBe(LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI)
+        ->and($laporan->fresh()->catatan_revisi)
+        ->toBe('Dokumen identitas tidak terbaca.');
 });
 
 it('menolak daftar verifikasi untuk pemohon dan pejabat', function () {
