@@ -30,18 +30,31 @@ class DashboardController extends Controller
                     ->orderByDesc('dibuat_pada')
                     ->get(),
                 'pengajuanSaya' => $pengguna->laporanKematian()
-                    ->where('status_pengajuan', '!=', LaporanKematian::STATUS_DRAF)
+                    ->whereIn('status_pengajuan', [
+                        LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+                        LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE,
+                        LaporanKematian::STATUS_SELESAI,
+                    ])
                     ->with(['dokumenResmi', 'hasilVerifikasiRevisiTerbaru'])
                     ->orderByDesc('dibuat_pada')
                     ->limit(5)
                     ->get(),
-                'ringkasanStatus' => $pengguna->laporanKematian()
-                    ->where('status_pengajuan', '!=', LaporanKematian::STATUS_DRAF)
-                    ->selectRaw('status_pengajuan, count(*) as jumlah')
-                    ->groupBy('status_pengajuan')
-                    ->pluck('jumlah', 'status_pengajuan')
-                    ->filter(fn ($jumlah) => (int) $jumlah > 0)
-                    ->sortBy(fn ($jumlah, string $status) => array_search($status, LaporanKematian::DAFTAR_STATUS, true)),
+                'statistikPemohon' => [
+                    'total' => $pengguna->laporanKematian()->count(),
+                    'menunggu' => $pengguna->laporanKematian()
+                        ->where('status_pengajuan', LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
+                        ->count(),
+                    'perluPerbaikan' => $pengguna->laporanKematian()
+                        ->whereIn('status_pengajuan', [
+                            LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI,
+                            LaporanKematian::STATUS_DIKEMBALIKAN,
+                            LaporanKematian::STATUS_MENUNGGU_PERBAIKAN,
+                        ])
+                        ->count(),
+                    'selesai' => $pengguna->laporanKematian()
+                        ->where('status_pengajuan', LaporanKematian::STATUS_SELESAI)
+                        ->count(),
+                ],
             ]),
             $pengguna->adalahVerifikator() => view('dashboard.verifikator', [
                 'pengguna' => $pengguna,
