@@ -33,7 +33,9 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Rute storage/{path} bawaan dimatikan: berkas privat hanya
+            // disajikan lewat controller ber-otorisasi.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

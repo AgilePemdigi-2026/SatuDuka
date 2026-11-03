@@ -9,7 +9,8 @@ Gunakan `$table`, `$primaryKey`, dan `$timestamps` eksplisit di model karena tid
 |---|---|---|
 | id_pengguna | bigint PK auto | |
 | nama_lengkap | varchar(100) | |
-| nik | varchar(16) | unik, nullable untuk petugas |
+| nik | text | terenkripsi (cast `encrypted`), nullable untuk petugas; ciphertext lebih panjang dari 16 karakter |
+| nik_hash | varchar(64) | blind index HMAC-SHA256, unik; dipakai login/pencarian/cek duplikat |
 | nip | varchar(20) | IMPROVISASI: unik, nullable; dipakai login Verifikator/Pejabat |
 | email | varchar(100) | unik |
 | kata_sandi | varchar(255) | hash; override `getAuthPassword()` |
@@ -20,7 +21,7 @@ Gunakan `$table`, `$primaryKey`, dan `$timestamps` eksplisit di model karena tid
 Auth Laravel: set `config/auth.php` provider ke model `Pengguna`; `getAuthPassword()` mengembalikan `kata_sandi`; `getAuthIdentifierName()` = `id_pengguna`.
 
 ## laporan_kematian
-id_laporan (PK), id_pengguna (FK → pengguna, pemohon), no_pengajuan varchar(30) unik (format mis. `SD-20261020-0001`), nama_pelapor varchar(100), hubungan_pelapor varchar(50), nama_almarhum varchar(100), nik_almarhum varchar(16), tanggal_kematian date, tempat_kematian varchar(100), sebab_kematian text, status_pengajuan varchar(30), tanggal_pengajuan timestamp nullable.
+id_laporan (PK), id_pengguna (FK → pengguna, pemohon), no_pengajuan varchar(30) unik (format mis. `SD-20261020-0001`), nama_pelapor varchar(100), hubungan_pelapor varchar(50), nama_almarhum varchar(100), nik_almarhum text (terenkripsi), nik_almarhum_hash varchar(64) (blind index, indeks komposit dengan `status_pengajuan`), tanggal_kematian date, tempat_kematian varchar(100), sebab_kematian text, status_pengajuan varchar(30), tanggal_pengajuan timestamp nullable.
 Nilai status_pengajuan: `Draf` (IMPROVISASI), `Menunggu Verifikasi`, `Ditolak/Butuh Revisi`, `Disetujui/Menunggu TTE`, `Selesai`, `Dikembalikan`.
 IMPROVISASI: tambah `catatan_revisi` text nullable dan `perlu_verifikasi_manual` boolean default false (fallback layanan eksternal).
 
@@ -39,6 +40,13 @@ IMPROVISASI: tambah `alasan_pengembalian` text nullable.
 
 ## log_audit (IMPROVISASI, kebutuhan NFR-06)
 id_log (PK), id_pengguna (FK nullable), aksi varchar(100), objek varchar(50), id_objek bigint nullable, detail jsonb nullable, layanan_eksternal varchar(30) nullable, hasil varchar(20) nullable, dibuat_pada timestamp. Tanpa updated_at. Append-only.
+
+## Enkripsi NIK dan blind index (Fase 9b)
+- `pengguna.nik`, `laporan_kematian.nik_almarhum`, dan NIK di `analisis_ai.hasil` TIDAK disimpan sebagai plaintext.
+- Kolom NIK memakai cast Eloquent `encrypted`; tipe `text` karena ciphertext (base64 + IV + MAC) jauh lebih panjang dari 16 karakter. Indeks unik/like lama pada kolom NIK sudah dilepas.
+- Blind index `*_hash` = HMAC-SHA256 atas NIK yang sudah dinormalisasi (hanya digit), memakai `SATUDUKA_NIK_HASH_KEY`. Kunci wajib eksplisit di produksi; local/testing menurunkan sub-kunci dari `APP_KEY`.
+- Semua kueri NIK WAJIB lewat `Pengguna::scopeDenganNik()` / `cariDenganNik()` dan `LaporanKematian::scopeDenganNik()` / `cariDenganNik()`. Jangan memakai `where('nik', ...)`, `where('nik_almarhum', ...)`, atau `LIKE` pada kolom NIK.
+- `analisis_ai.hasil` menyimpan `hash` (blind index) dan nilai termasker (mis. `347103120355****`) untuk kolom NIK, bukan NIK utuh.
 
 ## Relasi (Tabel 8.2)
 1. pengguna 1:N laporan_kematian (pemohon)

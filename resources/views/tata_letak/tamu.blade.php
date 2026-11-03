@@ -15,7 +15,7 @@
             <div class="text-center">
                 <a href="{{ url('/') }}"
                     class="text-[52px] font-extrabold leading-none tracking-tight text-ink">{{ config('app.name', 'SKD') }}</a>
-                <p class="mt-2 text-xl font-medium text-ink-soft">Layanan Pencatatan &amp; Administrasi Kematian</p>
+                <p class="mt-2 text-xl font-medium text-ink-soft">{{ config('satuduka.tagline') }}</p>
             </div>
 
             <x-ui.card class="mt-8">
@@ -37,10 +37,20 @@
                     </x-ui.alert>
                 @endif
 
-                @if ($errors->any())
+                @php
+                    // Error per field sudah ditampilkan inline oleh komponen input.
+                    // Alert di layout hanya untuk error yang tidak punya kolom di
+                    // formulir tamu (mis. galat umum atau token tidak valid).
+                    $kolomFormulirTamu = ['identitas', 'nik', 'email', 'kata_sandi', 'konfirmasi_kata_sandi'];
+                    $galatTanpaKolom = collect($errors->getBag('default')->getMessages())
+                        ->except($kolomFormulirTamu)
+                        ->flatten();
+                @endphp
+
+                @if ($galatTanpaKolom->isNotEmpty())
                     <x-ui.alert variant="danger" class="mb-4">
                         <ul class="list-disc space-y-1 pl-5">
-                            @foreach ($errors->all() as $error)
+                            @foreach ($galatTanpaKolom as $error)
                                 <li>{{ $error }}</li>
                             @endforeach
                         </ul>
@@ -53,8 +63,8 @@
         </div>
     </main>
 
-    <footer class="py-4 text-center text-xs text-faint">
-        &copy; {{ date('Y') }} {{ config('app.name', 'SKD') }}
+    <footer class="w-full border-t border-line bg-surface py-4 text-center text-xs text-faint">
+        &copy; {{ date('Y') }} {{ config('app.name', 'SKD') }} {{ config('satuduka.layanan') }}. Hak Cipta Dilindungi.
     </footer>
 </body>
 </html>

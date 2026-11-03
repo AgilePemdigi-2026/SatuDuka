@@ -34,13 +34,6 @@
 
         <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
             <div class="space-y-6">
-                @if ($laporan->catatan_revisi && $laporan->bolehDiubah())
-                    <x-ui.alert variant="warning">
-                        <p class="font-semibold">Catatan Revisi</p>
-                        <p class="mt-1 font-normal">{{ $laporan->catatan_revisi }}</p>
-                    </x-ui.alert>
-                @endif
-
                 @if ($laporan->dokumenResmi?->alasan_pengembalian)
                     <x-ui.alert variant="warning">
                         <p class="font-semibold">Alasan Pengembalian Dokumen</p>
@@ -48,7 +41,34 @@
                     </x-ui.alert>
                 @endif
 
+                @if ($laporan->selesai() && blank($laporan->dokumenResmi?->file_dokumen))
+                    <x-ui.alert variant="info">
+                        <p class="font-semibold">Dokumen resmi sedang disiapkan</p>
+                        <p class="mt-1 font-normal">
+                            Pengajuan sudah selesai dan ditandatangani. Unduhan akan tersedia setelah
+                            berkas dokumen resmi diterbitkan.
+                        </p>
+                    </x-ui.alert>
+                @endif
+
+                <x-ui.card title="Pratinjau Dokumen">
+                    <x-dokumen.pratinjau-akta :laporan="$laporan" />
+                </x-ui.card>
+
                 <x-ui.card title="Lini Masa Pengajuan">
+                    @if (filled($laporan->catatan_revisi)
+                        && ($laporan->bolehDiubah()
+                            || $laporan->status_pengajuan === \App\Models\LaporanKematian::STATUS_DITOLAK_ANOMALI_FATAL))
+                        <x-ui.alert variant="warning" class="mb-4">
+                            <p class="font-semibold">
+                                {{ $laporan->status_pengajuan === \App\Models\LaporanKematian::STATUS_DITOLAK_ANOMALI_FATAL
+                                    ? 'Catatan Resmi Verifikator'
+                                    : 'Catatan Revisi dari Verifikator' }}
+                            </p>
+                            <p class="mt-1 font-normal">{{ $laporan->catatan_revisi }}</p>
+                        </x-ui.alert>
+                    @endif
+
                     <x-ui.stepper :steps="$liniMasa" />
                 </x-ui.card>
             </div>
@@ -103,10 +123,12 @@
                     @endif
 
                     @if ($laporan->selesai())
-                        <x-ui.button :href="route('pengajuan.unduh', $laporan)" class="w-full">
-                            <x-icon.arrow-down-tray class="h-4 w-4" />
-                            Unduh Dokumen (PDF)
-                        </x-ui.button>
+                        @if (filled($laporan->dokumenResmi?->file_dokumen))
+                            <x-ui.button :href="route('pengajuan.unduh', $laporan)" class="w-full">
+                                <x-icon.arrow-down-tray class="h-4 w-4" />
+                                Unduh Dokumen (PDF)
+                            </x-ui.button>
+                        @endif
                     @else
                         <x-ui.button type="button" disabled class="w-full">
                             <x-icon.arrow-down-tray class="h-4 w-4" />
@@ -123,8 +145,8 @@
                 <p class="text-xs text-faint">*Aktif setelah status "Selesai"</p>
 
                 <p class="text-xs leading-relaxed text-muted">
-                    Dokumen ini diterbitkan secara elektronik dan sah menurut Undang-Undang Informasi dan
-                    Transaksi Elektronik.
+                    Dokumen pada aplikasi ini adalah simulasi akademik, bukan dokumen resmi dan tidak
+                    memiliki kekuatan hukum.
                 </p>
             </aside>
         </div>

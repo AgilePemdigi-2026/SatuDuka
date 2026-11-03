@@ -1,9 +1,15 @@
 @props(['steps' => []])
 
+@php
+    $adaYangBelumSelesai = false;
+@endphp
+
 <ol class="space-y-0">
     @foreach ($steps as $indeks => $tahap)
         @php
             $selesai = (bool) ($tahap['selesai'] ?? false);
+            $sedang = ! $selesai && ! $adaYangBelumSelesai;
+            $adaYangBelumSelesai = $adaYangBelumSelesai || ! $selesai;
             $waktu = $tahap['waktu'] ?? $tahap['tanggal'] ?? null;
         @endphp
 
@@ -15,16 +21,22 @@
 
             <span
                 class="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2
-                    {{ $selesai ? 'border-brand bg-brand text-white' : 'border-line-strong bg-surface text-muted' }}">
+                    {{ $selesai
+                        ? 'border-brand bg-brand text-white'
+                        : ($sedang
+                            ? 'border-brand bg-brand-soft text-brand'
+                            : 'border-line-strong bg-surface text-muted') }}">
                 @if ($selesai)
                     <x-icon.check class="h-4 w-4" />
+                @elseif ($sedang)
+                    <span class="h-2 w-2 rounded-full bg-brand" aria-hidden="true"></span>
                 @else
                     <span class="text-xs font-bold">{{ $indeks + 1 }}</span>
                 @endif
             </span>
 
             <div class="min-w-0 pt-0.5">
-                <p class="text-sm font-semibold {{ $selesai ? 'text-ink' : 'text-muted' }}">
+                <p class="text-sm font-semibold {{ $selesai || $sedang ? 'text-ink' : 'text-muted' }}">
                     {{ $tahap['judul'] }}
                 </p>
 
@@ -34,6 +46,8 @@
                     </p>
                 @elseif ($waktu)
                     <p class="mt-1 text-xs text-faint">{{ $waktu }}</p>
+                @elseif ($sedang)
+                    <p class="mt-1 text-xs font-medium text-brand">Sedang diproses</p>
                 @elseif (! $selesai)
                     <p class="mt-1 text-xs text-faint">Menunggu</p>
                 @endif

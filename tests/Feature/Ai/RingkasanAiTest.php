@@ -217,11 +217,11 @@ it('membuat ringkasan ai untuk verifikator', function () {
 
     $this->actingAs($verifikator)
         ->post(route('verifikasi.ringkasan_ai', $laporan))
-        ->assertRedirect(route('verifikasi.detail', $laporan))
+        ->assertRedirect(route('verifikasi.show', $laporan))
         ->assertSessionHas('sukses');
 
     $this->actingAs($verifikator)
-        ->get(route('verifikasi.detail', $laporan))
+        ->get(route('verifikasi.show', $laporan))
         ->assertOk()
         ->assertSee('Ringkasan Ketidaksesuaian (AI)')
         ->assertSee('Tidak ditemukan ketidaksesuaian');
@@ -251,11 +251,11 @@ it('mencatat kegagalan ringkasan ai', function () {
 
     $this->actingAs($verifikator)
         ->post(route('verifikasi.ringkasan_ai', $laporan))
-        ->assertRedirect(route('verifikasi.detail', $laporan))
+        ->assertRedirect(route('verifikasi.show', $laporan))
         ->assertSessionHas('galat', 'Analisis AI tidak tersedia, lanjutkan secara manual');
 
     $this->actingAs($verifikator)
-        ->get(route('verifikasi.detail', $laporan))
+        ->get(route('verifikasi.show', $laporan))
         ->assertOk()
         ->assertSee('Analisis AI tidak tersedia, lanjutkan secara manual');
 

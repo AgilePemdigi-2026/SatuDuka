@@ -15,7 +15,6 @@ class DashboardController extends Controller
 {
     /**
      * Menampilkan dashboard sesuai peran pengguna yang masuk.
-     * Verifikator langsung diarahkan ke halaman verifikasi berkas.
      */
     public function tampilkan(Request $request)
     {
@@ -41,7 +40,28 @@ class DashboardController extends Controller
                     ->filter(fn ($jumlah) => (int) $jumlah > 0)
                     ->sortBy(fn ($jumlah, string $status) => array_search($status, LaporanKematian::DAFTAR_STATUS, true)),
             ]),
-            $pengguna->adalahVerifikator() => redirect()->route('verifikasi.index'),
+            $pengguna->adalahVerifikator() => view('dashboard.verifikator', [
+                'pengguna' => $pengguna,
+                'statistik' => [
+                    'menunggu' => LaporanKematian::query()
+                        ->where('status_pengajuan', LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
+                        ->count(),
+                    'rekonsiliasi' => LaporanKematian::query()
+                        ->where('status_pengajuan', LaporanKematian::STATUS_DALAM_REKONSILIASI)
+                        ->count(),
+                    'selesai' => LaporanKematian::query()
+                        ->where('status_pengajuan', LaporanKematian::STATUS_SELESAI)
+                        ->count(),
+                ],
+                'antrean' => LaporanKematian::query()
+                    ->whereIn('status_pengajuan', [
+                        LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+                        LaporanKematian::STATUS_DALAM_REKONSILIASI,
+                    ])
+                    ->orderBy('tanggal_pengajuan')
+                    ->limit(5)
+                    ->get(),
+            ]),
             default => view('dashboard.pejabat', ['pengguna' => $pengguna]),
         };
     }

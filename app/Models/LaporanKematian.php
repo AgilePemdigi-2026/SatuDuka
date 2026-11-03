@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Support\PengindeksNik;
 use Database\Factories\LaporanKematianFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -40,6 +42,11 @@ class LaporanKematian extends Model
 
     public const STATUS_MENUNGGU_PERBAIKAN = 'Pending - Menunggu Perbaikan Berkas Pelapor';
 
+    /**
+     * Status penolakan permanen untuk anomali data fatal (ATURAN_VERIFIKASI bagian 7).
+     */
+    public const STATUS_DITOLAK_ANOMALI_FATAL = 'Ditolak - Anomali Data Fatal';
+
     /* Jenis kasus kematian. */
     public const JENIS_KASUS_NORMAL = 'Normal';
 
@@ -72,6 +79,7 @@ class LaporanKematian extends Model
         self::STATUS_DIKEMBALIKAN,
         self::STATUS_DALAM_REKONSILIASI,
         self::STATUS_MENUNGGU_PERBAIKAN,
+        self::STATUS_DITOLAK_ANOMALI_FATAL,
     ];
 
     /**
@@ -83,6 +91,7 @@ class LaporanKematian extends Model
         self::STATUS_DRAF,
         self::STATUS_MENUNGGU_PERBAIKAN,
         self::STATUS_DITOLAK_BUTUH_REVISI,
+        self::STATUS_DIKEMBALIKAN,
     ];
 
     protected $table = 'laporan_kematian';
@@ -122,17 +131,61 @@ class LaporanKematian extends Model
     ];
 
     /**
+     * @var list<string>
+     */
+    protected $hidden = [
+        'nik_almarhum_hash',
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
+            'nik_almarhum' => 'encrypted',
             'tanggal_kematian' => 'date',
             'tanggal_pengajuan' => 'datetime',
             'perlu_verifikasi_manual' => 'boolean',
             'dibuat_pada' => 'datetime',
             'diperbarui_pada' => 'datetime',
         ];
+    }
+
+    /**
+     * Menjaga blind index NIK almarhum selalu sinkron.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $laporan): void {
+            $laporan->nik_almarhum_hash = PengindeksNik::hash($laporan->nik_almarhum);
+        });
+    }
+
+    /**
+     * Batasi kueri pada NIK almarhum tertentu lewat blind index.
+     */
+    public function scopeDenganNik(Builder $query, ?string $nik): Builder
+    {
+        $hash = PengindeksNik::hash($nik);
+
+        if ($hash === null) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where('nik_almarhum_hash', $hash);
+    }
+
+    /**
+     * Cari laporan pertama dengan NIK almarhum tertentu lewat blind index.
+     */
+    public static function cariDenganNik(string $nik): ?self
+    {
+        if (PengindeksNik::angka($nik) === '') {
+            return null;
+        }
+
+        return self::query()->denganNik($nik)->first();
     }
 
     /*

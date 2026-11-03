@@ -27,7 +27,7 @@ function buatLaporanAi(Pengguna $pemohon, array $timpa = []): LaporanKematian
         'hubungan_pelapor' => 'Anak Kandung',
         'nama_almarhum' => 'Suharto Wiryo',
         'nik_almarhum' => '3471031203559001',
-        'tanggal_kematian' => '2026-10-01',
+        'tanggal_kematian' => now()->subDays(2)->toDateString(),
         'tempat_kematian' => 'RSUD Kota Yogyakarta',
         'sebab_kematian' => 'Sakit',
     ], $timpa));
@@ -94,7 +94,7 @@ function responOpenAi(?array $kolom = null)
     $data = $kolom ?? [
         'nama_almarhum' => 'Suharto Wiryo',
         'nik' => '3471031203559001',
-        'tanggal_kematian' => '2026-10-01',
+        'tanggal_kematian' => now()->subDays(2)->toDateString(),
         'tempat_kematian' => 'RSUD Kota Yogyakarta',
         'keyakinan' => [
             'nama_almarhum' => 0.99,
@@ -233,7 +233,7 @@ it('menangani waktu tunggu layanan ai tanpa menolak pengajuan', function () {
         'hubungan_pelapor' => 'Anak Kandung',
         'nama_almarhum' => 'Suharto Wiryo',
         'nik_almarhum' => '3471031203559001',
-        'tanggal_kematian' => '2026-10-01',
+        'tanggal_kematian' => now()->subDays(2)->toDateString(),
         'tempat_kematian' => 'RSUD Kota Yogyakarta',
         'sebab_kematian' => 'Sakit',
         'pernyataan' => '1',

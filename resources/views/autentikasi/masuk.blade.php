@@ -1,18 +1,18 @@
 @extends('tata_letak.tamu')
 
-@section('judul', 'Masuk')
+@section('judul', 'Masuk ke Akun Anda')
 
 @section('konten')
     <div class="text-center">
         <h1 class="text-[28px] font-bold leading-tight text-ink">Masuk ke Akun Anda</h1>
-        <p class="mt-2 text-sm text-muted">Layanan Pencatatan &amp; Administrasi Kematian</p>
+        <p class="mt-2 text-sm text-muted">{{ config('satuduka.layanan') }}</p>
     </div>
 
     <form method="POST" action="{{ route('masuk.coba') }}" class="mt-8 space-y-5">
         @csrf
 
         <x-ui.input id="identitas" name="identitas" label="NIK / NIP" type="text" inputmode="numeric"
-            :value="old('identitas')" placeholder="Masukkan NIK atau NIP" autocomplete="username" required autofocus />
+            maxlength="18" :value="old('identitas')" placeholder="Masukkan NIK atau NIP" autocomplete="username" required autofocus />
 
         <x-ui.password id="kata_sandi" name="kata_sandi" label="Kata Sandi" placeholder="Masukkan kata sandi"
             autocomplete="current-password" required />
@@ -35,17 +35,4 @@
         Belum punya akun?
         <a href="{{ route('registrasi') }}" class="font-semibold text-brand hover:text-brand-hover">Daftar di sini</a>
     </p>
-
-    @once
-        <script>
-            document.querySelectorAll('[data-tampilkan-sandi]').forEach((tombol) => {
-                tombol.addEventListener('click', () => {
-                    const kolom = document.getElementById(tombol.dataset.tampilkanSandi);
-                    if (kolom) {
-                        kolom.type = kolom.type === 'password' ? 'text' : 'password';
-                    }
-                });
-            });
-        </script>
-    @endonce
 @endsection

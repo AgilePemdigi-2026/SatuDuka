@@ -8,6 +8,7 @@ use App\Models\Pengguna;
 use App\Services\Ai\LayananAnalisisAi;
 use App\Services\LayananAudit;
 use App\Services\LayananNomorPengajuan;
+use App\Services\Verifikasi\LayananAturanBerkas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +39,11 @@ class LaporanController extends Controller
     public const MAKS_UKURAN_KB = 5120;
 
     /**
+     * Pesan penolakan pengajuan ganda saat pengiriman.
+     */
+    public const PESAN_PENGAJUAN_GANDA = 'NIK almarhum sudah terdaftar pada pengajuan lain yang masih aktif atau sudah selesai. Satu almarhum hanya dapat diajukan satu kali.';
+
+    /**
      * Pemetaan jenis dokumen ke nama kolom unggahan pada formulir.
      *
      * @var array<string, string>
@@ -58,6 +64,11 @@ class LaporanController extends Controller
      * Jenis ekstensi berkas yang diterima, diperiksa dari MIME.
      */
     private const EKSTENSI_BERKAS = 'pdf,jpg,jpeg,png';
+
+    /**
+     * MIME sebenarnya yang diterima (dibaca dari isi berkas, bukan ekstensi).
+     */
+    private const MIME_BERKAS = 'application/pdf,image/jpeg,image/png';
 
     /**
      * Pilihan hubungan pelapor dengan almarhum.
@@ -155,7 +166,7 @@ class LaporanController extends Controller
     /**
      * Mengirim draf atau mengirim ulang pengajuan berstatus revisi.
      */
-    public function kirim(Request $request, LaporanKematian $laporan)
+    public function kirim(Request $request, LaporanKematian $laporan, LayananAturanBerkas $aturanBerkas)
     {
         $laporan = $this->laporanMilik($request, $laporan);
         $this->pastikanBolehDiubah($laporan);
@@ -178,13 +189,19 @@ class LaporanController extends Controller
 
         $this->pastikanBerkasLengkap($laporan, $data);
 
-        $hasil = DB::transaction(function () use ($laporan, $data) {
+        $hasil = DB::transaction(function () use ($laporan, $data, $aturanBerkas) {
             $terkunci = LaporanKematian::query()
                 ->whereKey($laporan->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
 
             abort_unless($terkunci->bolehDiubah(), 403, 'Pengajuan dengan status ini tidak dapat diubah.');
+
+            if ($aturanBerkas->adaPengajuanGanda((string) $data['nik_almarhum'], (int) $terkunci->id_laporan)) {
+                throw ValidationException::withMessages([
+                    'nik_almarhum' => self::PESAN_PENGAJUAN_GANDA,
+                ])->redirectTo($this->alamatLangkah($terkunci, 2));
+            }
 
             $statusSebelumnya = $terkunci->status_pengajuan;
             $kirimUlang = ! $terkunci->adalahDraf();
@@ -253,7 +270,7 @@ class LaporanController extends Controller
         $namaInput = self::INPUT_BERKAS[$jenis];
 
         $request->validate([
-            $namaInput => ['required', 'file', 'max:'.self::MAKS_UKURAN_KB, 'mimes:'.self::EKSTENSI_BERKAS],
+            $namaInput => ['required', 'file', 'max:'.self::MAKS_UKURAN_KB, 'mimes:'.self::EKSTENSI_BERKAS, 'mimetypes:'.self::MIME_BERKAS],
         ], [
             $namaInput.'.required' => self::PESAN_BERKAS,
             $namaInput.'.file' => self::PESAN_BERKAS,

@@ -15,7 +15,7 @@
         <form method="GET" action="{{ route('pengajuan.status') }}" class="mt-6 flex items-start gap-3">
             <div class="min-w-0 flex-1">
                 <x-ui.input name="nomor" id="nomor" label="Nomor Pengajuan" :value="$nomor"
-                    placeholder="Contoh: SD-20261020-0001"
+                    placeholder="Masukkan nomor pengajuan"
                     :class="$galatNomor ? 'border-red-400' : ''" />
 
                 @if ($galatNomor)

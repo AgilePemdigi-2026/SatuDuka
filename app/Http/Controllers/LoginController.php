@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Pengguna;
 use App\Services\LayananAudit;
 use App\Services\LayananPenguncian;
+use App\Support\PengindeksNik;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -46,6 +47,16 @@ class LoginController extends Controller
     private const PESAN_SUDAH_TERKUNCI = 'Akun Anda dikunci sementara';
 
     /**
+     * Hash bcrypt tetap untuk percobaan masuk saat akun tidak ditemukan.
+     *
+     * `Hash::check()` tetap dijalankan terhadap hash ini agar waktu respons
+     * tidak membocorkan apakah sebuah NIK/NIP terdaftar. Nilainya hash dari
+     * kata sandi acak yang tidak pernah dipakai; cost-nya sama dengan cost
+     * hash kata sandi sebenarnya (bcrypt 12).
+     */
+    private const HASH_DUMMY = '$2y$12$NjrrAOmyVtqTmCrAQGjbKOpgo7Bnp3oD2yBi2pV604.YTWAJB9IEq';
+
+    /**
      * Menampilkan halaman masuk.
      */
     public function tampilkan()
@@ -66,15 +77,19 @@ class LoginController extends Controller
             'kata_sandi.required' => self::PESAN_KOSONG,
         ]);
 
-        $identitas = trim($valid['identitas']);
-        $kunci = 'login:'.strtolower($identitas);
+        // Identitas dibersihkan menjadi digit saja (NIK/NIP kanonik) SEBELUM
+        // dipakai sebagai kunci penguncian, kunci audit, dan pencarian. Dengan
+        // begitu "3471-...", "3471 ...", dan "3471..." diperlakukan sebagai akun
+        // yang sama sehingga penghitung kegagalan tidak bisa diakali format.
+        $identitasBersih = PengindeksNik::angka(trim($valid['identitas']));
+        $kunci = 'login:'.$identitasBersih;
 
         // Alur 4.c.5: percobaan masuk saat akun sedang terkunci.
         if (LayananPenguncian::terkunci($kunci)) {
             LayananAudit::catat(
                 aksi: 'percobaan_masuk_saat_terkunci',
                 objek: 'pengguna',
-                detail: ['identitas' => $identitas],
+                detail: ['identitas' => $identitasBersih],
             );
 
             return back()
@@ -82,10 +97,20 @@ class LoginController extends Controller
                 ->onlyInput('identitas');
         }
 
-        $pengguna = Pengguna::cariDenganNikAtauNip($identitas);
+        $pengguna = Pengguna::cariDenganNikAtauNip($identitasBersih);
+
+        // Saat akun tidak ditemukan, tetap jalankan Hash::check terhadap hash
+        // dummy agar waktu respons setara dengan kasus kata sandi salah (tidak
+        // membocorkan keberadaan akun lewat selisih waktu).
+        if ($pengguna === null) {
+            Hash::check($valid['kata_sandi'], self::HASH_DUMMY);
+            $kataSandiCocok = false;
+        } else {
+            $kataSandiCocok = Hash::check($valid['kata_sandi'], $pengguna->kata_sandi);
+        }
 
         // Alur 4.b: kredensial tidak cocok, tambah hitungan percobaan gagal.
-        if ($pengguna === null || ! Hash::check($valid['kata_sandi'], $pengguna->kata_sandi)) {
+        if (! $kataSandiCocok) {
             $percobaanKe = LayananPenguncian::catatGagalDanKunciBilaPerlu(
                 kunci: $kunci,
                 maksGagal: LayananPenguncian::MAKS_GAGAL_LOGIN,
@@ -96,7 +121,7 @@ class LoginController extends Controller
                 aksi: 'masuk_gagal',
                 objek: 'pengguna',
                 idObjek: $pengguna?->id_pengguna,
-                detail: ['identitas' => $identitas, 'percobaan_ke' => $percobaanKe],
+                detail: ['identitas' => $identitasBersih, 'percobaan_ke' => $percobaanKe],
                 pengguna: $pengguna,
             );
 

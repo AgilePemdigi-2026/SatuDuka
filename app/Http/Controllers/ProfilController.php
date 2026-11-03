@@ -121,7 +121,7 @@ class ProfilController extends Controller
         $pengguna = $request->user();
 
         $request->validate([
-            'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'foto' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png', 'mimetypes:image/jpeg,image/png', 'max:2048'],
         ], [
             'foto.required' => self::PESAN_FOTO,
             'foto.file' => self::PESAN_FOTO,
@@ -183,7 +183,12 @@ class ProfilController extends Controller
 
         if ($pengguna->path_foto !== null && $pengguna->path_foto !== ''
             && Storage::disk('local')->exists($pengguna->path_foto)) {
-            return Storage::disk('local')->response($pengguna->path_foto);
+            $response = Storage::disk('local')->response($pengguna->path_foto);
+
+            $response->headers->set('X-Content-Type-Options', 'nosniff');
+            $response->headers->set('Cache-Control', 'no-store, private');
+
+            return $response;
         }
 
         return response(
