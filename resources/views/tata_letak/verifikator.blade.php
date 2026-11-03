@@ -52,6 +52,8 @@
         .skd-main { flex: 1; min-width: 0; }
         .skd-container { max-width: 1180px; margin: 0 auto; padding: 36px 44px 56px; }
         .skd-topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 32px; }
+        .skd-heading { display: flex; flex: 1; min-width: 0; align-items: center; justify-content: space-between; gap: 24px; }
+        .skd-heading-copy { min-width: 0; }
         .skd-title { font-size: 28px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; color: var(--ink); }
         .skd-sub { font-size: 14px; color: var(--muted); margin-top: 6px; }
         .skd-user { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
@@ -152,6 +154,7 @@
             .skd-app { flex-direction: column; }
             .skd-side { width: 100%; height: auto; position: static; }
             .skd-container { padding: 24px 18px 40px; }
+            .skd-heading { flex-wrap: wrap; }
             .info-grid, .decision-grid { grid-template-columns: 1fr; }
             .dashboard-card-head { align-items: stretch; flex-direction: column; }
             .dashboard-card-head .search-form { width: 100%; }
@@ -176,17 +179,30 @@
             </div>
 
             <nav class="skd-nav">
-                <p class="skd-nav-label">Menu Utama</p>
-                <a href="{{ route('verifikasi.index') }}" class="nav-link {{ request()->routeIs('verifikasi.index') ? 'active' : '' }}">
-                    <span class="nav-dot"></span>Dashboard
-                </a>
-                <a href="#" class="nav-link {{ request()->routeIs('verifikasi.show') ? 'active' : '' }}">
-                    <span class="nav-dot"></span>Verifikasi &amp; Rekonsiliasi
-                </a>
-                <a href="#" class="nav-link"><span class="nav-dot"></span>Approve / Reject Berkas</a>
+                @if (auth()->user()->adalahPemohon())
+                    <p class="skd-nav-label">Menu Utama</p>
+                    <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Dashboard
+                    </a>
+                    <a href="{{ route('laporan.baru') }}" class="nav-link {{ request()->routeIs('laporan.baru') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Ajukan Laporan Baru
+                    </a>
+                    <a href="{{ route('pengajuan.status') }}" class="nav-link {{ request()->routeIs('pengajuan.*') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Status Pengajuan
+                    </a>
+                @else
+                    <p class="skd-nav-label">Menu Utama</p>
+                    <a href="{{ route('verifikasi.index') }}" class="nav-link {{ request()->routeIs('verifikasi.index') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Dashboard
+                    </a>
+                    <a href="#" class="nav-link {{ request()->routeIs('verifikasi.show') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Verifikasi &amp; Rekonsiliasi
+                    </a>
+                    <a href="#" class="nav-link"><span class="nav-dot"></span>Approve / Reject Berkas</a>
 
-                <p class="skd-nav-label" style="margin-top: 22px;">Lainnya</p>
-                <a href="#" class="nav-link"><span class="nav-dot"></span>Pengaturan</a>
+                    <p class="skd-nav-label" style="margin-top: 22px;">Lainnya</p>
+                    <a href="#" class="nav-link"><span class="nav-dot"></span>Pengaturan</a>
+                @endif
             </nav>
         </div>
 
@@ -197,12 +213,14 @@
         <main class="skd-container">
 
             <div class="skd-topbar">
-                <div>
+                <div class="skd-heading">
+                    <div class="skd-heading-copy">
+                        <h1 class="skd-title">@yield('judul', 'Verifikasi')</h1>
+                        @hasSection('subjudul')
+                            <p class="skd-sub">@yield('subjudul')</p>
+                        @endif
+                    </div>
                     @yield('aksi_header')
-                    <h1 class="skd-title">@yield('judul', 'Verifikasi')</h1>
-                    @hasSection('subjudul')
-                        <p class="skd-sub">@yield('subjudul')</p>
-                    @endif
                 </div>
                 @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
             </div>

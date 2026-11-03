@@ -61,7 +61,7 @@ it('menampilkan pesan saat pemohon belum memiliki pengajuan', function () {
 
     $this->actingAs($pemohon)->get(route('pengajuan.status'))
         ->assertOk()
-        ->assertSee('Belum ada pengajuan yang diajukan');
+        ->assertSee('Belum ada pengajuan');
 });
 
 it('mencari pengajuan berdasarkan nomor dan menampilkan detailnya', function () {
@@ -96,7 +96,7 @@ it('meminta nomor pengajuan saat kolom pencarian kosong', function () {
     $this->actingAs($pemohon)->get(route('pengajuan.status', ['nomor' => '']))
         ->assertOk()
         ->assertSee('Harap isi nomor pengajuan')
-        ->assertSee('border-red-400', false);
+        ->assertSee('aria-invalid="true"', false);
 });
 
 it('menampilkan data tidak ditemukan untuk nomor yang tidak terdaftar', function () {
@@ -335,7 +335,42 @@ it('membatasi pengajuan saya menjadi lima baris terbaru', function () {
         ->assertSee('Almarhum 3')
         ->assertDontSee('Almarhum 2')
         ->assertDontSee('Almarhum 1')
-        ->assertSee('Lihat semua');
+        ->assertDontSee('Lihat semua');
+});
+
+it('memisahkan pengajuan yang perlu tindakan dan mencari nomor dari dashboard', function () {
+    [$pemohon] = buatAkunDemo();
+
+    $draf = LaporanKematian::factory()->create([
+        'id_pengguna' => $pemohon->id_pengguna,
+        'status_pengajuan' => LaporanKematian::STATUS_DRAF,
+    ]);
+    $dikembalikan = buatPengajuanTerkirim($pemohon, [
+        'status_pengajuan' => LaporanKematian::STATUS_DIKEMBALIKAN,
+    ]);
+    $ditolak = buatPengajuanTerkirim($pemohon, [
+        'status_pengajuan' => LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI,
+    ]);
+    $menunggu = buatPengajuanTerkirim($pemohon, [
+        'status_pengajuan' => LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+    ]);
+    $disetujui = buatPengajuanTerkirim($pemohon, [
+        'status_pengajuan' => LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE,
+    ]);
+    $selesai = buatPengajuanTerkirim($pemohon, [
+        'status_pengajuan' => LaporanKematian::STATUS_SELESAI,
+    ]);
+
+    $respons = $this->actingAs($pemohon)->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('name="nomor"', false)
+        ->assertSee('action="'.route('pengajuan.status').'"', false)
+        ->assertDontSee('Lihat semua');
+
+    expect($respons->viewData('perluTindakan')->modelKeys())
+        ->toContain($draf->id_laporan, $dikembalikan->id_laporan, $ditolak->id_laporan)
+        ->and($respons->viewData('pengajuanSaya')->modelKeys())
+        ->toEqualCanonicalizing([$menunggu->id_laporan, $disetujui->id_laporan, $selesai->id_laporan]);
 });
 
 it('menampilkan ringkasan status pengajuan di dashboard pemohon', function () {
@@ -343,13 +378,41 @@ it('menampilkan ringkasan status pengajuan di dashboard pemohon', function () {
 
     buatPengajuanTerkirim($pemohon, ['status_pengajuan' => LaporanKematian::STATUS_MENUNGGU_VERIFIKASI]);
     buatPengajuanTerkirim($pemohon, ['status_pengajuan' => LaporanKematian::STATUS_MENUNGGU_VERIFIKASI]);
+    buatPengajuanTerkirim($pemohon, ['status_pengajuan' => LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI]);
+    buatPengajuanTerkirim($pemohon, ['status_pengajuan' => LaporanKematian::STATUS_DIKEMBALIKAN]);
     buatPengajuanTerkirim($pemohon, ['status_pengajuan' => LaporanKematian::STATUS_SELESAI]);
 
-    $this->actingAs($pemohon)->get(route('dashboard'))
+    $respons = $this->actingAs($pemohon)->get(route('dashboard'))
         ->assertOk()
         ->assertSee('Status Pengajuan')
-        ->assertSee(route('pengajuan.status'))
-        ->assertSee('>2</span>', false)
-        ->assertSee('>1</span>', false)
-        ->assertSee(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI);
+        ->assertSee('Total Pengajuan')
+        ->assertSee('Menunggu Verifikasi')
+        ->assertSee('Perlu Perbaikan')
+        ->assertSee('Selesai')
+        ->assertSeeInOrder([
+            'Total Pengajuan',
+            'Menunggu Verifikasi',
+            'Perlu Perbaikan',
+            'Selesai',
+        ]);
+
+    $statistik = $respons->viewData('statistikPemohon');
+
+    expect($statistik)->toBe([
+        'total' => 5,
+        'menunggu' => 2,
+        'perluPerbaikan' => 2,
+        'selesai' => 1,
+    ]);
+});
+
+it('menggunakan desain dashboard pada halaman lacak status pengajuan', function () {
+    [$pemohon] = buatAkunDemo();
+
+    $this->actingAs($pemohon)->get(route('pengajuan.status'))
+        ->assertOk()
+        ->assertSee('Poppins', false)
+        ->assertSee('skd-side', false)
+        ->assertSee('Daftar Pengajuan')
+        ->assertSee('Kembali ke Dashboard');
 });
