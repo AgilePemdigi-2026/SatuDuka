@@ -1,0 +1,419 @@
+
+Feature: Login
+  In order to access the system with proper authentication and authorization
+  As a Petugas (Verifikator Dukcapil and Pejabat) or Pemohon
+  I want to login using my credentials
+
+  Scenario: Berpindah ke halaman Registrasi dari halaman Masuk  # features\login.feature:15
+    Given saya melihat halaman "Masuk"                          # FeatureContext::sayaMelihatHalaman()
+    When saya menekan tautan "Belum punya akun? Daftar di sini" # FeatureContext::sayaMenekanTautanRegistrasi()
+    Then saya melihat halaman "Registrasi"                      # FeatureContext::sayaMelihatHalaman()
+
+  Scenario: Berhasil mengatur ulang kata sandi melalui tautan surel            # features\login.feature:20
+    Given saya melihat halaman "Masuk"                                         # FeatureContext::sayaMelihatHalaman()
+    When saya menekan tautan "Lupa Kata Sandi?"                                # FeatureContext::sayaMenekanTautanLupaKataSandi()
+    Then saya melihat halaman "Lupa Kata Sandi"                                # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "9999990101900001" pada kolom "NIK/NIP"                  # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Kirim"                                            # FeatureContext::sayaMenekanTombol()
+    Then tautan pengaturan ulang dikirim ke surel akun                         # FeatureContext::tautanPengaturanUlangDikirim()
+    When saya membuka tautan pengaturan ulang dari surel                       # FeatureContext::sayaMembukaTautanAturUlangDariSurel()
+    Then saya melihat halaman "Kata Sandi Baru"                                # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "Baru12345" pada kolom "Kata Sandi"                      # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "Baru12345" pada kolom "Konfirmasi Kata Sandi"            # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Simpan"                                           # FeatureContext::sayaMenekanTombol()
+    Then saya melihat notifikasi "Kata sandi berhasil direset. Silakan login." # FeatureContext::sayaMelihatNotifikasi()
+    And saya melihat halaman "Masuk"                                           # FeatureContext::sayaMelihatHalaman()
+    And kata sandi baru dapat digunakan untuk masuk                            # FeatureContext::kataSandiBaruDapatDigunakan()
+
+  Scenario: Tersedia kontrol untuk menampilkan kata sandi           # features\login.feature:36
+    Given saya melihat halaman "Masuk"                              # FeatureContext::sayaMelihatHalaman()
+    When saya menekan ikon "tampilkan kata sandi"                   # FeatureContext::sayaMenekanIkonTampilkanKataSandi()
+    Then kontrol tampilkan kata sandi terhubung ke kolom kata sandi # FeatureContext::kontrolTampilkanKataSandiTerhubung()
+
+  Scenario: Berhasil masuk dengan kredensial Pemohon yang valid # features\login.feature:41
+    Given saya melihat halaman "Masuk"                          # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "9999990101900001" pada kolom "NIK/NIP"   # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "password123" pada kolom "Kata Sandi"      # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Masuk"                             # FeatureContext::sayaMenekanTombol()
+    Then saya diarahkan ke dashboard Pemohon                    # FeatureContext::sayaDiarahkanKeDashboard()
+
+  Scenario: Berhasil masuk dengan kredensial Verifikator yang valid (NIP) # features\login.feature:48
+    Given saya melihat halaman "Masuk"                                    # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "999999991234567890" pada kolom "NIK/NIP"           # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "password123" pada kolom "Kata Sandi"                # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Masuk"                                       # FeatureContext::sayaMenekanTombol()
+    Then saya diarahkan ke dashboard Verifikator                          # FeatureContext::sayaDiarahkanKeDashboard()
+
+  Scenario: Berhasil masuk dengan kredensial Pejabat yang valid (NIP) # features\login.feature:55
+    Given saya melihat halaman "Masuk"                                # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "999999992345678901" pada kolom "NIK/NIP"       # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "password123" pada kolom "Kata Sandi"            # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Masuk"                                   # FeatureContext::sayaMenekanTombol()
+    Then saya diarahkan ke dashboard Pejabat                          # FeatureContext::sayaDiarahkanKeDashboard()
+
+  Scenario: Berhasil masuk dengan opsi Ingat Saya             # features\login.feature:62
+    Given saya melihat halaman "Masuk"                        # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "9999990101900001" pada kolom "NIK/NIP" # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "password123" pada kolom "Kata Sandi"    # FeatureContext::sayaMengisiKolom()
+    And saya mencentang opsi "Ingat Saya"                     # FeatureContext::sayaMencentangIngatSaya()
+    And saya menekan tombol "Masuk"                           # FeatureContext::sayaMenekanTombol()
+    Then sesi saya diingat pada perangkat tersebut            # FeatureContext::sesiSayaDiingat()
+
+  Scenario: Gagal masuk karena kata sandi salah                   # features\login.feature:70
+    Given saya melihat halaman "Masuk"                            # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "9999990101900001" pada kolom "NIK/NIP"     # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "password124" pada kolom "Kata Sandi"        # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Masuk"                               # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan galat "NIK/NIP atau kata sandi salah" # FeatureContext::sayaMelihatPesanGalat()
+
+  Scenario: Gagal masuk karena NIK/NIP tidak valid                # features\login.feature:77
+    Given saya melihat halaman "Masuk"                            # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "123456789012" pada kolom "NIK/NIP"         # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "password123" pada kolom "Kata Sandi"        # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Masuk"                               # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan galat "NIK/NIP atau kata sandi salah" # FeatureContext::sayaMelihatPesanGalat()
+
+  Scenario: Gagal masuk karena kolom kosong                               # features\login.feature:84
+    Given saya melihat halaman "Masuk"                                    # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "9999990101900001" pada kolom "NIK/NIP"             # FeatureContext::sayaMengisiKolom()
+    And saya membiarkan kolom "Kata Sandi" kosong                         # FeatureContext::sayaMembiarkanKolomKosong()
+    And saya menekan tombol "Masuk"                                       # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan galat "Harap isi semua field yang diperlukan" # FeatureContext::sayaMelihatPesanGalat()
+    And kolom yang kosong ditandai                                        # FeatureContext::kolomYangKosongDitandai()
+
+  Scenario: Gagal masuk karena NIK/NIP kosong                             # features\login.feature:92
+    Given saya melihat halaman "Masuk"                                    # FeatureContext::sayaMelihatHalaman()
+    When saya membiarkan kolom "NIK/NIP" kosong                           # FeatureContext::sayaMembiarkanKolomKosong()
+    And saya mengisi "password123" pada kolom "Kata Sandi"                # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Masuk"                                       # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan galat "Harap isi semua field yang diperlukan" # FeatureContext::sayaMelihatPesanGalat()
+    And kolom yang kosong ditandai                                        # FeatureContext::kolomYangKosongDitandai()
+
+  Scenario: Akun terkunci setelah terlalu banyak percobaan gagal                                                          # features\login.feature:100
+    Given saya melihat halaman "Masuk"                                                                                    # FeatureContext::sayaMelihatHalaman()
+    And saya telah mencapai batas maksimum percobaan login gagal                                                          # FeatureContext::sayaTelahMencapaiBatasLoginGagal()
+    When saya menekan tombol "Masuk"                                                                                      # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan galat "Terlalu banyak percobaan gagal. Akun Anda dikunci sementara. Coba lagi dalam 15 menit" # FeatureContext::sayaMelihatPesanGalat()
+
+  Scenario: Gagal masuk saat akun terkunci                      # features\login.feature:106
+    Given akun NIK "9999990101900001" sedang terkunci           # FeatureContext::akunNikSedangTerkunci()
+    When saya mengisi "9999990101900001" pada kolom "NIK/NIP"   # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "password123" pada kolom "Kata Sandi"      # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Masuk"                             # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan galat "Akun Anda dikunci sementara" # FeatureContext::sayaMelihatPesanGalat()
+
+Feature: Pengajuan laporan kematian
+  Sebagai pemohon
+  Saya ingin mengajukan laporan kematian
+  Agar laporan dapat diproses oleh petugas
+
+  Scenario: Pemohon membuka formulir pengajuan     # features\pengajuan-laporan.feature:6
+    Given pemohon sudah login                      # FeatureContext::pemohonSudahLogin()
+    When pemohon membuka halaman pengajuan laporan # FeatureContext::pemohonMembukaHalamanPengajuanLaporan()
+    Then halaman pengajuan berhasil ditampilkan    # FeatureContext::halamanPengajuanBerhasilDitampilkan()
+    And bagian Data Pelapor ditampilkan            # FeatureContext::bagianDataPelaporDitampilkan()
+    And tombol Lanjut tersedia                     # FeatureContext::tombolLanjutTersedia()
+    And bagian Data Almarhum belum ditampilkan     # FeatureContext::bagianDataAlmarhumBelumDitampilkan()
+
+  Scenario: Pemohon mengisi data dan menyimpan draf               # features\pengajuan-laporan.feature:14
+    Given pemohon sudah login                                     # FeatureContext::pemohonSudahLogin()
+    And pemohon berada pada formulir pengajuan                    # FeatureContext::pemohonBeradaPadaFormulirPengajuan()
+    When pemohon menyimpan data pelapor dan almarhum yang lengkap # FeatureContext::pemohonMenyimpanDataLengkap()
+    Then data pengajuan tersimpan sebagai draf                    # FeatureContext::dataPengajuanTersimpanSebagaiDraf()
+    And pemohon dapat melanjutkan pengajuan                       # FeatureContext::pemohonDapatMelanjutkanPengajuan()
+
+  Scenario: Pemohon mengirim pengajuan dengan data lengkap    # features\pengajuan-laporan.feature:21
+    Given pemohon sudah login                                 # FeatureContext::pemohonSudahLogin()
+    And data pelapor dan almarhum sudah lengkap               # FeatureContext::dataPelaporDanAlmarhumSudahLengkap()
+    And seluruh berkas wajib sudah diunggah                   # FeatureContext::seluruhBerkasWajibSudahDiunggah()
+    And pemohon berada pada halaman review                    # FeatureContext::pemohonBeradaPadaHalamanReview()
+    When pemohon menyetujui pernyataan dan mengirim pengajuan # FeatureContext::pemohonMenyetujuiDanMengirimPengajuan()
+    Then pengajuan berhasil dikirim                           # FeatureContext::pengajuanBerhasilDikirim()
+    And pemohon diarahkan ke halaman detail pengajuan         # FeatureContext::pemohonDiarahkanKeHalamanDetailPengajuan()
+
+  Scenario: Pemohon mengirim pengajuan tanpa bukti kematian     # features\pengajuan-laporan.feature:30
+    Given pemohon sudah login                                   # FeatureContext::pemohonSudahLogin()
+    And data pengajuan sudah lengkap                            # FeatureContext::dataPengajuanSudahLengkap()
+    And tidak ada bukti kematian yang diunggah                  # FeatureContext::tidakAdaBuktiKematianYangDiunggah()
+    When pemohon mengirim pengajuan                             # FeatureContext::pemohonMengirimPengajuan()
+    Then pengajuan ditolak karena bukti kematian tidak tersedia # FeatureContext::pengajuanDitolakKarenaBuktiKematianTidakTersedia()
+
+  Scenario: Pemohon mencoba mengakses laporan milik orang lain  # features\pengajuan-laporan.feature:37
+    Given terdapat laporan milik pemohon lain                   # FeatureContext::terdapatLaporanMilikPemohonLain()
+    And pemohon sudah login                                     # FeatureContext::pemohonSudahLogin()
+    When pemohon mencoba melihat atau mengubah laporan tersebut # FeatureContext::pemohonMencobaMelihatAtauMengubahLaporan()
+    Then akses ke laporan milik pemohon lain ditolak            # FeatureContext::aksesKeLaporanMilikPemohonLainDitolak()
+
+Feature: Kelola Profil
+  In order to menjaga data pribadi dan keamanan akun
+  As a Pengguna (Pemohon, Verifikator, atau Pejabat)
+  I want to melihat dan memperbarui profil serta kata sandi saya
+
+  Scenario: Menampilkan halaman Kelola Profil                                      # features\profil.feature:11
+    Given saya sudah masuk sebagai "Pemohon"                                       # FeatureContext::sayaSudahMasukSebagai()
+    When saya membuka menu "Kelola Profil"                                         # FeatureContext::sayaMembukaMenuKelolaProfil()
+    Then saya melihat bagian "Foto Profil", "Data Diri", dan "Pengaturan Keamanan" # FeatureContext::sayaMelihatBagianProfil()
+    And saya melihat NIK saya tetapi tidak dapat mengubahnya                       # FeatureContext::sayaMelihatNikReadonly()
+
+  Scenario: Berhasil memperbarui data diri                                          # features\profil.feature:17
+    Given saya sudah masuk sebagai "Pemohon"                                        # FeatureContext::sayaSudahMasukSebagai()
+    When saya membuka menu "Kelola Profil"                                          # FeatureContext::sayaMembukaMenuKelolaProfil()
+    And saya mengubah "Nama Lengkap", "Alamat Surel", "Nomor Telepon", dan "Alamat" # FeatureContext::sayaMengubahDataDiri()
+    And saya menekan tombol "Simpan Perubahan"                                      # FeatureContext::sayaMenekanTombol()
+    Then saya melihat notifikasi "Profil berhasil diperbarui."                      # FeatureContext::sayaMelihatNotifikasi()
+    And data saya tersimpan di database                                             # FeatureContext::dataSayaTersimpan()
+
+  Scenario: Format data diri tidak valid                                            # features\profil.feature:25
+    Given saya sudah masuk sebagai "Pemohon"                                        # FeatureContext::sayaSudahMasukSebagai()
+    When saya membuka menu "Kelola Profil"                                          # FeatureContext::sayaMembukaMenuKelolaProfil()
+    And saya mengubah "Nama Lengkap", "Alamat Surel", "Nomor Telepon", dan "Alamat" # FeatureContext::sayaMengubahDataDiri()
+    And saya mengisi "Alamat Surel" dengan "bukan-email"                            # FeatureContext::sayaMengisiSurel()
+    And saya mengisi "Nomor Telepon" dengan "telepon-salah"                         # FeatureContext::sayaMengisiTelepon()
+    And saya menekan tombol "Simpan Perubahan"                                      # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan kesalahan pada kolom "Alamat Surel"                     # FeatureContext::sayaMelihatKesalahanPadaKolom()
+    And saya melihat pesan kesalahan pada kolom "Nomor Telepon"                     # FeatureContext::sayaMelihatKesalahanPadaKolom()
+    And data saya tidak berubah                                                     # FeatureContext::dataSayaTidakBerubah()
+
+  Scenario: Email atau nomor telepon sudah dipakai pengguna lain                        # features\profil.feature:36
+    Given saya sudah masuk sebagai "Pemohon"                                            # FeatureContext::sayaSudahMasukSebagai()
+    And sudah ada pengguna lain dengan email atau nomor telepon tertentu                # FeatureContext::sudahAdaPenggunaLainDenganKontak()
+    When saya membuka menu "Kelola Profil"                                              # FeatureContext::sayaMembukaMenuKelolaProfil()
+    And saya mengisi data diri dengan email atau nomor telepon milik pengguna lain      # FeatureContext::sayaMengisiKontakPenggunaLain()
+    And saya menekan tombol "Simpan Perubahan"                                          # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan "Email / Nomor Telepon sudah digunakan oleh pengguna lain." # FeatureContext::sayaMelihatPesan()
+    And data saya tidak berubah                                                         # FeatureContext::dataSayaTidakBerubah()
+
+  Scenario: Foto profil tidak valid                                                                                  # features\profil.feature:45
+    Given saya sudah masuk sebagai "Pemohon"                                                                         # FeatureContext::sayaSudahMasukSebagai()
+    When saya membuka menu "Kelola Profil"                                                                           # FeatureContext::sayaMembukaMenuKelolaProfil()
+    And saya mengunggah berkas yang bukan JPG/PNG atau lebih dari 2 MB                                               # FeatureContext::sayaMengunggahFotoTidakValid()
+    Then saya melihat pesan "Ukuran berkas melebihi batas (maks. 2MB) atau format tidak didukung (gunakan JPG/PNG)." # FeatureContext::sayaMelihatPesan()
+    And foto profil lama saya tetap tersimpan                                                                        # FeatureContext::fotoProfilLamaTetapTersimpan()
+
+  Scenario: Berhasil mengganti foto profil                        # features\profil.feature:52
+    Given saya sudah masuk sebagai "Pemohon"                      # FeatureContext::sayaSudahMasukSebagai()
+    When saya membuka menu "Kelola Profil"                        # FeatureContext::sayaMembukaMenuKelolaProfil()
+    And saya mengunggah foto berformat JPG atau PNG maksimal 2 MB # FeatureContext::sayaMengunggahFotoValid()
+    Then foto profil baru saya tersimpan                          # FeatureContext::fotoProfilBaruTersimpan()
+    And foto profil lama saya dihapus                             # FeatureContext::fotoProfilLamaDihapus()
+
+  Scenario: Berhasil mengubah kata sandi                             # features\profil.feature:59
+    Given saya sudah masuk sebagai "Pemohon"                         # FeatureContext::sayaSudahMasukSebagai()
+    And saya berada pada bagian "Pengaturan Keamanan"                # FeatureContext::sayaBeradaPadaBagianKeamanan()
+    When saya mengisi "Kata Sandi Lama" dengan kata sandi yang benar # FeatureContext::sayaMengisiKataSandiLamaBenar()
+    And saya mengisi "Kata Sandi Baru" dengan "sandiBaru1"           # FeatureContext::sayaMengisiKataSandiBaru()
+    And saya mengisi "Konfirmasi Kata Sandi" dengan "sandiBaru1"     # FeatureContext::sayaMengisiKonfirmasiKataSandi()
+    And saya menekan tombol "Simpan Perubahan"                       # FeatureContext::sayaMenekanTombol()
+    Then saya melihat notifikasi "Kata sandi berhasil diperbarui"    # FeatureContext::sayaMelihatNotifikasi()
+    And kata sandi saya tersimpan dalam bentuk hash                  # FeatureContext::kataSandiTersimpanDalamHash()
+
+  Scenario: Kata sandi lama tidak sesuai                                                    # features\profil.feature:69
+    Given saya sudah masuk sebagai "Pemohon"                                                # FeatureContext::sayaSudahMasukSebagai()
+    And saya berada pada bagian "Pengaturan Keamanan"                                       # FeatureContext::sayaBeradaPadaBagianKeamanan()
+    When saya mengisi "Kata Sandi Lama" dengan kata sandi yang salah                        # FeatureContext::sayaMengisiKataSandiLamaSalah()
+    And saya mengisi "Kata Sandi Baru" dengan "sandiBaru1"                                  # FeatureContext::sayaMengisiKataSandiBaru()
+    And saya mengisi "Konfirmasi Kata Sandi" dengan "sandiBaru1"                            # FeatureContext::sayaMengisiKonfirmasiKataSandi()
+    And saya menekan tombol "Simpan Perubahan"                                              # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan "Kata sandi lama tidak sesuai" di bawah kolom "Kata Sandi Lama" # FeatureContext::sayaMelihatPesanDiBawahKolom()
+    And kata sandi saya tidak berubah                                                       # FeatureContext::kataSandiSayaTidakBerubah()
+
+  Scenario: Kata sandi baru terlalu lemah                                                          # features\profil.feature:79
+    Given saya sudah masuk sebagai "Pemohon"                                                       # FeatureContext::sayaSudahMasukSebagai()
+    And saya berada pada bagian "Pengaturan Keamanan"                                              # FeatureContext::sayaBeradaPadaBagianKeamanan()
+    When saya mengisi "Kata Sandi Lama" dengan kata sandi yang benar                               # FeatureContext::sayaMengisiKataSandiLamaBenar()
+    And saya mengisi "Kata Sandi Baru" dengan "abc"                                                # FeatureContext::sayaMengisiKataSandiBaru()
+    And saya menekan tombol "Simpan Perubahan"                                                     # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan "Kata sandi minimal 8 karakter dan harus mengandung huruf serta angka" # FeatureContext::sayaMelihatPesan()
+    And kata sandi saya tidak berubah                                                              # FeatureContext::kataSandiSayaTidakBerubah()
+
+  Scenario: Konfirmasi kata sandi tidak cocok                        # features\profil.feature:88
+    Given saya sudah masuk sebagai "Pemohon"                         # FeatureContext::sayaSudahMasukSebagai()
+    And saya berada pada bagian "Pengaturan Keamanan"                # FeatureContext::sayaBeradaPadaBagianKeamanan()
+    When saya mengisi "Kata Sandi Lama" dengan kata sandi yang benar # FeatureContext::sayaMengisiKataSandiLamaBenar()
+    And saya mengisi "Kata Sandi Baru" dengan "sandiBaru1"           # FeatureContext::sayaMengisiKataSandiBaru()
+    And saya mengisi "Konfirmasi Kata Sandi" dengan "sandiLain2"     # FeatureContext::sayaMengisiKonfirmasiKataSandi()
+    And saya menekan tombol "Simpan Perubahan"                       # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan "Konfirmasi kata sandi tidak cocok"      # FeatureContext::sayaMelihatPesan()
+    And kata sandi saya tidak berubah                                # FeatureContext::kataSandiSayaTidakBerubah()
+
+  Scenario: NIK tidak dapat diubah melalui permintaan             # features\profil.feature:98
+    Given saya sudah masuk sebagai "Pemohon"                      # FeatureContext::sayaSudahMasukSebagai()
+    When saya mengirim perubahan profil disertai NIK yang berbeda # FeatureContext::sayaMengirimPerubahanProfilDenganNikBerbeda()
+    Then NIK saya tetap seperti semula                            # FeatureContext::nikSayaTetapSama()
+
+  Scenario: Pengguna hanya mengubah profilnya sendiri # features\profil.feature:103
+    Given saya sudah masuk sebagai "Pemohon"          # FeatureContext::sayaSudahMasukSebagai()
+    And ada pengguna lain dengan profil tertentu      # FeatureContext::adaPenggunaLainDenganProfil()
+    When saya memperbarui profil saya                 # FeatureContext::sayaMemperbaruiProfilSaya()
+    Then hanya profil saya yang berubah               # FeatureContext::hanyaProfilSayaYangBerubah()
+    And profil pengguna lain tidak berubah            # FeatureContext::profilPenggunaLainTidakBerubah()
+
+Feature: Register
+  In order to submit a request for death registration and administration
+  As a calon pemohon (masyarakat)
+  I want to register and create a new account
+
+  Scenario: Berhasil registrasi dengan NIK yang terdapat pada data kependudukan # features\register.feature:15
+    Given saya melihat halaman "Registrasi"                                     # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "9999990101900115" pada kolom "NIK"                       # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "pemohon.baru@demo.satuduka.id" pada kolom "Alamat Surel"  # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "Baru12345" pada kolom "Kata Sandi"                        # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "Baru12345" pada kolom "Konfirmasi Kata Sandi"             # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Daftar"                                            # FeatureContext::sayaMenekanTombol()
+    Then saya melihat notifikasi "Registrasi berhasil!"                         # FeatureContext::sayaMelihatNotifikasi()
+    And saya melihat halaman "Masuk"                                            # FeatureContext::sayaMelihatHalaman()
+
+  Scenario: Berpindah ke halaman Masuk dari halaman Registrasi # features\register.feature:25
+    Given saya melihat halaman "Registrasi"                    # FeatureContext::sayaMelihatHalaman()
+    When saya menekan tautan "Sudah punya akun? Masuk di sini" # FeatureContext::sayaMenekanTautanMasuk()
+    Then saya melihat halaman "Masuk"                          # FeatureContext::sayaMelihatHalaman()
+
+  Scenario: Registrasi gagal karena kata sandi lemah                                                                           # features\register.feature:30
+    Given saya melihat halaman "Registrasi"                                                                                    # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "9999990101900114" pada kolom "NIK"                                                                      # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "pemohon.baru@demo.satuduka.id" pada kolom "Alamat Surel"                                                 # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "abc123" pada kolom "Kata Sandi"                                                                          # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "abc123" pada kolom "Konfirmasi Kata Sandi"                                                               # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Daftar"                                                                                           # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan galat di bawah kolom "Kata Sandi" "Kata sandi minimal 8 karakter dan mengandung huruf serta angka" # FeatureContext::sayaMelihatPesanGalatDiKolom()
+
+  Scenario: Registrasi gagal karena konfirmasi kata sandi tidak cocok                             # features\register.feature:39
+    Given saya melihat halaman "Registrasi"                                                       # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "9999990101900114" pada kolom "NIK"                                         # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "pemohon.baru@demo.satuduka.id" pada kolom "Alamat Surel"                    # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "Baru12345" pada kolom "Kata Sandi"                                          # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "Baru12346" pada kolom "Konfirmasi Kata Sandi"                               # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Daftar"                                                              # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan galat di bawah kolom "Konfirmasi Kata Sandi" "Kata sandi tidak cocok" # FeatureContext::sayaMelihatPesanGalatDiKolom()
+
+  Scenario: Registrasi gagal karena format NIK tidak valid                     # features\register.feature:48
+    Given saya melihat halaman "Registrasi"                                    # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "123456789012" pada kolom "NIK"                          # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "pemohon.baru@demo.satuduka.id" pada kolom "Alamat Surel" # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "Baru12345" pada kolom "Kata Sandi"                       # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "Baru12345" pada kolom "Konfirmasi Kata Sandi"            # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Daftar"                                           # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan galat di bawah kolom "NIK" "NIK tidak valid"       # FeatureContext::sayaMelihatPesanGalatDiKolom()
+
+  Scenario: Registrasi gagal karena NIK sudah terdaftar                        # features\register.feature:57
+    Given akun dengan NIK "9999990101900001" sudah ada                         # FeatureContext::akunDenganNikSudahAda()
+    And saya melihat halaman "Registrasi"                                      # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "9999990101900001" pada kolom "NIK"                      # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "pemohon.baru@demo.satuduka.id" pada kolom "Alamat Surel" # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "Baru12345" pada kolom "Kata Sandi"                       # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "Baru12345" pada kolom "Konfirmasi Kata Sandi"            # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Daftar"                                           # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan galat "NIK sudah terdaftar"                        # FeatureContext::sayaMelihatPesanGalat()
+
+  Scenario: Berhasil registrasi dengan NIK 16 digit yang tidak ditemukan pada data kependudukan # features\register.feature:67
+    Given saya melihat halaman "Registrasi"                                                     # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "9999990101900099" pada kolom "NIK"                                       # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "pemohon.baru@demo.satuduka.id" pada kolom "Alamat Surel"                  # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "Baru12345" pada kolom "Kata Sandi"                                        # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "Baru12345" pada kolom "Konfirmasi Kata Sandi"                             # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Daftar"                                                            # FeatureContext::sayaMenekanTombol()
+    Then saya melihat notifikasi "Registrasi berhasil!"                                         # FeatureContext::sayaMelihatNotifikasi()
+    And saya melihat halaman "Masuk"                                                            # FeatureContext::sayaMelihatHalaman()
+
+  Scenario: Registrasi gagal karena surel sudah terdaftar                 # features\register.feature:77
+    Given akun dengan surel "pemohon@demo.satuduka.id" sudah ada          # FeatureContext::akunDenganSurelSudahAda()
+    And saya melihat halaman "Registrasi"                                 # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "9999990101900114" pada kolom "NIK"                 # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "pemohon@demo.satuduka.id" pada kolom "Alamat Surel" # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "Baru12345" pada kolom "Kata Sandi"                  # FeatureContext::sayaMengisiKolom()
+    And saya mengisi "Baru12345" pada kolom "Konfirmasi Kata Sandi"       # FeatureContext::sayaMengisiKolom()
+    And saya menekan tombol "Daftar"                                      # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan galat "Surel sudah terdaftar"                 # FeatureContext::sayaMelihatPesanGalat()
+
+  Scenario: Registrasi gagal karena kolom kosong                          # features\register.feature:87
+    Given saya melihat halaman "Registrasi"                               # FeatureContext::sayaMelihatHalaman()
+    When saya mengisi "9999990101900114" pada kolom "NIK"                 # FeatureContext::sayaMengisiKolom()
+    And saya membiarkan kolom "Kata Sandi" kosong                         # FeatureContext::sayaMembiarkanKolomKosong()
+    And saya membiarkan kolom "Konfirmasi Kata Sandi" kosong              # FeatureContext::sayaMembiarkanKolomKosong()
+    And saya menekan tombol "Daftar"                                      # FeatureContext::sayaMenekanTombol()
+    Then saya melihat pesan galat "Harap isi semua field yang diperlukan" # FeatureContext::sayaMelihatPesanGalat()
+    And kolom yang kosong ditandai                                        # FeatureContext::kolomYangKosongDitandai()
+
+Feature: Memverifikasi Berkas Pengajuan
+  Sebagai verifikator
+  Saya ingin memeriksa dan memproses berkas pengajuan
+  Agar setiap pengajuan mendapatkan keputusan verifikasi yang sesuai
+
+  Scenario: Melihat daftar antrean pengajuan            # features\verifikasi-berkas.feature:6
+    Given saya masuk sebagai verifikator                # FeatureContext::sayaMasukSebagaiVerifikatorBDD()
+    When saya membuka daftar antrean pengajuan          # FeatureContext::sayaMembukaDaftarAntreanPengajuanBDD()
+    Then halaman antrean pengajuan berhasil ditampilkan # FeatureContext::halamanAntreanBerhasilDitampilkanBDD()
+    And saya melihat pengajuan yang menunggu verifikasi # FeatureContext::sayaMelihatPengajuanMenungguVerifikasiBDD()
+
+  Scenario: Melihat detail pengajuan                   # features\verifikasi-berkas.feature:12
+    Given terdapat pengajuan yang menunggu verifikasi  # FeatureContext::terdapatPengajuanMenungguVerifikasiBDD()
+    And saya masuk sebagai verifikator                 # FeatureContext::sayaMasukSebagaiVerifikatorBDD()
+    When saya membuka detail pengajuan tersebut        # FeatureContext::sayaMembukaDetailPengajuanBDD()
+    Then halaman detail pengajuan berhasil ditampilkan # FeatureContext::halamanDetailPengajuanBerhasilDitampilkanBDD()
+    And saya melihat data laporan dan berkas pendukung # FeatureContext::sayaMelihatDataLaporanDanBerkasBDD()
+
+  Scenario: Menyetujui berkas yang valid                                    # features\verifikasi-berkas.feature:19
+    Given terdapat pengajuan dengan berkas lengkap yang menunggu verifikasi # FeatureContext::terdapatPengajuanBerkasLengkapBDD()
+    And saya masuk sebagai verifikator                                      # FeatureContext::sayaMasukSebagaiVerifikatorBDD()
+    When saya menyetujui pengajuan tersebut                                 # FeatureContext::sayaMenyetujuiPengajuanBDD()
+    Then status pengajuan menjadi "Disetujui/Menunggu TTE"                  # FeatureContext::statusPengajuanMenjadiBDD()
+    And saya melihat notifikasi persetujuan berhasil                        # FeatureContext::sayaMelihatNotifikasiPersetujuanBDD()
+
+  Scenario: Meminta revisi berkas                                            # features\verifikasi-berkas.feature:26
+    Given terdapat pengajuan yang menunggu verifikasi                        # FeatureContext::terdapatPengajuanMenungguVerifikasiBDD()
+    And saya masuk sebagai verifikator                                       # FeatureContext::sayaMasukSebagaiVerifikatorBDD()
+    When saya meminta revisi dengan alasan "Dokumen pendukung tidak terbaca" # FeatureContext::sayaMemintaRevisiBDD()
+    Then status pengajuan menjadi "Ditolak/Butuh Revisi"                     # FeatureContext::statusPengajuanMenjadiBDD()
+    And catatan revisi tersimpan                                             # FeatureContext::catatanRevisiTersimpanBDD()
+
+  Scenario: Menandai berkas sebagai anomali                                                                                       # features\verifikasi-berkas.feature:33
+    Given terdapat pengajuan yang menunggu verifikasi                                                                             # FeatureContext::terdapatPengajuanMenungguVerifikasiBDD()
+    And saya masuk sebagai verifikator                                                                                            # FeatureContext::sayaMasukSebagaiVerifikatorBDD()
+    When saya menandai pengajuan sebagai anomali "Perbedaan Identitas" dengan catatan "Terdapat perbedaan identitas pada dokumen" # FeatureContext::sayaMenandaiPengajuanSebagaiAnomaliBDD()
+    Then status pengajuan menjadi "Dalam Rekonsiliasi Anomali"                                                                    # FeatureContext::statusPengajuanMenjadiBDD()
+    And data anomali berhasil disimpan                                                                                            # FeatureContext::dataAnomaliBerhasilDisimpanBDD()
+
+  Scenario: Mencegah persetujuan ketika dokumen wajib belum lengkap               # features\verifikasi-berkas.feature:40
+    Given terdapat pengajuan tanpa seluruh dokumen wajib yang menunggu verifikasi # FeatureContext::terdapatPengajuanDokumenTidakLengkapBDD()
+    And saya masuk sebagai verifikator                                            # FeatureContext::sayaMasukSebagaiVerifikatorBDD()
+    When saya mencoba menyetujui pengajuan tersebut                               # FeatureContext::sayaMencobaMenyetujuiPengajuanBDD()
+    Then status pengajuan tetap "Menunggu Verifikasi"                             # FeatureContext::statusPengajuanTetapBDD()
+    And persetujuan ditolak karena dokumen belum lengkap                          # FeatureContext::persetujuanDitolakKarenaDokumenBelumLengkapBDD()
+
+  Scenario: Mencegah alasan revisi yang kosong            # features\verifikasi-berkas.feature:47
+    Given terdapat pengajuan yang menunggu verifikasi     # FeatureContext::terdapatPengajuanMenungguVerifikasiBDD()
+    And saya masuk sebagai verifikator                    # FeatureContext::sayaMasukSebagaiVerifikatorBDD()
+    When saya mengirim permintaan revisi dengan alasan "" # FeatureContext::sayaMengirimPermintaanRevisiBDD()
+    Then status pengajuan tetap "Menunggu Verifikasi"     # FeatureContext::statusPengajuanTetapBDD()
+    And validasi alasan revisi ditampilkan                # FeatureContext::validasiAlasanRevisiDitampilkanBDD()
+
+  Scenario: Mencegah alasan revisi yang terlalu pendek       # features\verifikasi-berkas.feature:54
+    Given terdapat pengajuan yang menunggu verifikasi        # FeatureContext::terdapatPengajuanMenungguVerifikasiBDD()
+    And saya masuk sebagai verifikator                       # FeatureContext::sayaMasukSebagaiVerifikatorBDD()
+    When saya mengirim permintaan revisi dengan alasan "abc" # FeatureContext::sayaMengirimPermintaanRevisiBDD()
+    Then status pengajuan tetap "Menunggu Verifikasi"        # FeatureContext::statusPengajuanTetapBDD()
+    And validasi alasan revisi ditampilkan                   # FeatureContext::validasiAlasanRevisiDitampilkanBDD()
+
+  Scenario: Mencegah catatan anomali yang kosong                                         # features\verifikasi-berkas.feature:61
+    Given terdapat pengajuan yang menunggu verifikasi                                    # FeatureContext::terdapatPengajuanMenungguVerifikasiBDD()
+    And saya masuk sebagai verifikator                                                   # FeatureContext::sayaMasukSebagaiVerifikatorBDD()
+    When saya menandai pengajuan sebagai anomali "Perbedaan Identitas" dengan catatan "" # FeatureContext::sayaMenandaiPengajuanSebagaiAnomaliBDD()
+    Then status pengajuan tetap "Menunggu Verifikasi"                                    # FeatureContext::statusPengajuanTetapBDD()
+    And validasi catatan anomali ditampilkan                                             # FeatureContext::validasiCatatanAnomaliDitampilkanBDD()
+
+  Scenario: Mencegah pengguna non-verifikator membuka halaman verifikasi # features\verifikasi-berkas.feature:68
+    Given terdapat pengajuan yang menunggu verifikasi                    # FeatureContext::terdapatPengajuanMenungguVerifikasiBDD()
+    And saya masuk sebagai pemohon                                       # FeatureContext::sayaMasukSebagaiPemohonBDD()
+    When saya membuka daftar antrean pengajuan                           # FeatureContext::sayaMembukaDaftarAntreanPengajuanBDD()
+    Then akses ke halaman verifikasi ditolak                             # FeatureContext::aksesKeHalamanVerifikasiDitolakBDD()
+
+  Scenario: Mencegah pengguna non-verifikator menyetujui pengajuan # features\verifikasi-berkas.feature:74
+    Given terdapat pengajuan yang menunggu verifikasi              # FeatureContext::terdapatPengajuanMenungguVerifikasiBDD()
+    And saya masuk sebagai pemohon                                 # FeatureContext::sayaMasukSebagaiPemohonBDD()
+    When saya mencoba menyetujui pengajuan tersebut                # FeatureContext::sayaMencobaMenyetujuiPengajuanBDD()
+    Then akses ke aksi persetujuan ditolak                         # FeatureContext::aksesKeAksiPersetujuanDitolakBDD()
+    And status pengajuan tetap "Menunggu Verifikasi"               # FeatureContext::statusPengajuanTetapBDD()
+
+50 scenarios (50 passed)
+290 steps (290 passed)
+0m48.67s (85.53Mb)

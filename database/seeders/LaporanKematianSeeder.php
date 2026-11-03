@@ -32,24 +32,6 @@ class LaporanKematianSeeder extends Seeder
         LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE,
     ];
 
-    /**
-     * Sebaran jenis kasus untuk 10 laporan.
-     *
-     * @var list<string>
-     */
-    private const SEBARAN_JENIS_KASUS = [
-        LaporanKematian::JENIS_KASUS_NORMAL,
-        LaporanKematian::JENIS_KASUS_NORMAL,
-        LaporanKematian::JENIS_KASUS_NORMAL,
-        LaporanKematian::JENIS_KASUS_NORMAL,
-        LaporanKematian::JENIS_KASUS_NORMAL,
-        LaporanKematian::JENIS_KASUS_NORMAL,
-        LaporanKematian::JENIS_KASUS_NORMAL,
-        LaporanKematian::JENIS_KASUS_NORMAL,
-        LaporanKematian::JENIS_KASUS_TIDAK_DIKENAL,
-        LaporanKematian::JENIS_KASUS_TIDAK_DITEMUKAN,
-    ];
-
     public function run(): void
     {
         $pemohonDemo = Pengguna::where('email', 'pemohon@demo.satuduka.id')->firstOrFail();
@@ -71,10 +53,7 @@ class LaporanKematianSeeder extends Seeder
                 ? $pemohonDemo
                 : $pemohonLain[($index - 6) % max($pemohonLain->count(), 1)];
 
-            $atribut = [
-                'id_pengguna' => $pemohon->id_pengguna,
-                'jenis_kasus' => self::SEBARAN_JENIS_KASUS[$index],
-            ];
+            $atribut = ['id_pengguna' => $pemohon->id_pengguna];
 
             if (isset($dataSiak[$index])) {
                 $atribut['nama_almarhum'] = $dataSiak[$index]['nama_lengkap'];
@@ -86,6 +65,14 @@ class LaporanKematianSeeder extends Seeder
                 $atribut['no_pengajuan'] = null;
             }
 
+            if ($status === LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI) {
+                $atribut['catatan_revisi'] = $index === 2
+                    ? 'KTP pelapor tidak terbaca. Silakan unggah ulang dengan kualitas gambar yang lebih jelas.'
+                    : 'Kartu Keluarga belum menampilkan data yang diperlukan. Silakan unggah ulang berkas yang sesuai.';
+            } elseif ($status === LaporanKematian::STATUS_DIKEMBALIKAN) {
+                $atribut['catatan_revisi'] = 'Dokumen dikembalikan oleh pejabat karena perlu perbaikan format atau kelengkapan data.';
+            }
+
             $laporan = LaporanKematian::factory()->denganStatus($status)->create($atribut);
 
             // 3 sampai 4 berkas pendukung per laporan.
@@ -94,6 +81,24 @@ class LaporanKematianSeeder extends Seeder
             for ($i = 0; $i < $jumlahBerkas; $i++) {
                 BerkasPendukung::factory()->create(['id_laporan' => $laporan->id_laporan]);
             }
+        }
+
+        $dataSkenarioLengkap = $dataSiak[count(self::SEBARAN_STATUS)] ?? DataSIAK::acak();
+        $laporanLengkap = LaporanKematian::factory()
+            ->denganStatus(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
+            ->create([
+                'id_pengguna' => $pemohonDemo->id_pengguna,
+                'nama_pelapor' => 'Pemohon Demo - Skenario Berkas Lengkap',
+                'nama_almarhum' => $dataSkenarioLengkap['nama_lengkap'] ?? 'Data Demo',
+                'nik_almarhum' => $dataSkenarioLengkap['nik'] ?? '9999990101900999',
+            ]);
+
+        foreach (BerkasPendukung::DAFTAR_JENIS as $jenisDokumen) {
+            BerkasPendukung::factory()->create([
+                'id_laporan' => $laporanLengkap->id_laporan,
+                'jenis_dokumen' => $jenisDokumen,
+                'status_unggahan' => BerkasPendukung::STATUS_BERHASIL,
+            ]);
         }
     }
 }

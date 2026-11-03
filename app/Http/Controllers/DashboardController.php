@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DokumenResmi;
 use App\Models\LaporanKematian;
 use Illuminate\Http\Request;
 
@@ -25,10 +26,12 @@ class DashboardController extends Controller
                 'pengguna' => $pengguna,
                 'perluTindakan' => $pengguna->laporanKematian()
                     ->whereIn('status_pengajuan', LaporanKematian::DAFTAR_STATUS_BOLEH_DIUBAH)
+                    ->with(['dokumenResmi', 'hasilVerifikasiRevisiTerbaru'])
                     ->orderByDesc('dibuat_pada')
                     ->get(),
                 'pengajuanSaya' => $pengguna->laporanKematian()
                     ->where('status_pengajuan', '!=', LaporanKematian::STATUS_DRAF)
+                    ->with(['dokumenResmi', 'hasilVerifikasiRevisiTerbaru'])
                     ->orderByDesc('dibuat_pada')
                     ->limit(5)
                     ->get(),
@@ -62,7 +65,27 @@ class DashboardController extends Controller
                     ->limit(5)
                     ->get(),
             ]),
-            default => view('dashboard.pejabat', ['pengguna' => $pengguna]),
+            default => view('dashboard.pejabat', [
+                'pengguna' => $pengguna,
+                'statistik' => [
+                    'menunggu' => DokumenResmi::query()
+                        ->where('status_ttd', DokumenResmi::STATUS_MENUNGGU)
+                        ->count(),
+                    'selesai' => DokumenResmi::query()
+                        ->where('status_ttd', DokumenResmi::STATUS_SELESAI)
+                        ->count(),
+                    'dikembalikan' => DokumenResmi::query()
+                        ->where('status_ttd', DokumenResmi::STATUS_DIKEMBALIKAN)
+                        ->count(),
+                ],
+                'dokumenMenunggu' => DokumenResmi::query()
+                    ->with('laporanKematian')
+                    ->where('status_ttd', DokumenResmi::STATUS_MENUNGGU)
+                    ->orderBy('dibuat_pada')
+                    ->orderBy('id_dokumen')
+                    ->limit(5)
+                    ->get(),
+            ]),
         };
     }
 }
