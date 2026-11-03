@@ -1,72 +1,135 @@
-@extends('tata_letak.utama')
+
+@extends('tata_letak.verifikator')
 
 @section('judul', 'Dashboard Verifikator')
 
-@section('navigasi')
-    @include('komponen.menu_avatar', ['pengguna' => $pengguna])
+@section('subjudul')
+    Selamat datang, {{ $pengguna->nama_lengkap }}.
+    Anda masuk sebagai {{ $pengguna->labelPeran() }}.
+    Antrean verifikasi berkas pengajuan.
 @endsection
 
 @section('konten')
-    <x-ui.page-header title="Dashboard Verifikator"
-        :subtitle="'Selamat datang, '.$pengguna->nama_lengkap.'. Anda masuk sebagai '.$pengguna->labelPeran().'. Antrean verifikasi berkas pengajuan.'">
-        <x-slot:aksi>
-            <x-ui.button :href="route('verifikasi.index')">Buka Daftar Verifikasi</x-ui.button>
-            <x-ui.button :href="route('rekonsiliasi.index')" variant="secondary">Rekonsiliasi Anomali</x-ui.button>
-        </x-slot:aksi>
-    </x-ui.page-header>
 
-    <section class="mt-8">
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <x-ui.stat label="Menunggu Verifikasi" :value="$statistik['menunggu']" variant="warning" />
-            <x-ui.stat label="Dalam Rekonsiliasi" :value="$statistik['rekonsiliasi']" variant="purple" />
-            <x-ui.stat label="Selesai" :value="$statistik['selesai']" variant="success" />
+    {{-- Statistik Dashboard --}}
+    <section class="stats">
+        <div class="stat">
+            <p class="stat-label">Menunggu Verifikasi</p>
+            <p class="stat-value">{{ $statistik['menunggu'] }}</p>
+            <p class="stat-note">Pengajuan menunggu pemeriksaan</p>
+        </div>
+
+        <div class="stat">
+            <p class="stat-label">Dalam Rekonsiliasi</p>
+            <p class="stat-value">{{ $statistik['rekonsiliasi'] }}</p>
+            <p class="stat-note">Pengajuan dalam proses rekonsiliasi</p>
+        </div>
+
+        <div class="stat">
+            <p class="stat-label">Selesai</p>
+            <p class="stat-value">{{ $statistik['selesai'] }}</p>
+            <p class="stat-note">Pengajuan telah selesai diproses</p>
+        </div>
+
+        <div class="stat">
+            <p class="stat-label">Total Antrean</p>
+            <p class="stat-value">
+                {{ $statistik['menunggu'] + $statistik['rekonsiliasi'] }}
+            </p>
+            <p class="stat-note">Pengajuan yang membutuhkan tindak lanjut</p>
         </div>
     </section>
 
-    <section class="mt-8">
-        <x-ui.card>
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h2 class="text-lg font-semibold text-ink">Antrean Terbaru</h2>
-                    <p class="mt-1 text-sm text-muted">Lima pengajuan terlama yang menunggu tindakan.</p>
-                </div>
-                <x-ui.button :href="route('verifikasi.index')" size="sm" variant="secondary">
-                    Lihat Semua
-                </x-ui.button>
+    {{-- Daftar Permohonan --}}
+    <section class="card" style="margin-top: 32px;">
+        <div class="card-head dashboard-card-head">
+            <div>
+                <h2 class="card-title">Daftar Permohonan</h2>
+                <p class="card-desc">
+                    Pilih berkas untuk melakukan pemeriksaan detail.
+                </p>
             </div>
 
-            @if ($antrean->isEmpty())
-                <x-ui.notice icon="check" class="mt-4">
-                    <p class="font-semibold text-ink">Tidak ada antrean</p>
-                    <p class="mt-1">Semua pengajuan sudah diperiksa.</p>
-                </x-ui.notice>
-            @else
-                <x-ui.table class="mt-4">
-                    <x-slot:head>
-                        <th>No. Pengajuan</th>
-                        <th>Nama</th>
-                        <th>Tanggal</th>
-                        <th>Status</th>
-                        <th class="text-center">Aksi</th>
-                    </x-slot:head>
+            <form action="{{ route('verifikasi.index') }}" method="GET"
+                class="search-form">
+                <input
+                    type="text"
+                    name="cari"
+                    class="field search-input"
+                    placeholder="Cari nomor, NIK, atau nama..."
+                    value="{{ request('cari') }}"
+                >
 
-                    @foreach ($antrean as $item)
+                <button type="submit" class="btn btn-brand">
+                    Cari
+                </button>
+            </form>
+        </div>
+
+        @if ($antrean->isEmpty())
+            <div class="empty">
+                <div class="empty-ic">✓</div>
+                <h3 class="card-title">Tidak Ada Antrean</h3>
+                <p class="card-desc" style="margin-top: 8px;">
+                    Belum ada pengajuan yang membutuhkan pemeriksaan.
+                </p>
+            </div>
+        @else
+            <div class="table-wrap">
+                <table class="tbl">
+                    <thead>
                         <tr>
-                            <td class="whitespace-nowrap font-mono text-xs font-semibold text-ink">
-                                {{ $item->no_pengajuan ?? '-' }}
-                            </td>
-                            <td class="font-semibold text-ink">{{ $item->nama_almarhum }}</td>
-                            <td class="whitespace-nowrap text-xs text-ink-soft">
-                                {{ $item->tanggal_pengajuan?->format('d/m/Y') ?? '-' }}
-                            </td>
-                            <td>@include('komponen.badge_status', ['status' => $item->status_pengajuan])</td>
-                            <td class="text-center">
-                                <x-ui.button :href="route('verifikasi.show', $item)" size="sm">LIHAT</x-ui.button>
-                            </td>
+                            <th>No.</th>
+                            <th>NIK</th>
+                            <th>Nama</th>
+                            <th>Tanggal</th>
+                            <th>Berkas</th>
+                            <th class="c">Aksi</th>
                         </tr>
-                    @endforeach
-                </x-ui.table>
-            @endif
-        </x-ui.card>
+                    </thead>
+
+                    <tbody>
+                        @foreach ($antrean as $index => $item)
+                            <tr>
+                                <td>{{ $index + 1 }}.</td>
+
+                                <td class="num">
+                                    {{ $item->nik_almarhum }}
+                                </td>
+
+                                <td style="font-weight: 600; color: var(--ink);">
+                                    {{ $item->nama_almarhum }}
+                                </td>
+
+                                <td class="num">
+                                    {{ $item->tanggal_pengajuan?->format('d/m/Y') ?? '-' }}
+                                </td>
+
+                                <td>
+                                    {{ $item->berkasPendukung->count() }} Berkas
+                                </td>
+
+                                <td class="c">
+                                    <a
+                                        href="{{ route('verifikasi.show', $item) }}"
+                                        class="btn btn-brand btn-sm"
+                                    >
+                                        Lihat
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
     </section>
+
+    {{-- Tombol menuju daftar verifikasi --}}
+    <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+        <a href="{{ route('verifikasi.index') }}" class="btn btn-outline">
+            Lihat Semua Pengajuan
+        </a>
+    </div>
+
 @endsection

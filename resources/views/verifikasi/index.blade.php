@@ -1,167 +1,119 @@
-@extends('tata_letak.utama')
+@extends('tata_letak.verifikator')
 
-@section('judul', 'Verifikasi Berkas')
-
-@section('navigasi')
-    @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
-@endsection
+@section('judul', 'Dashboard Verifikator')
+@section('subjudul', 'Ringkasan seluruh proses verifikasi dan rekonsiliasi')
 
 @section('konten')
-    <x-ui.page-header title="Antrean Verifikasi Berkas"
-        subtitle="Urutan mengikuti keparahan anomali tertinggi dari mesin, lalu tanggal pengajuan.">
-        <x-slot:aksi>
-            <x-ui.button :href="route('rekonsiliasi.index')" variant="secondary">Rekonsiliasi Anomali</x-ui.button>
-            <x-ui.button :href="route('dashboard')" variant="secondary">Dashboard</x-ui.button>
-        </x-slot:aksi>
-    </x-ui.page-header>
+<div class="stack">
 
-    <section class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <x-ui.stat label="Menunggu Verifikasi" :value="$statistik['menunggu']" variant="warning" />
-        <x-ui.stat label="Dalam Rekonsiliasi" :value="$statistik['rekonsiliasi']" variant="purple" />
-        <x-ui.stat label="Selesai" :value="$statistik['selesai']" variant="success" />
+    <!-- Kartu Statistik -->
+    <section class="stats">
+        <div class="stat">
+            <p class="stat-label">Total Permohonan</p>
+            <p class="stat-value">{{ $ringkasan['total'] }}</p>
+        </div>
+        <div class="stat">
+            <p class="stat-label">Menunggu Verifikasi</p>
+            <p class="stat-value">{{ $ringkasan['menunggu'] }}</p>
+        </div>
+        <div class="stat">
+            <p class="stat-label">Anomali Perlu Rekonsiliasi</p>
+            <p class="stat-value">{{ $ringkasan['rekonsiliasi'] }}</p>
+        </div>
+        <div class="stat">
+            <p class="stat-label">Selesai</p>
+            <p class="stat-value">{{ $ringkasan['selesai'] }}</p>
+        </div>
     </section>
 
-    <section class="mt-8">
-        <x-ui.card>
-            <div class="flex flex-wrap items-start justify-between gap-4">
-                <div class="min-w-0">
-                    <h2 class="text-lg font-semibold text-ink">Daftar Permohonan</h2>
-                    <p class="mt-1 text-sm text-muted">Pilih berkas untuk melakukan pemeriksaan detail.</p>
-                </div>
-
-                <form method="GET" action="{{ route('verifikasi.index') }}"
-                    class="flex w-full flex-wrap items-end gap-2 sm:w-auto">
-                    <div class="min-w-0 flex-1 sm:w-72">
-                        <x-ui.input name="cari" type="search" :value="request('cari')"
-                            placeholder="Cari nama atau NIK lengkap (16 digit)" />
-                    </div>
-                    <x-ui.button type="submit">Cari</x-ui.button>
-                    @if (request('cari'))
-                        <x-ui.button :href="route('verifikasi.index')" variant="secondary">Reset</x-ui.button>
-                    @endif
-                </form>
+    <!-- Tabel Permohonan -->
+    <section class="card">
+        <div class="card-head dashboard-card-head">
+            <div>
+                <h2 class="card-title">Daftar Permohonan</h2>
+                <p class="card-desc">Pilih berkas untuk melakukan pemeriksaan detail.</p>
             </div>
 
-            @if ($pengajuan->isEmpty())
-                <x-ui.notice icon="check" class="mt-4">
-                    <p class="font-semibold text-ink">Tidak ada berkas yang menunggu verifikasi</p>
-                    <p class="mt-1">Semua pengajuan sudah diperiksa.</p>
-                </x-ui.notice>
-            @else
-                @php
-                    $baris = $pengajuan->getCollection()->map(function ($item) {
-                        $anomali = $item->hasil_analisis?->anomali ?? [];
-                        $teratas = $anomali[0] ?? null;
+            <form method="GET" action="{{ route('verifikasi.index') }}" class="search-form">
+                <select id="status" name="status" class="field" aria-label="Filter status"
+                        onchange="this.form.submit()"
+                        style="appearance: none; background-image: none; width: 190px; min-width: 190px; border-radius: 999px; padding: 10px 16px; text-align: center; text-align-last: center;">
+                    @foreach ([
+                        'semua' => 'Semua Status',
+                        'disetujui' => 'Disetujui',
+                        'menunggu' => 'Menunggu Verifikasi',
+                        'rekonsiliasi' => 'Perlu Rekonsiliasi',
+                        'selesai' => 'Selesai',
+                    ] as $nilai => $label)
+                        <option value="{{ $nilai }}" @selected($statusFilter === $nilai)>{{ $label }}</option>
+                    @endforeach
+                </select>
+                <input id="cari" name="cari" type="search" value="{{ request('cari') }}"
+                       placeholder="Cari NIK atau Nama..." class="field search-input">
+                @if (request('cari') || $statusFilter !== 'semua')
+                    <a href="{{ route('verifikasi.index') }}" class="btn btn-outline btn-pill btn-sm" style="padding: 10px 20px;">Reset</a>
+                @endif
+            </form>
+        </div>
 
-                        return [
-                            'item' => $item,
-                            'teratas' => $teratas,
-                            'lainnya' => max(0, count($anomali) - 1),
-                            'label' => $teratas
-                                ? config('verifikasi.taksonomi_anomali.'.$teratas->kode.'.label', $teratas->kode)
-                                : null,
-                            'varian' => match ($teratas?->keparahan) {
-                                'fatal' => 'danger',
-                                'tinggi' => 'warning',
-                                'sedang' => 'info',
-                                'rendah' => 'neutral',
-                                'info' => 'neutral',
-                                default => 'success',
-                            },
-                        ];
-                    });
-                @endphp
-
-                <x-ui.table class="mt-4 hidden md:block">
-                    <x-slot:head>
-                        <th>No. Pengajuan &amp; Waktu</th>
-                        <th>NIK</th>
-                        <th>Nama</th>
-                        <th>Anomali</th>
-                        <th>Status</th>
-                        <th class="text-center">Aksi</th>
-                    </x-slot:head>
-
-                    @foreach ($baris as $data)
-                        @php($item = $data['item'])
+        @if ($pengajuan->isEmpty())
+            <div class="empty">
+                <div class="empty-ic">✓</div>
+                <p style="font-size: 14px; font-weight: 600; color: var(--ink);">Tidak ada permohonan yang sesuai</p>
+                <p style="font-size: 12.5px; color: var(--faint); margin-top: 4px;">Coba ubah status atau kata kunci pencarian.</p>
+            </div>
+        @else
+            <div class="table-wrap">
+                <table class="tbl">
+                    <thead>
                         <tr>
-                            <td class="whitespace-nowrap">
-                                <span class="block font-mono text-xs font-semibold text-ink">
-                                    {{ $item->no_pengajuan ?? '-' }}
-                                </span>
-                                <span class="text-xs text-faint">
-                                    {{ $item->tanggal_pengajuan?->format('d/m/Y H:i') ?? '-' }}
-                                </span>
-                            </td>
-                            <td class="whitespace-nowrap font-mono text-xs text-ink-soft">
-                                {{ \App\Support\MaskerNik::masker($item->nik_almarhum) ?? '-' }}
-                            </td>
-                            <td class="font-semibold text-ink">{{ $item->nama_almarhum }}</td>
-                            <td>
-                                @if ($data['teratas'])
-                                    <x-ui.badge :variant="$data['varian']">{{ ucfirst($data['teratas']->keparahan) }}</x-ui.badge>
-                                    <span class="mt-1 block text-xs text-muted">{{ $data['label'] }}</span>
-                                    @if ($data['lainnya'] > 0)
-                                        <span class="mt-1 block text-xs font-semibold text-ink-soft">
-                                            +{{ $data['lainnya'] }} lainnya
-                                        </span>
-                                    @endif
-                                @else
-                                    <x-ui.badge variant="success">Bersih</x-ui.badge>
-                                @endif
-                            </td>
-                            <td>
-                                @include('komponen.badge_status', ['status' => $item->status_pengajuan])
-                            </td>
-                            <td class="text-center">
-                                <x-ui.button :href="route('verifikasi.show', $item)" size="sm">LIHAT</x-ui.button>
-                            </td>
+                            <th style="width: 70px;">No.</th>
+                            <th>NIK</th>
+                            <th>Nama</th>
+                            <th>Tanggal Masuk</th>
+                            <th>Status</th>
+                            <th class="c">Aksi</th>
                         </tr>
-                    @endforeach
-                </x-ui.table>
-
-                <div class="mt-4 space-y-3 md:hidden">
-                    @foreach ($baris as $data)
-                        @php($item = $data['item'])
-                        <x-ui.card padding="p-4">
-                            <div class="flex flex-wrap items-center justify-between gap-2">
-                                <span class="font-mono text-xs font-semibold text-ink">
-                                    {{ $item->no_pengajuan ?? '-' }}
-                                </span>
-                                @include('komponen.badge_status', ['status' => $item->status_pengajuan])
-                            </div>
-
-                            <p class="mt-2 font-semibold text-ink">{{ $item->nama_almarhum }}</p>
-                            <p class="mt-1 font-mono text-xs text-ink-soft">
-                                {{ \App\Support\MaskerNik::masker($item->nik_almarhum) ?? '-' }}
-                            </p>
-                            <p class="mt-1 text-xs text-muted">
-                                Waktu: {{ $item->tanggal_pengajuan?->format('d/m/Y H:i') ?? '-' }}
-                            </p>
-
-                            <div class="mt-2">
-                                @if ($data['teratas'])
-                                    <x-ui.badge :variant="$data['varian']">{{ ucfirst($data['teratas']->keparahan) }}</x-ui.badge>
-                                    <span class="text-xs text-muted">{{ $data['label'] }}</span>
-                                    @if ($data['lainnya'] > 0)
-                                        <span class="block text-xs font-semibold text-ink-soft">
-                                            +{{ $data['lainnya'] }} lainnya
-                                        </span>
+                    </thead>
+                    <tbody>
+                        @foreach ($pengajuan as $index => $item)
+                            @php
+                                [$labelStatus, $warnaStatus] = match ($item->status_pengajuan) {
+                                    \App\Models\LaporanKematian::STATUS_MENUNGGU_VERIFIKASI => ['Menunggu Verifikasi', 'badge-brand'],
+                                    \App\Models\LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE => ['Disetujui', 'badge-brand'],
+                                    \App\Models\LaporanKematian::STATUS_DALAM_REKONSILIASI => ['Perlu Rekonsiliasi', 'badge-warning'],
+                                    \App\Models\LaporanKematian::STATUS_SELESAI => ['Selesai', 'badge-ok'],
+                                    \App\Models\LaporanKematian::STATUS_DIKEMBALIKAN => ['Dikembalikan', 'badge-bad'],
+                                    \App\Models\LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI => ['Ditolak/Butuh Revisi', 'badge-warning'],
+                                    \App\Models\LaporanKematian::STATUS_MENUNGGU_PERBAIKAN => ['Menunggu Perbaikan', 'badge-warning'],
+                                    default => ['Status lainnya', 'badge-brand'],
+                                };
+                            @endphp
+                            <tr>
+                                <td style="color: var(--faint);">{{ $pengajuan->firstItem() + $index }}.</td>
+                                <td class="num" style="font-weight: 500; color: var(--ink);">{{ $item->nik_almarhum }}</td>
+                                <td style="font-weight: 600; color: var(--ink);">{{ $item->nama_almarhum }}</td>
+                                <td style="color: var(--muted);">
+                                    {{ $item->tanggal_pengajuan ? \Carbon\Carbon::parse($item->tanggal_pengajuan)->format('d/m/Y') : '-' }}
+                                </td>
+                                <td><span class="badge {{ $warnaStatus }}"><span class="badge-dot"></span>{{ $labelStatus }}</span></td>
+                                <td class="c">
+                                    @if ($item->status_pengajuan === \App\Models\LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
+                                        <a href="{{ route('verifikasi.show', $item) }}" class="btn btn-brand btn-sm">Verifikasi</a>
+                                    @else
+                                        <span style="color: var(--faint);">—</span>
                                     @endif
-                                @else
-                                    <x-ui.badge variant="success">Bersih</x-ui.badge>
-                                @endif
-                            </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
 
-                            <div class="mt-3">
-                                <x-ui.button :href="route('verifikasi.show', $item)" size="sm">LIHAT</x-ui.button>
-                            </div>
-                        </x-ui.card>
-                    @endforeach
-                </div>
-
-                <div class="mt-4">{{ $pengajuan->links() }}</div>
+            @if ($pengajuan->hasPages())
+                <div class="pager">{{ $pengajuan->links() }}</div>
             @endif
-        </x-ui.card>
+        @endif
     </section>
+</div>
 @endsection

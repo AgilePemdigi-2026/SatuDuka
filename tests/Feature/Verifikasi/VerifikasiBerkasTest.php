@@ -713,7 +713,7 @@ it('memproses pengajuan berstatus dalam rekonsiliasi anomali', function () {
     expect($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE);
 });
 
-it('mengurutkan antrean berdasarkan keparahan anomali tertinggi lalu tanggal', function () {
+it('mengurutkan seluruh permohonan dari tanggal masuk terbaru tanpa mengutamakan keparahan', function () {
     Storage::fake('local');
 
     [$pemohon, $verifikator] = buatAkunDemo();
@@ -733,7 +733,7 @@ it('mengurutkan antrean berdasarkan keparahan anomali tertinggi lalu tanggal', f
     ]);
     lengkapiBerkasVerifikasiBerkas($ganda);
 
-    buatLaporanAntreanVerifikasi($pemohon, [
+    $duplikatTerbaru = buatLaporanAntreanVerifikasi($pemohon, [
         'status_pengajuan' => LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
         'tanggal_pengajuan' => now()->addMinute(),
         'nik_almarhum' => $ganda->nik_almarhum,
@@ -746,7 +746,7 @@ it('mengurutkan antrean berdasarkan keparahan anomali tertinggi lalu tanggal', f
 
     $items = $respons->viewData('pengajuan')->items();
 
-    expect($items[0]->id_laporan)->toBe($ganda->id_laporan);
+    expect($items[0]->id_laporan)->toBe($duplikatTerbaru->id_laporan);
 });
 
 it('menampilkan label anomali Indonesia dan penanda anomali lain pada antrean', function () {
@@ -854,7 +854,7 @@ it('menolak transisi status di luar pemetaan verifikasi', function () {
         ->and(HasilVerifikasi::where('id_laporan', $laporan->id_laporan)->count())->toBe(0);
 });
 
-it('hanya menampilkan pengajuan menunggu verifikasi dan rekonsiliasi pada antrean', function () {
+it('menampilkan seluruh status non-draf pada dashboard verifikator', function () {
     [$pemohon, $verifikator] = buatAkunDemo();
 
     $menunggu = buatLaporanAntreanVerifikasi($pemohon, [
@@ -883,10 +883,36 @@ it('hanya menampilkan pengajuan menunggu verifikasi dan rekonsiliasi pada antrea
         'jenis_kelamin' => 'P',
         'status_pengajuan' => LaporanKematian::STATUS_SELESAI,
     ]);
+    $dikembalikan = buatLaporanAntreanVerifikasi($pemohon, [
+        'no_pengajuan' => 'SD-20261028-0004',
+        'nik_almarhum' => '3471074405680002',
+        'nama_almarhum' => 'Dikembalikan',
+        'status_pengajuan' => LaporanKematian::STATUS_DIKEMBALIKAN,
+    ]);
+    $disetujui = buatLaporanAntreanVerifikasi($pemohon, [
+        'no_pengajuan' => 'SD-20261028-0005',
+        'nik_almarhum' => '3471084405680003',
+        'nama_almarhum' => 'Nama Laporan Tahap TTE',
+        'status_pengajuan' => LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE,
+    ]);
 
     $respons = $this->actingAs($verifikator)
         ->get(route('verifikasi.index'))
-        ->assertOk();
+        ->assertOk()
+        ->assertSeeInOrder([
+            'Total Permohonan',
+            'Menunggu Verifikasi',
+            'Anomali Perlu Rekonsiliasi',
+            'Selesai',
+        ])
+        ->assertSeeInOrder([
+            'Semua Status',
+            'Disetujui',
+            'Menunggu Verifikasi',
+            'Perlu Rekonsiliasi',
+            'Selesai',
+        ])
+        ->assertDontSee('<th>Berkas</th>', false);
 
     $ids = collect($respons->viewData('pengajuan')->items())
         ->pluck('id_laporan')
@@ -894,8 +920,22 @@ it('hanya menampilkan pengajuan menunggu verifikasi dan rekonsiliasi pada antrea
 
     expect($ids)->toContain($menunggu->id_laporan)
         ->and($ids)->toContain($rekonsiliasi->id_laporan)
+        ->and($ids)->toContain($selesai->id_laporan)
+        ->and($ids)->toContain($dikembalikan->id_laporan)
+        ->and($ids)->toContain($disetujui->id_laporan)
         ->and($ids)->not->toContain($draf->id_laporan)
-        ->and($ids)->not->toContain($selesai->id_laporan);
+        ->and($respons->viewData('ringkasan')['total'])->toBe(5);
+
+    $this->get(route('verifikasi.index', ['status' => 'disetujui']))
+        ->assertOk()
+        ->assertSee($disetujui->nama_almarhum)
+        ->assertDontSee($menunggu->nama_almarhum)
+        ->assertDontSee($dikembalikan->nama_almarhum);
+
+    $this->get(route('verifikasi.index', ['status' => 'selesai']))
+        ->assertOk()
+        ->assertSee($selesai->nama_almarhum)
+        ->assertDontSee($disetujui->nama_almarhum);
 });
 
 it('membatasi antrean verifikasi sepuluh pengajuan per halaman', function () {
@@ -1019,7 +1059,7 @@ it('menolak analisis AI dengan berkas milik laporan lain tanpa membuat catatan',
     expect(AnalisisAi::query()->count())->toBe(0);
 });
 
-it('mengurutkan antrean menurut tanggal saat keparahan sama dan keparahan mengalahkan tanggal', function () {
+it('mengurutkan seluruh pengajuan hanya berdasarkan tanggal masuk terbaru', function () {
     [$pemohon, $verifikator] = buatAkunDemo();
 
     $bersihLama = buatLaporanAntreanVerifikasi($pemohon, [
@@ -1057,7 +1097,7 @@ it('mengurutkan antrean menurut tanggal saat keparahan sama dan keparahan mengal
 
     expect(collect($items)->pluck('id_laporan')->all())->toBe([
         $fatalTerbaru->id_laporan,
-        $bersihLama->id_laporan,
         $bersihBaru->id_laporan,
+        $bersihLama->id_laporan,
     ]);
 });

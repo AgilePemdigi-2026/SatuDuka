@@ -219,6 +219,19 @@ class LaporanKematian extends Model
     }
 
     /**
+     * Hasil verifikasi revisi terbaru sebagai sumber cadangan catatan perbaikan.
+     */
+    public function hasilVerifikasiRevisiTerbaru(): HasOne
+    {
+        return $this->hasOne(HasilVerifikasi::class, 'id_laporan', 'id_laporan')
+            ->whereIn('status_verifikasi', [
+                HasilVerifikasi::STATUS_DITOLAK,
+                HasilVerifikasi::STATUS_PERLU_REVISI,
+            ])
+            ->latestOfMany('id_verifikasi');
+    }
+
+    /**
      * Relasi 6: laporan_kematian 1:1 dokumen_resmi.
      */
     public function dokumenResmi(): HasOne
@@ -298,5 +311,23 @@ class LaporanKematian extends Model
         }
 
         return '—';
+    }
+
+    /**
+     * Alasan revisi/pengembalian, termasuk sumber data verifikasi lama.
+     */
+    public function labelAlasanPerbaikan(): ?string
+    {
+        foreach ([
+            $this->catatan_revisi,
+            $this->dokumenResmi?->alasan_pengembalian,
+            $this->hasilVerifikasiRevisiTerbaru?->catatan,
+        ] as $alasan) {
+            if (filled($alasan)) {
+                return $alasan;
+            }
+        }
+
+        return null;
     }
 }

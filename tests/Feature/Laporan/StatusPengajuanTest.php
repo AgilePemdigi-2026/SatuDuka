@@ -266,13 +266,38 @@ it('menampilkan tombol Perbaiki untuk pengajuan yang membutuhkan revisi', functi
     $laporan = buatPengajuanTerkirim($pemohon, [
         'no_pengajuan' => 'SD-20261020-0011',
         'status_pengajuan' => LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI,
+        'catatan_revisi' => 'KTP pelapor tidak terbaca, mohon unggah ulang.',
     ]);
 
     $this->actingAs($pemohon)->get(route('dashboard'))
         ->assertOk()
         ->assertSee('Perlu Tindakan Anda')
+        ->assertSee('Alasan perbaikan:')
+        ->assertSee('KTP pelapor tidak terbaca, mohon unggah ulang.')
         ->assertSee('>Perbaiki</a>', false)
         ->assertSee(route('laporan.ubah', $laporan));
+});
+
+it('menampilkan alasan revisi dari riwayat verifikasi lama pada tabel perlu tindakan', function () {
+    [$pemohon, $verifikator] = buatAkunDemo();
+
+    $laporan = buatPengajuanTerkirim($pemohon, [
+        'status_pengajuan' => LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI,
+        'catatan_revisi' => null,
+    ]);
+
+    HasilVerifikasi::factory()
+        ->denganStatus(HasilVerifikasi::STATUS_PERLU_REVISI)
+        ->create([
+            'id_laporan' => $laporan->id_laporan,
+            'id_pengguna' => $verifikator->id_pengguna,
+            'catatan' => 'Surat keterangan kematian perlu diperjelas.',
+        ]);
+
+    $this->actingAs($pemohon)->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Alasan perbaikan:')
+        ->assertSee('Surat keterangan kematian perlu diperjelas.');
 });
 
 it('menampilkan tombol Lihat untuk pengajuan yang sudah selesai', function () {

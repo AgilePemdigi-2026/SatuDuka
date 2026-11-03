@@ -4,6 +4,8 @@
  * Pengujian dashboard per peran dan middleware pembatas peran.
  */
 
+use App\Models\DokumenResmi;
+use App\Models\LaporanKematian;
 use App\Models\Pengguna;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -34,6 +36,39 @@ it('menampilkan dashboard sesuai peran pengguna', function () {
         ->assertSee('Anda masuk sebagai Pejabat')
         ->assertSee('Kelola Profil')
         ->assertDontSee('Profil Saya');
+});
+
+it('mengambil statistik dan antrean dashboard pejabat dari database', function () {
+    [, , $pejabat] = buatAkunDemo();
+
+    $menunggu = LaporanKematian::factory()
+        ->denganStatus(LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE)
+        ->create(['nama_almarhum' => 'Almarhum Antrean']);
+    DokumenResmi::factory()->create(['id_laporan' => $menunggu->id_laporan]);
+
+    $selesai = LaporanKematian::factory()
+        ->denganStatus(LaporanKematian::STATUS_SELESAI)
+        ->create();
+    DokumenResmi::factory()->selesai()->create(['id_laporan' => $selesai->id_laporan]);
+
+    $dikembalikan = LaporanKematian::factory()->create();
+    DokumenResmi::factory()->create([
+        'id_laporan' => $dikembalikan->id_laporan,
+        'status_ttd' => DokumenResmi::STATUS_DIKEMBALIKAN,
+    ]);
+
+    $respons = $this->actingAs($pejabat)->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Menunggu Tindakan')
+        ->assertSee('Almarhum Antrean')
+        ->assertSee(route('tanda_tangan.show', $menunggu));
+
+    expect($respons->viewData('statistik'))->toBe([
+        'menunggu' => 1,
+        'selesai' => 1,
+        'dikembalikan' => 1,
+    ])->and($respons->viewData('dokumenMenunggu')->pluck('id_dokumen')->all())
+        ->toBe([DokumenResmi::query()->where('id_laporan', $menunggu->id_laporan)->value('id_dokumen')]);
 });
 
 it('menampilkan menu avatar dengan inisial saat foto profil belum ada', function () {
