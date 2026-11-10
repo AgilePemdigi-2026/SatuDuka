@@ -3,7 +3,6 @@
 namespace App\Services\Ai;
 
 use App\Models\BerkasPendukung;
-use App\Support\DataSIAK;
 use App\Support\MaskerNik;
 use App\Support\PengindeksNik;
 use Illuminate\Support\Carbon;
@@ -15,7 +14,7 @@ use Illuminate\Support\Str;
  * Kasus dipilih dari nama berkas:
  * - mengandung `tidak-terbaca`, `rusak`, atau `buram` -> kolom tidak terbaca;
  * - mengandung `beda`, `tidak-cocok`, atau `selisih` -> nilai sengaja berbeda;
- * - selain itu memakai data SIAK/laporan sebagai hasil pembacaan.
+ * - selain itu memakai data laporan sebagai hasil pembacaan.
  */
 class MockAIService implements AIService
 {
@@ -84,7 +83,7 @@ class MockAIService implements AIService
 
         foreach ($beda as $baris) {
             $saran[] = match ($baris['kunci'] ?? '') {
-                'nik' => 'Cocokkan NIK pada dokumen asli dengan data SIAK sebelum melanjutkan.',
+                'nik' => 'Periksa kembali NIK pada dokumen asli dan isian pemohon.',
                 'nama_almarhum' => 'Periksa kembali ejaan nama pada dokumen dan isian pemohon.',
                 'tanggal_kematian' => 'Pastikan tanggal kematian pada dokumen sesuai dengan isian pemohon.',
                 'tempat_kematian' => 'Konfirmasi tempat kematian pada dokumen asli.',
@@ -170,17 +169,13 @@ class MockAIService implements AIService
     }
 
     /**
-     * Data acuan: utamakan catatan SIAK bila NIK ditemukan.
-     *
      * @return array{nama_almarhum: string, nik: string, tanggal_kematian: string|null, tempat_kematian: string}
      */
     private function dataDasar(?string $nama, ?string $nik, mixed $tanggal, ?string $tempat): array
     {
-        $siak = $nik !== null && $nik !== '' ? DataSIAK::cariNik($nik) : null;
-
         return [
-            'nama_almarhum' => $siak['nama_lengkap'] ?? $nama ?? '',
-            'nik' => $siak['nik'] ?? $nik ?? '',
+            'nama_almarhum' => $nama ?? '',
+            'nik' => $nik ?? '',
             'tanggal_kematian' => $tanggal instanceof \DateTimeInterface
                 ? Carbon::instance($tanggal)->toDateString()
                 : ($tanggal !== null ? (string) $tanggal : null),

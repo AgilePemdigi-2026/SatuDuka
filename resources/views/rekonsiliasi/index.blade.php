@@ -8,7 +8,7 @@
 
 @section('konten')
     <x-ui.page-header title="Antrean Rekonsiliasi Anomali"
-        subtitle="Berkas berstatus Dalam Rekonsiliasi Anomali. Bandingkan data pemohon, SIAK, dan surat keterangan sebelum memutuskan.">
+        subtitle="Berkas berstatus Dalam Rekonsiliasi Anomali. Tinjau data pemohon dan surat keterangan sebelum memutuskan.">
         <x-slot:aksi>
             <x-ui.button :href="route('verifikasi.index')" variant="secondary">Antrean Verifikasi</x-ui.button>
             <x-ui.button :href="route('dashboard')" variant="secondary">Dashboard</x-ui.button>
@@ -20,7 +20,7 @@
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div class="min-w-0">
                     <h2 class="text-lg font-semibold text-ink">Daftar Kasus Anomali</h2>
-                    <p class="mt-1 text-sm text-muted">Pilih kasus untuk menelusuri data acuan yang sah.</p>
+                    <p class="mt-1 text-sm text-muted">Pilih kasus untuk meninjau berkas dan menentukan koreksi berdasarkan bukti otentik.</p>
                 </div>
 
                 <form method="GET" action="{{ route('rekonsiliasi.index') }}"

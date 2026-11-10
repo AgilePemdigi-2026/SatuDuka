@@ -4,7 +4,7 @@
  * Pengujian alur rekonsiliasi anomali (SRS 5.2.7 dan 6.2.7).
  *
  * Seluruh pengujian memakai SQLite in-memory dan tidak memanggil layanan
- * eksternal. Data SIAK berasal dari berkas dummy.
+ * eksternal. Data uji hanya membandingkan isian dengan hasil ekstraksi dokumen.
  */
 
 use App\Models\AnalisisAi;
@@ -40,14 +40,14 @@ function buatKasusRekonsiliasi(Pengguna $pemohon, Pengguna $verifikator, array $
         'id_laporan' => $laporan->id_laporan,
         'id_pengguna' => $verifikator->id_pengguna,
         'status_verifikasi' => HasilVerifikasi::STATUS_ANOMALI,
-        'catatan' => 'NIK pada dokumen berbeda dengan data SIAK.',
+        'catatan' => 'NIK pada dokumen berbeda dengan isian pemohon.',
         'tanggal_verifikasi' => now(),
     ]);
 
     AnomaliDokumen::create([
         'id_verifikasi' => $hasil->id_verifikasi,
         'jenis_anomali' => AnomaliDokumen::JENIS_PERBEDAAN_IDENTITAS,
-        'deskripsi' => 'Nama pada dokumen berbeda dengan data SIAK.',
+        'deskripsi' => 'Nama pada dokumen berbeda dengan isian pemohon.',
         'status_rekonsiliasi' => AnomaliDokumen::STATUS_TERBUKA,
     ]);
 
@@ -124,7 +124,7 @@ it('menyelesaikan rekonsiliasi dengan koreksi dan audit NIK termasker', function
             'nama_almarhum' => 'Siti Aminah',
             'nik_almarhum' => $nikBaru,
             'tanggal_kematian' => '2026-10-01',
-            'catatan_rekonsiliasi' => 'Data acuan diambil dari KTP dan data SIAK terbaru.',
+            'catatan_rekonsiliasi' => 'Data acuan diambil dari dokumen identitas yang diserahkan.',
         ])
         ->assertRedirect(route('rekonsiliasi.index'))
         ->assertSessionHas('sukses');
@@ -145,7 +145,7 @@ it('menyelesaikan rekonsiliasi dengan koreksi dan audit NIK termasker', function
         ->where('status_verifikasi', HasilVerifikasi::STATUS_REKONSILIASI)
         ->firstOrFail();
 
-    expect($hasil->catatan)->toBe('Data acuan diambil dari KTP dan data SIAK terbaru.')
+    expect($hasil->catatan)->toBe('Data acuan diambil dari dokumen identitas yang diserahkan.')
         ->and($hasil->id_pengguna)->toBe($verifikator->id_pengguna);
 
     $audit = LogAudit::query()->where('aksi', 'menyelesaikan_rekonsiliasi')->firstOrFail();
@@ -210,7 +210,7 @@ it('menolak permanen dengan alasan eskalasi internal dan catatan resmi publik', 
     [$pemohon, $verifikator] = buatAkunDemo();
     $laporan = buatKasusRekonsiliasi($pemohon, $verifikator);
 
-    $alasanEskalasi = 'Identitas fiktif; hasil penelusuran SIAK tidak dapat dipertanggungjawabkan.';
+    $alasanEskalasi = 'Identitas belum dapat dipastikan dari dokumen yang tersedia.';
     $catatanResmi = 'Pengajuan ditolak permanen karena data identitas tidak dapat diverifikasi.';
 
     $this->actingAs($verifikator)

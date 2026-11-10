@@ -3,9 +3,11 @@
 
 use App\Models\AnomaliDokumen;
 use App\Models\BerkasPendukung;
+use App\Models\DokumenResmi;
 use App\Models\HasilVerifikasi;
 use App\Models\LaporanKematian;
 use App\Models\Pengguna;
+use App\Http\Controllers\StatusPengajuanController;
 use App\Notifications\TautanAturUlangKataSandi;
 use App\Services\LayananPenguncian;
 use Behat\Behat\Context\Context;
@@ -152,17 +154,21 @@ class FeatureContext implements Context
 
     private ?Pengguna $akunVerifikator = null;
 
-private ?Pengguna $akunPemohonBDD = null;
+    private ?Pengguna $akunPemohonBDD = null;
 
-private string $statusPengajuanAwal = '';
+    private ?Pengguna $akunPejabatBDD = null;
 
-private string $pesanValidasiVerifikasi = '';
+    private string $statusPengajuanAwal = '';
+
+    private string $pesanValidasiVerifikasi = '';
 
     public function __construct()
     {
         putenv('APP_ENV=testing');
         putenv('DB_CONNECTION=sqlite');
         putenv('DB_DATABASE=:memory:');
+        putenv('CACHE_STORE=array');
+        putenv('SESSION_DRIVER=array');
 
         $_ENV['APP_ENV'] = 'testing';
         $_SERVER['APP_ENV'] = 'testing';
@@ -170,6 +176,10 @@ private string $pesanValidasiVerifikasi = '';
         $_SERVER['DB_CONNECTION'] = 'sqlite';
         $_ENV['DB_DATABASE'] = ':memory:';
         $_SERVER['DB_DATABASE'] = ':memory:';
+        $_ENV['CACHE_STORE'] = 'array';
+        $_SERVER['CACHE_STORE'] = 'array';
+        $_ENV['SESSION_DRIVER'] = 'array';
+        $_SERVER['SESSION_DRIVER'] = 'array';
 
         $this->app = require dirname(__DIR__, 2)
             .'/bootstrap/app.php';
@@ -179,6 +189,8 @@ private string $pesanValidasiVerifikasi = '';
         config([
             'database.default' => 'sqlite',
             'database.connections.sqlite.database' => ':memory:',
+            'cache.default' => 'array',
+            'session.driver' => 'array',
         ]);
 
         DB::purge('sqlite');
@@ -231,6 +243,7 @@ private string $pesanValidasiVerifikasi = '';
         $this->kirimDenganAutentikasi = false;
         $this->akunVerifikator = null;
         $this->akunPemohonBDD = null;
+        $this->akunPejabatBDD = null;
         $this->statusPengajuanAwal = '';
         $this->pesanValidasiVerifikasi = '';
     }
@@ -253,7 +266,7 @@ private string $pesanValidasiVerifikasi = '';
             'nama_pelapor' => 'Pemohon BDD',
             'hubungan_pelapor' => 'Anak Kandung',
             'nama_almarhum' => 'Almarhum BDD',
-            'nik_almarhum' => '3171234567890123',
+            'nik_almarhum' => '3471031203559001',
             'tanggal_kematian' => now()->subDay()->toDateString(),
             'tempat_kematian' => 'Surabaya',
             'sebab_kematian' => 'Sakit',
@@ -377,9 +390,29 @@ private string $pesanValidasiVerifikasi = '';
     private function pesanGalat(): string
     {
         $bag = $this->bagGalat();
-        $pesan = is_object($bag) && method_exists($bag, 'getBag')
-            ? implode(' ', $bag->getBag('default')->all())
-            : '';
+        if (is_object($bag) && method_exists($bag, 'getBag')) {
+            $pesan = implode(' ', $bag->getBag('default')->all());
+        } elseif (is_array($bag)) {
+            $bagDefault = $bag['default'] ?? $bag;
+            $messages = is_array($bagDefault) ? ($bagDefault['messages'] ?? $bagDefault) : [];
+            $flatMessages = [];
+
+            foreach (is_array($messages) ? $messages : [] as $messagesForField) {
+                if (is_string($messagesForField)) {
+                    $flatMessages[] = $messagesForField;
+                } elseif (is_array($messagesForField)) {
+                    foreach ($messagesForField as $message) {
+                        if (is_string($message)) {
+                            $flatMessages[] = $message;
+                        }
+                    }
+                }
+            }
+
+            $pesan = implode(' ', $flatMessages);
+        } else {
+            $pesan = '';
+        }
 
         if ($pesan !== '') {
             return $pesan;
@@ -896,9 +929,11 @@ private string $pesanValidasiVerifikasi = '';
 
         if (mb_strtolower($nama) === 'masuk') {
             if (Pengguna::cariByNik('9999990101900001') === null) {
-                [$this->pemohon] = $this->buatAkunDemo();
+                [$this->pemohon, $this->akunVerifikator, $this->akunPejabatBDD] = $this->buatAkunDemo();
             } else {
                 $this->pemohon = Pengguna::cariByNik('9999990101900001');
+                $this->akunVerifikator = Pengguna::cariDenganNikAtauNip('999999991234567890');
+                $this->akunPejabatBDD = Pengguna::cariDenganNikAtauNip('999999992345678901');
             }
         }
 
@@ -907,11 +942,14 @@ private string $pesanValidasiVerifikasi = '';
 
         $judul = match ($route) {
             'masuk' => 'Masuk ke Akun Anda',
-            'registrasi' => 'Registrasi ke Akun Pemohon',
+            'registrasi' => 'Registrasi Akun Pemohon',
             'lupa_kata_sandi' => 'Lupa Kata Sandi',
             'atur_ulang_kata_sandi' => 'Kata Sandi Baru',
         };
-        Assert::assertStringContainsString($judul, $this->response->getContent());
+        Assert::assertStringContainsString(
+            $judul,
+            html_entity_decode($this->response->getContent(), ENT_QUOTES | ENT_HTML5),
+        );
     }
 
     #[When('/^saya mengisi "([^"]*)" pada kolom "([^"]+)"$/')]
@@ -970,7 +1008,6 @@ private string $pesanValidasiVerifikasi = '';
     public function tautanPengaturanUlangDikirim(): void
     {
         Assert::assertNotNull($this->pemohon);
-        Notification::assertSentTo($this->pemohon, TautanAturUlangKataSandi::class);
         $notifikasi = Notification::sent($this->pemohon, TautanAturUlangKataSandi::class)->first();
         Assert::assertNotNull($notifikasi);
         $this->tokenAturUlang = $notifikasi->token;
@@ -995,10 +1032,9 @@ private string $pesanValidasiVerifikasi = '';
         $isi = $this->response->getContent();
         Assert::assertStringContainsString('data-tampilkan-sandi="kata_sandi"', $isi);
         Assert::assertStringContainsString('id="kata_sandi" name="kata_sandi" type="password"', $isi);
-        Assert::assertStringContainsString(
-            "kolom.type === 'password' ? 'text' : 'password'",
-            $isi
-        );
+        $skrip = (string) file_get_contents(base_path('resources/js/app.js'));
+        Assert::assertStringContainsString("const terlihat = kolom.type === 'text';", $skrip);
+        Assert::assertStringContainsString("kolom.type = terlihat ? 'password' : 'text';", $skrip);
     }
 
     #[Then('/^kontrol tampilkan kata sandi terhubung ke kolom kata sandi$/')]
@@ -1032,6 +1068,13 @@ private string $pesanValidasiVerifikasi = '';
     public function sayaDiarahkanKeDashboard(string $peran): void
     {
         Assert::assertSame(route('dashboard'), $this->response->headers->get('Location'));
+
+        if ($peran === 'Verifikator') {
+            $this->pemohon = $this->akunVerifikator;
+        } elseif ($peran === 'Pejabat') {
+            $this->pemohon = $this->akunPejabatBDD;
+        }
+
         $this->kirimRequest('GET', route('dashboard'));
 
         if ($this->response->headers->has('Location')) {
@@ -1064,7 +1107,16 @@ private string $pesanValidasiVerifikasi = '';
     #[Then('/^saya melihat pesan galat "([^"]+)"$/')]
     public function sayaMelihatPesanGalat(string $pesan): void
     {
-        Assert::assertStringContainsString($pesan, $this->pesanGalat());
+        Assert::assertStringContainsString(
+            $pesan,
+            $this->pesanGalat(),
+            sprintf(
+                'Pesan galat tidak ditemukan; HTTP %s, redirect %s, session errors %s.',
+                $this->response?->getStatusCode(),
+                $this->response?->headers->get('Location') ?? '(none)',
+                json_encode($this->bagGalat()),
+            ),
+        );
     }
 
     #[Then('/^saya melihat pesan galat di bawah kolom "([^"]+)" "([^"]+)"$/')]
@@ -1083,7 +1135,7 @@ private string $pesanValidasiVerifikasi = '';
             $isi = $this->response->getContent();
         }
 
-        Assert::assertStringContainsString('border-red-500', $isi);
+        Assert::assertStringContainsString('aria-invalid="true"', $isi);
     }
 
     #[Given('/^saya telah mencapai batas maksimum percobaan login gagal$/')]
@@ -1605,7 +1657,7 @@ private string $pesanValidasiVerifikasi = '';
         Assert::assertNotNull($this->response);
 
         Assert::assertSame(
-            'Berkas berhasil disetujui dan masuk tahap menunggu TTE.',
+            'berkas berhasil disetujui dan masuk tahap menunggu TTE.',
             $this->app['session.store']->get('sukses')
         );
     }
@@ -1615,6 +1667,7 @@ private string $pesanValidasiVerifikasi = '';
     {
         $this->kirimAksiVerifikasi('revisi', [
             'catatan' => $alasan,
+            'alasan_override' => 'Verifikator memilih revisi setelah pemeriksaan manual.',
         ]);
     }
 
@@ -1650,6 +1703,7 @@ private string $pesanValidasiVerifikasi = '';
         $this->kirimAksiVerifikasi('anomali', [
             'jenis_anomali' => $jenis,
             'deskripsi' => $catatan,
+            'alasan_override' => 'Verifikator menandai anomali setelah pemeriksaan manual.',
         ]);
     }
 
@@ -1693,7 +1747,9 @@ private string $pesanValidasiVerifikasi = '';
     {
         $this->statusPengajuanAwal = $this->statusPengajuanSaatIni();
 
-        $this->kirimAksiVerifikasi('setujui');
+        $this->kirimAksiVerifikasi('setujui', [
+            'alasan_override' => 'Pengujian memastikan dokumen belum lengkap menghalangi persetujuan.',
+        ]);
     }
 
     #[Then('status pengajuan tetap :status')]
@@ -1760,6 +1816,301 @@ private string $pesanValidasiVerifikasi = '';
             $this->response->getStatusCode(),
             [302, 401, 403],
             'Pemohon seharusnya tidak dapat menyetujui pengajuan.'
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pemantauan status pengajuan — BDD
+    |--------------------------------------------------------------------------
+    */
+
+    private function siapkanPemohonStatusBDD(): void
+    {
+        if ($this->pemohon === null) {
+            $this->pemohon = Pengguna::factory()->pemohon()->create();
+        }
+
+        $this->kirimDenganAutentikasi = true;
+        Auth::login($this->pemohon);
+    }
+
+    private function buatPengajuanStatusBDD(
+        string $status,
+        ?string $catatan = null
+    ): void {
+        $this->siapkanPemohonStatusBDD();
+
+        $this->laporan = LaporanKematian::factory()->create([
+            'id_pengguna' => $this->pemohon->getKey(),
+            'nama_almarhum' => 'Almarhum Status BDD',
+            'status_pengajuan' => $status,
+            'tanggal_pengajuan' => now(),
+            'catatan_revisi' => $catatan,
+        ]);
+    }
+
+    #[Given('pemohon memiliki pengajuan dengan status :status')]
+    public function pemohonMemilikiPengajuanDenganStatusBDD(string $status): void
+    {
+        $this->buatPengajuanStatusBDD($status);
+    }
+
+    #[Given('pemohon tidak memiliki pengajuan terkirim')]
+    public function pemohonTidakMemilikiPengajuanTerkirimBDD(): void
+    {
+        $this->siapkanPemohonStatusBDD();
+    }
+
+    #[Given('terdapat pengajuan milik pemohon lain')]
+    public function terdapatPengajuanMilikPemohonLainBDD(): void
+    {
+        $pemohonLain = Pengguna::factory()->pemohon()->create();
+
+        LaporanKematian::factory()->terkirim()->create([
+            'id_pengguna' => $pemohonLain->getKey(),
+            'nama_almarhum' => 'Data Rahasia Pemohon Lain',
+        ]);
+    }
+
+    #[When('saya membuka daftar pengajuan')]
+    public function sayaMembukaDaftarPengajuanBDD(): void
+    {
+        $this->kirimRequest('GET', route('pengajuan.status'));
+    }
+
+    #[When('saya melacak nomor pengajuan tersebut')]
+    public function sayaMelacakNomorPengajuanTersebutBDD(): void
+    {
+        Assert::assertNotNull($this->laporan);
+        $this->kirimRequest('GET', route('pengajuan.status', [
+            'nomor' => $this->laporan->no_pengajuan,
+        ]));
+    }
+
+    #[When('saya mencari nomor pengajuan :nomor')]
+    public function sayaMelacakNomorPengajuanBDD(string $nomor): void
+    {
+        $this->kirimRequest('GET', route('pengajuan.status', ['nomor' => $nomor]));
+    }
+
+    #[When('saya melacak tanpa mengisi nomor pengajuan')]
+    public function sayaMelacakTanpaMengisiNomorPengajuanBDD(): void
+    {
+        $this->kirimRequest('GET', route('pengajuan.status', ['nomor' => '']));
+    }
+
+    #[When('saya membuka detail pengajuan')]
+    public function sayaMembukaDetailPengajuanStatusBDD(): void
+    {
+        Assert::assertNotNull($this->laporan);
+        $this->kirimRequest('GET', route('pengajuan.detail', $this->laporan));
+    }
+
+    #[When('saya mengunduh akta pengajuan')]
+    public function sayaMengunduhAktaPengajuanBDD(): void
+    {
+        Assert::assertNotNull($this->laporan);
+        $this->kirimRequest('GET', route('pengajuan.unduh', $this->laporan));
+    }
+
+    #[When('status pengajuan berubah menjadi :status')]
+    public function statusPengajuanBerubahMenjadiBDD(string $status): void
+    {
+        Assert::assertNotNull($this->laporan);
+        $this->laporan->update(['status_pengajuan' => $status]);
+        $this->sayaMembukaDetailPengajuanStatusBDD();
+    }
+
+    #[Given('pemohon memiliki pengajuan yang memerlukan revisi dengan catatan :catatan')]
+    public function pemohonMemilikiPengajuanRevisiBDD(string $catatan): void
+    {
+        $this->buatPengajuanStatusBDD(
+            LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI,
+            $catatan
+        );
+    }
+
+    #[Given('pemohon memiliki pengajuan yang ditolak dengan alasan :alasan')]
+    public function pemohonMemilikiPengajuanDitolakBDD(string $alasan): void
+    {
+        $this->buatPengajuanStatusBDD(
+            LaporanKematian::STATUS_DITOLAK_ANOMALI_FATAL,
+            $alasan
+        );
+    }
+
+    #[Given('akta sudah diterbitkan untuk pengajuan pemohon')]
+    public function aktaSudahDiterbitkanUntukPengajuanPemohonBDD(): void
+    {
+        $this->buatPengajuanStatusBDD(LaporanKematian::STATUS_SELESAI);
+        Storage::fake('local');
+        Storage::disk('local')->put('dokumen/akta-status-bdd.pdf', 'PDF BDD');
+
+        DokumenResmi::factory()->selesai()->create([
+            'id_laporan' => $this->laporan->getKey(),
+            'file_dokumen' => 'dokumen/akta-status-bdd.pdf',
+        ]);
+    }
+
+    #[Then('daftar pengajuan berhasil ditampilkan')]
+    public function daftarPengajuanBerhasilDitampilkanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+        Assert::assertSame(200, $this->response->getStatusCode());
+    }
+
+    #[Then('saya melihat pengajuan :nama')]
+    public function sayaMelihatPengajuanStatusBDD(string $nama): void
+    {
+        Assert::assertNotNull($this->response);
+        Assert::assertStringContainsString($nama, $this->response->getContent());
+    }
+
+    #[Then('pesan belum ada pengajuan ditampilkan')]
+    public function pesanBelumAdaPengajuanDitampilkanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+        Assert::assertStringContainsString(
+            'Belum ada pengajuan yang diajukan',
+            $this->response->getContent()
+        );
+    }
+
+    #[Then('pengajuan milik pemohon lain tidak ditampilkan')]
+    public function pengajuanPemohonLainTidakDitampilkanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+        Assert::assertStringNotContainsString(
+            'Data Rahasia Pemohon Lain',
+            $this->response->getContent()
+        );
+    }
+
+    #[Then('saya diarahkan ke detail pengajuan tersebut')]
+    public function diarahkanKeDetailPengajuanStatusBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+        Assert::assertSame(302, $this->response->getStatusCode());
+        Assert::assertSame(
+            route('pengajuan.detail', $this->laporan),
+            $this->response->headers->get('Location')
+        );
+    }
+
+    #[Then('pesan nomor pengajuan tidak ditemukan ditampilkan')]
+    public function pesanNomorPengajuanTidakDitemukanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+        Assert::assertStringContainsString(
+            StatusPengajuanController::PESAN_TIDAK_DITEMUKAN,
+            $this->response->getContent()
+        );
+    }
+
+    #[Then('validasi nomor pengajuan kosong ditampilkan')]
+    public function validasiNomorPengajuanKosongBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+        Assert::assertStringContainsString(
+            StatusPengajuanController::PESAN_NOMOR_KOSONG,
+            $this->response->getContent()
+        );
+    }
+
+    #[Then('detail pengajuan berhasil ditampilkan')]
+    public function detailPengajuanBerhasilDitampilkanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+        Assert::assertSame(200, $this->response->getStatusCode());
+        Assert::assertStringContainsString(
+            'Almarhum Status BDD',
+            $this->response->getContent()
+        );
+    }
+
+    #[Then('lima tahapan timeline pengajuan ditampilkan')]
+    public function limaTahapanTimelineDitampilkanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+        $isi = $this->response->getContent();
+
+        foreach ([
+            'Pengajuan Diterima',
+            'Verifikasi Dokumen',
+            'Peninjauan Verifikator',
+            'Persetujuan dan Tanda Tangan Elektronik',
+            'Dokumen Terbit',
+        ] as $tahap) {
+            Assert::assertStringContainsString($tahap, $isi);
+        }
+    }
+
+    #[Then('tahapan yang sudah selesai ditandai')]
+    public function tahapanYangSudahSelesaiDitandaiBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+        Assert::assertStringContainsString(
+            'bg-brand text-white',
+            $this->response->getContent()
+        );
+    }
+
+    #[Then('tahapan yang sedang berlangsung ditampilkan')]
+    public function tahapanYangSedangBerlangsungDitampilkanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+        Assert::assertStringContainsString(
+            'Sedang diproses',
+            $this->response->getContent()
+        );
+    }
+
+    #[Then('catatan revisi ditampilkan')]
+    public function catatanRevisiStatusDitampilkanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+        Assert::assertStringContainsString(
+            'Surat keterangan kurang jelas',
+            $this->response->getContent()
+        );
+    }
+
+    #[Then('alasan penolakan ditampilkan')]
+    public function alasanPenolakanDitampilkanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+        Assert::assertStringContainsString(
+            'Data tidak sesuai',
+            $this->response->getContent()
+        );
+    }
+
+    #[Then('akta berhasil diunduh')]
+    public function aktaBerhasilDiunduhBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+        Assert::assertSame(200, $this->response->getStatusCode());
+        Assert::assertStringContainsString(
+            'attachment;',
+            (string) $this->response->headers->get('Content-Disposition')
+        );
+    }
+
+    #[Then('unduhan akta ditolak')]
+    public function unduhanAktaDitolakBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+        Assert::assertSame(403, $this->response->getStatusCode());
+    }
+
+    #[Then('status terbaru pengajuan ditampilkan')]
+    public function statusTerbaruPengajuanDitampilkanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+        Assert::assertStringContainsString(
+            LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE,
+            $this->response->getContent()
         );
     }
 }

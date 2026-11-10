@@ -51,7 +51,7 @@
             <x-ui.alert variant="warning">
                 <p class="font-semibold">Layanan eksternal tidak tersedia</p>
                 <p class="mt-1 font-normal">
-                    Data SIAK atau analisis AI tidak dapat diakses. Lanjutkan secara manual; keputusan tetap dapat diambil.
+                    Analisis AI tidak dapat diakses. Lanjutkan secara manual; keputusan tetap dapat diambil.
                 </p>
             </x-ui.alert>
         @endif

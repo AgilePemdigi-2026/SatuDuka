@@ -41,7 +41,6 @@
                         <th class="px-3 py-2 font-semibold">Kolom</th>
                         <th class="px-3 py-2 font-semibold">Isian Pemohon</th>
                         <th class="px-3 py-2 font-semibold">Hasil Ekstraksi AI</th>
-                        <th class="px-3 py-2 font-semibold">Data SIAK</th>
                         <th class="px-3 py-2 font-semibold">Status</th>
                         <th class="px-3 py-2 font-semibold">Keyakinan</th>
                     </tr>
@@ -52,7 +51,6 @@
                             <td class="px-3 py-2 font-semibold text-ink-soft">{{ $kolom['label'] }}</td>
                             <td class="px-3 py-2 text-ink-soft">{{ $kolom['nilai_pemohon'] ?? '—' }}</td>
                             <td class="px-3 py-2 text-ink-soft">{{ $kolom['nilai_ekstraksi'] ?? '—' }}</td>
-                            <td class="px-3 py-2 text-ink-soft">{{ $kolom['nilai_siak'] ?? '—' }}</td>
                             <td class="px-3 py-2">
                                 <x-ui.badge :variant="$varianStatus($kolom['status'])">
                                     {{ $kolom['status'] }}

@@ -5,7 +5,7 @@ namespace App\Services\Verifikasi;
 use Illuminate\Support\Str;
 
 /**
- * Normalisasi nama untuk pencocokan data pengajuan dengan SIAK atau dokumen.
+ * Normalisasi nama untuk membandingkan data pengajuan dengan dokumen.
  *
  * Kelas ini murni: tidak mengakses basis data, HTTP, atau UI.
  */

@@ -198,11 +198,6 @@ return [
             'keparahan' => 'fatal',
             'rekomendasi' => 'Tolak anomali fatal atau minta verifikasi manual.',
         ],
-        'SIAK_SUDAH_MENINGGAL' => [
-            'label' => 'Tercatat meninggal di SIAK',
-            'keparahan' => 'fatal',
-            'rekomendasi' => 'Rekonsiliasi data kependudukan; kemungkinan kematian sudah tercatat sebelumnya.',
-        ],
         'KASUS_KHUSUS' => [
             'label' => 'Kasus khusus',
             'keparahan' => 'tinggi',
@@ -212,16 +207,6 @@ return [
             'label' => 'NIK tidak valid',
             'keparahan' => 'tinggi',
             'rekomendasi' => 'Minta perbaikan berkas dan NIK almarhum.',
-        ],
-        'NIK_TIDAK_DITEMUKAN' => [
-            'label' => 'NIK tidak ditemukan',
-            'keparahan' => 'tinggi',
-            'rekomendasi' => 'Minta perbaikan berkas atau rekonsiliasi data kependudukan.',
-        ],
-        'JENIS_KELAMIN_TIDAK_COCOK' => [
-            'label' => 'Jenis kelamin tidak cocok',
-            'keparahan' => 'tinggi',
-            'rekomendasi' => 'Rekonsiliasi jenis kelamin dengan data SIAK dan dokumen.',
         ],
         'TANGGAL_TIDAK_KONSISTEN' => [
             'label' => 'Tanggal tidak konsisten',
@@ -248,16 +233,6 @@ return [
             'keparahan' => 'sedang',
             'rekomendasi' => 'Verifikator membaca dokumen secara manual.',
         ],
-        'NAMA_BEDA_TIPIS' => [
-            'label' => 'Nama beda tipis',
-            'keparahan' => 'rendah',
-            'rekomendasi' => 'Verifikator mengoreksi nama bila perlu.',
-        ],
-        'ALAMAT_DI_LUAR_WILAYAH' => [
-            'label' => 'Alamat di luar wilayah',
-            'keparahan' => 'info',
-            'rekomendasi' => 'Hanya catatan; lanjutkan verifikasi.',
-        ],
         'LAYANAN_TIDAK_TERSEDIA' => [
             'label' => 'Layanan tidak tersedia',
             'keparahan' => 'info',
@@ -277,18 +252,13 @@ return [
 
     'tindakan_anomali' => [
         'PENGAJUAN_GANDA' => 'tolak_fatal',
-        'SIAK_SUDAH_MENINGGAL' => 'tandai_anomali',
         'KASUS_KHUSUS' => 'tandai_anomali',
         'NIK_TIDAK_VALID' => 'minta_perbaikan',
-        'NIK_TIDAK_DITEMUKAN' => 'minta_perbaikan',
-        'JENIS_KELAMIN_TIDAK_COCOK' => 'tandai_anomali',
         'TANGGAL_TIDAK_KONSISTEN' => 'minta_perbaikan',
         'NAMA_TIDAK_COCOK' => 'minta_perbaikan',
         'TERLAMBAT_TANPA_SPTJM' => 'minta_perbaikan',
         'BERKAS_TIDAK_LENGKAP' => 'minta_perbaikan',
         'DOKUMEN_TIDAK_TERBACA' => 'tandai_anomali',
-        'NAMA_BEDA_TIPIS' => 'minta_perbaikan',
-        'ALAMAT_DI_LUAR_WILAYAH' => 'setujui',
         'LAYANAN_TIDAK_TERSEDIA' => 'setujui',
     ],
 

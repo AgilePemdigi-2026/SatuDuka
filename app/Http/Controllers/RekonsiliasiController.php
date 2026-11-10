@@ -9,7 +9,6 @@ use App\Models\HasilVerifikasi;
 use App\Models\LaporanKematian;
 use App\Services\LayananAudit;
 use App\Services\Verifikasi\LayananValidasiNik;
-use App\Support\DataSIAK;
 use App\Support\MaskerNik;
 use App\Support\PengindeksNik;
 use Illuminate\Http\RedirectResponse;
@@ -22,8 +21,8 @@ use Illuminate\View\View;
 /**
  * Rekonsiliasi anomali data kependudukan (SRS 5.2.7 dan 6.2.7).
  *
- * Verifikator membandingkan isian pemohon, data SIAK, dan hasil ekstraksi
- * surat keterangan, lalu memilih menyelesaikan rekonsiliasi, mengembalikan
+ * Verifikator meninjau isian pemohon dan hasil ekstraksi surat keterangan,
+ * lalu memilih menyelesaikan rekonsiliasi, mengembalikan
  * berkas ke pemohon, atau menolak permanen karena anomali fatal. Semua aksi
  * berjalan dalam satu transaksi dengan lockForUpdate dan dicatat ke log audit.
  * Mesin hanya menyarankan; keputusan tetap pada manusia.
@@ -99,16 +98,14 @@ class RekonsiliasiController extends Controller
         ]);
 
         $anomali = $this->anomaliTerbuka($laporan);
-        $siak = $this->ambilSiak($laporan);
         $ekstraksi = $this->ekstraksiTerakhir($laporan);
 
         return view('rekonsiliasi.show', [
             'laporan' => $laporan,
             'anomali' => $anomali,
-            'kolomKomparasi' => $this->susunKomparasi($laporan, $siak, $ekstraksi),
-            'siakTersedia' => $siak !== null,
+            'kolomKomparasi' => $this->susunKomparasi($laporan, $ekstraksi),
             'ekstraksiTersedia' => $ekstraksi !== null,
-            'bannerManual' => $siak === null || $ekstraksi === null,
+            'bannerManual' => $ekstraksi === null,
         ]);
     }
 
@@ -286,12 +283,8 @@ class RekonsiliasiController extends Controller
         }
 
         if ($nikBerubah || $tanggalBerubah) {
-            $siak = $this->cariSiak($nikBaru);
-
             $hasil = $this->validasiNik->periksa(
                 nik: $nikBaru,
-                jenisKelamin: $siak['jenis_kelamin'] ?? null,
-                tanggalLahir: $this->tanggalLahirSiak($siak),
                 tanggalKematian: $tanggalBaru,
             );
 
@@ -404,28 +397,6 @@ class RekonsiliasiController extends Controller
     }
 
     /**
-     * @return array<string, string>|null
-     */
-    private function ambilSiak(LaporanKematian $laporan): ?array
-    {
-        $nik = trim((string) $laporan->nik_almarhum);
-
-        return $nik === '' ? null : $this->cariSiak($nik);
-    }
-
-    /**
-     * @return array<string, string>|null
-     */
-    private function cariSiak(string $nik): ?array
-    {
-        try {
-            return DataSIAK::cariNik($nik);
-        } catch (\Throwable) {
-            return null;
-        }
-    }
-
-    /**
      * @return array<string, array{nilai: string|null, keyakinan: float}>|null
      */
     private function ekstraksiTerakhir(LaporanKematian $laporan): ?array
@@ -444,29 +415,25 @@ class RekonsiliasiController extends Controller
     }
 
     /**
-     * @param  array<string, string>|null  $siak
      * @param  array<string, array{nilai: string|null, keyakinan: float}>|null  $ekstraksi
      * @return list<array<string, string|null>>
      */
-    private function susunKomparasi(LaporanKematian $laporan, ?array $siak, ?array $ekstraksi): array
+    private function susunKomparasi(LaporanKematian $laporan, ?array $ekstraksi): array
     {
         $baris = [];
 
         foreach (self::KOLOM_KOMPARASI as $kunci => $label) {
             $nilaiPemohon = $this->nilaiPemohon($laporan, $kunci);
-            $nilaiSiak = $this->nilaiSiak($siak, $kunci);
             $nilaiEkstraksi = $ekstraksi[$kunci]['nilai'] ?? null;
 
             $baris[] = [
                 'kunci' => $kunci,
                 'label' => $label,
                 'nilai_pemohon' => $this->tampilkan($kunci, $nilaiPemohon),
-                'nilai_siak' => $this->tampilkan($kunci, $nilaiSiak),
                 'nilai_ekstraksi' => $this->tampilkan($kunci, $nilaiEkstraksi),
                 'status' => $this->statusBaris(
                     $kunci,
                     $nilaiPemohon,
-                    $nilaiSiak,
                     $nilaiEkstraksi,
                     $ekstraksi[$kunci]['hash'] ?? null,
                 ),
@@ -483,22 +450,6 @@ class RekonsiliasiController extends Controller
             'nik' => $laporan->nik_almarhum,
             'tanggal_kematian' => $laporan->tanggal_kematian?->toDateString(),
             'tempat_kematian' => $laporan->tempat_kematian,
-            default => null,
-        };
-    }
-
-    /**
-     * @param  array<string, string>|null  $siak
-     */
-    private function nilaiSiak(?array $siak, string $kunci): ?string
-    {
-        if ($siak === null) {
-            return null;
-        }
-
-        return match ($kunci) {
-            'nama_almarhum' => $siak['nama_lengkap'] ?? null,
-            'nik' => $siak['nik'] ?? null,
             default => null,
         };
     }
@@ -527,7 +478,6 @@ class RekonsiliasiController extends Controller
     private function statusBaris(
         string $kunci,
         ?string $pemohon,
-        ?string $siak,
         ?string $ekstraksi,
         ?string $hashEkstraksi = null,
     ): string {
@@ -544,9 +494,7 @@ class RekonsiliasiController extends Controller
                 return 'beda';
             }
 
-            $hashSiak = PengindeksNik::hash($siak);
-
-            return $hashSiak === null || hash_equals($hashPemohon, $hashSiak) ? 'cocok' : 'beda';
+            return 'cocok';
         }
 
         if ($ekstraksi === null || trim((string) $ekstraksi) === '') {
@@ -555,13 +503,7 @@ class RekonsiliasiController extends Controller
 
         $normalPemohon = $this->normalisasi($kunci, $pemohon);
 
-        if ($normalPemohon === $this->normalisasi($kunci, $ekstraksi)) {
-            if ($siak === null || $normalPemohon === $this->normalisasi($kunci, $siak)) {
-                return 'cocok';
-            }
-        }
-
-        return 'beda';
+        return $normalPemohon === $this->normalisasi($kunci, $ekstraksi) ? 'cocok' : 'beda';
     }
 
     private function normalisasi(string $kunci, ?string $nilai): string
@@ -593,21 +535,4 @@ class RekonsiliasiController extends Controller
             ->exists();
     }
 
-    /**
-     * @param  array<string, string>|null  $siak
-     */
-    private function tanggalLahirSiak(?array $siak): ?Carbon
-    {
-        $tanggal = $siak['tanggal_lahir'] ?? null;
-
-        if (blank($tanggal)) {
-            return null;
-        }
-
-        try {
-            return Carbon::parse($tanggal);
-        } catch (\Throwable) {
-            return null;
-        }
-    }
 }

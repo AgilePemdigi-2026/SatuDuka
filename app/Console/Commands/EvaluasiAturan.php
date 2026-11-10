@@ -111,13 +111,6 @@ class EvaluasiAturan extends Command
             ];
         }
 
-        $matriksNama = [
-            'PERSIS' => ['PERSIS' => 0, 'BEDA_TIPIS' => 0, 'TIDAK_COCOK' => 0, 'NA' => 0],
-            'BEDA_TIPIS' => ['PERSIS' => 0, 'BEDA_TIPIS' => 0, 'TIDAK_COCOK' => 0, 'NA' => 0],
-            'TIDAK_COCOK' => ['PERSIS' => 0, 'BEDA_TIPIS' => 0, 'TIDAK_COCOK' => 0, 'NA' => 0],
-            'NA' => ['PERSIS' => 0, 'BEDA_TIPIS' => 0, 'TIDAK_COCOK' => 0, 'NA' => 0],
-        ];
-
         $detail = [];
         $sesuaiPersis = 0;
 
@@ -149,15 +142,6 @@ class EvaluasiAturan extends Command
                 $sesuaiPersis++;
             }
 
-            $harapanNama = (string) ($kasusUji['kategori_nama_harapan'] ?? 'NA');
-            $aktualNama = $this->kategoriNamaAktual($kasusUji, $deteksi);
-
-            if (! isset($matriksNama[$harapanNama])) {
-                $harapanNama = 'NA';
-            }
-
-            $matriksNama[$harapanNama][$aktualNama]++;
-
             $detail[] = [
                 'id' => (string) ($kasusUji['id'] ?? ''),
                 'deskripsi' => (string) ($kasusUji['deskripsi'] ?? ''),
@@ -186,7 +170,6 @@ class EvaluasiAturan extends Command
             'sesuai_persis' => $sesuaiPersis,
             'akurasi' => $kasus === [] ? 0.0 : (float) ($sesuaiPersis / count($kasus)),
             'per_kode' => $perKode,
-            'matriks_nama' => $matriksNama,
             'detail' => $detail,
         ];
     }
@@ -345,22 +328,9 @@ class EvaluasiAturan extends Command
                 ]);
             }
 
-            $siak = $kasusUji['siak'] ?? null;
-            $siakTersedia = (bool) ($kasusUji['siak_tersedia'] ?? true);
-
-            $pencariSiak = function (string $nik) use ($siak, $siakTersedia) {
-                if (! $siakTersedia) {
-                    throw new RuntimeException('SIAK tidak tersedia pada kasus uji.');
-                }
-
-                return $siak;
-            };
-
             $mesin = new MesinRekonsiliasi(
                 new LayananValidasiNik,
                 new LayananAturanBerkas,
-                new LayananPencocokNama,
-                $pencariSiak,
             );
 
             $hasil = $mesin->analisis($laporan, false);
@@ -372,31 +342,6 @@ class EvaluasiAturan extends Command
         } finally {
             DB::rollBack();
         }
-    }
-
-    /**
-     * @param  array<string, mixed>  $kasusUji
-     * @param  list<string>  $deteksi
-     */
-    private function kategoriNamaAktual(array $kasusUji, array $deteksi): string
-    {
-        if (in_array(MesinRekonsiliasi::KODE_NAMA_TIDAK_COCOK, $deteksi, true)) {
-            return 'TIDAK_COCOK';
-        }
-
-        if (in_array(MesinRekonsiliasi::KODE_NAMA_BEDA_TIPIS, $deteksi, true)) {
-            return 'BEDA_TIPIS';
-        }
-
-        $siak = $kasusUji['siak'] ?? null;
-
-        if ((bool) ($kasusUji['siak_tersedia'] ?? true)
-            && is_array($siak)
-            && trim((string) ($siak['nama_lengkap'] ?? '')) !== '') {
-            return 'PERSIS';
-        }
-
-        return 'NA';
     }
 
     /**
@@ -477,17 +422,6 @@ class EvaluasiAturan extends Command
                 .' | '.$metrik['negatif_palsu']
                 .' | '.$this->formatRasio($metrik['presisi'])
                 .' | '.$this->formatRasio($metrik['recall'])." |\n";
-        }
-
-        $teks .= "\n";
-
-        $teks .= "## Matriks Kebingungan Kategori Nama\n\n";
-        $teks .= "| Harapan \\ Aktual | PERSIS | BEDA_TIPIS | TIDAK_COCOK | NA |\n";
-        $teks .= "|---|---:|---:|---:|---:|\n";
-
-        foreach ($evaluasi['matriks_nama'] as $harapan => $baris) {
-            $teks .= '| '.$harapan.' | '.$baris['PERSIS'].' | '.$baris['BEDA_TIPIS']
-                .' | '.$baris['TIDAK_COCOK'].' | '.$baris['NA']." |\n";
         }
 
         $teks .= "\n";
@@ -576,12 +510,13 @@ class EvaluasiAturan extends Command
         $teks .= '- Label dibuat dari rancangan kasus uji, bukan dari keputusan petugas Dukcapil. '
             .'Karena itu angka presisi dan recall mengukur kesesuaian implementasi dengan rancangan aturan, '
             ."bukan akurasi di lapangan.\n";
-        $teks .= '- Sebagian kasus memakai data SIAK fiktif yang ditempelkan langsung; pengujian tidak '
-            ."memanggil API SIAK atau AI nyata.\n";
+        $teks .= '- Dataset uji masih memuat metadata dan label historis SIAK yang tidak dipakai mesin; '
+            .'hasil pada label tersebut bukan ukuran akurasi aturan verifikasi saat ini. Pengujian tidak '
+            ."memanggil layanan eksternal.\n";
         $teks .= "- Evaluasi berjalan dalam transaksi yang di-rollback sehingga tidak mengubah data aplikasi.\n";
         $teks .= '- Ambang nama belum diuji pada variasi ejaan, gelar, dan nama tunggal yang luas. '
             ."Hasil 39 pasangan hanya menjadi batas awal, bukan bukti statistik.\n";
-        $teks .= '- Kasus dengan layanan SIAK/AI gagal hanya menguji jalur fallback manual, bukan perilaku '
+        $teks .= '- Kasus kegagalan AI hanya menguji jalur fallback manual, bukan perilaku '
             ."penyedia eksternal yang sebenarnya.\n\n";
 
         $teks .= "## Hal yang Perlu Dikonfirmasi ke Dukcapil\n\n";

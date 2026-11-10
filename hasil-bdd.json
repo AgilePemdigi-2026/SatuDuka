@@ -1,0 +1,548 @@
+{
+    "tests": 65,
+    "skipped": 0,
+    "failed": 0,
+    "pending": 0,
+    "undefined": 0,
+    "time": 45.116,
+    "suites": [
+        {
+            "name": "default",
+            "tests": 65,
+            "skipped": 0,
+            "failed": 0,
+            "pending": 0,
+            "undefined": 0,
+            "time": 45.111,
+            "features": [
+                {
+                    "name": "Login",
+                    "file": "features\\login.feature",
+                    "tests": 13,
+                    "skipped": 0,
+                    "failed": 0,
+                    "pending": 0,
+                    "undefined": 0,
+                    "time": 13.969,
+                    "scenarios": [
+                        {
+                            "name": "Berpindah ke halaman Registrasi dari halaman Masuk",
+                            "time": 0.828,
+                            "status": "passed",
+                            "file": "features\\login.feature",
+                            "line": 18
+                        },
+                        {
+                            "name": "Berhasil mengatur ulang kata sandi melalui tautan surel",
+                            "time": 1.753,
+                            "status": "passed",
+                            "file": "features\\login.feature",
+                            "line": 34
+                        },
+                        {
+                            "name": "Tersedia kontrol untuk menampilkan kata sandi",
+                            "time": 0.709,
+                            "status": "passed",
+                            "file": "features\\login.feature",
+                            "line": 39
+                        },
+                        {
+                            "name": "Berhasil masuk dengan kredensial Pemohon yang valid",
+                            "time": 0.933,
+                            "status": "passed",
+                            "file": "features\\login.feature",
+                            "line": 46
+                        },
+                        {
+                            "name": "Berhasil masuk dengan kredensial Verifikator yang valid (NIP)",
+                            "time": 0.959,
+                            "status": "passed",
+                            "file": "features\\login.feature",
+                            "line": 53
+                        },
+                        {
+                            "name": "Berhasil masuk dengan kredensial Pejabat yang valid (NIP)",
+                            "time": 0.935,
+                            "status": "passed",
+                            "file": "features\\login.feature",
+                            "line": 60
+                        },
+                        {
+                            "name": "Berhasil masuk dengan opsi Ingat Saya",
+                            "time": 0.92,
+                            "status": "passed",
+                            "file": "features\\login.feature",
+                            "line": 68
+                        },
+                        {
+                            "name": "Gagal masuk karena kata sandi salah",
+                            "time": 0.92,
+                            "status": "passed",
+                            "file": "features\\login.feature",
+                            "line": 75
+                        },
+                        {
+                            "name": "Gagal masuk karena NIK/NIP tidak valid",
+                            "time": 0.92,
+                            "status": "passed",
+                            "file": "features\\login.feature",
+                            "line": 82
+                        },
+                        {
+                            "name": "Gagal masuk karena kolom kosong",
+                            "time": 0.712,
+                            "status": "passed",
+                            "file": "features\\login.feature",
+                            "line": 90
+                        },
+                        {
+                            "name": "Gagal masuk karena NIK/NIP kosong",
+                            "time": 0.708,
+                            "status": "passed",
+                            "file": "features\\login.feature",
+                            "line": 98
+                        },
+                        {
+                            "name": "Akun terkunci setelah terlalu banyak percobaan gagal",
+                            "time": 1.791,
+                            "status": "passed",
+                            "file": "features\\login.feature",
+                            "line": 104
+                        },
+                        {
+                            "name": "Gagal masuk saat akun terkunci",
+                            "time": 0.705,
+                            "status": "passed",
+                            "file": "features\\login.feature",
+                            "line": 111
+                        }
+                    ]
+                },
+                {
+                    "name": "Pengajuan laporan kematian",
+                    "file": "features\\pengajuan-laporan.feature",
+                    "tests": 5,
+                    "skipped": 0,
+                    "failed": 0,
+                    "pending": 0,
+                    "undefined": 0,
+                    "time": 1.936,
+                    "scenarios": [
+                        {
+                            "name": "Pemohon membuka formulir pengajuan",
+                            "time": 0.277,
+                            "status": "passed",
+                            "file": "features\\pengajuan-laporan.feature",
+                            "line": 12
+                        },
+                        {
+                            "name": "Pemohon mengisi data dan menyimpan draf",
+                            "time": 0.283,
+                            "status": "passed",
+                            "file": "features\\pengajuan-laporan.feature",
+                            "line": 19
+                        },
+                        {
+                            "name": "Pemohon mengirim pengajuan dengan data lengkap",
+                            "time": 0.285,
+                            "status": "passed",
+                            "file": "features\\pengajuan-laporan.feature",
+                            "line": 28
+                        },
+                        {
+                            "name": "Pemohon mengirim pengajuan tanpa bukti kematian",
+                            "time": 0.274,
+                            "status": "passed",
+                            "file": "features\\pengajuan-laporan.feature",
+                            "line": 35
+                        },
+                        {
+                            "name": "Pemohon mencoba mengakses laporan milik orang lain",
+                            "time": 0.489,
+                            "status": "passed",
+                            "file": "features\\pengajuan-laporan.feature",
+                            "line": 41
+                        }
+                    ]
+                },
+                {
+                    "name": "Kelola Profil",
+                    "file": "features\\profil.feature",
+                    "tests": 12,
+                    "skipped": 0,
+                    "failed": 0,
+                    "pending": 0,
+                    "undefined": 0,
+                    "time": 10.915,
+                    "scenarios": [
+                        {
+                            "name": "Menampilkan halaman Kelola Profil",
+                            "time": 0.706,
+                            "status": "passed",
+                            "file": "features\\profil.feature",
+                            "line": 15
+                        },
+                        {
+                            "name": "Berhasil memperbarui data diri",
+                            "time": 0.713,
+                            "status": "passed",
+                            "file": "features\\profil.feature",
+                            "line": 23
+                        },
+                        {
+                            "name": "Format data diri tidak valid",
+                            "time": 0.711,
+                            "status": "passed",
+                            "file": "features\\profil.feature",
+                            "line": 34
+                        },
+                        {
+                            "name": "Email atau nomor telepon sudah dipakai pengguna lain",
+                            "time": 0.928,
+                            "status": "passed",
+                            "file": "features\\profil.feature",
+                            "line": 43
+                        },
+                        {
+                            "name": "Foto profil tidak valid",
+                            "time": 0.732,
+                            "status": "passed",
+                            "file": "features\\profil.feature",
+                            "line": 50
+                        },
+                        {
+                            "name": "Berhasil mengganti foto profil",
+                            "time": 0.72,
+                            "status": "passed",
+                            "file": "features\\profil.feature",
+                            "line": 57
+                        },
+                        {
+                            "name": "Berhasil mengubah kata sandi",
+                            "time": 1.597,
+                            "status": "passed",
+                            "file": "features\\profil.feature",
+                            "line": 67
+                        },
+                        {
+                            "name": "Kata sandi lama tidak sesuai",
+                            "time": 0.927,
+                            "status": "passed",
+                            "file": "features\\profil.feature",
+                            "line": 77
+                        },
+                        {
+                            "name": "Kata sandi baru terlalu lemah",
+                            "time": 0.718,
+                            "status": "passed",
+                            "file": "features\\profil.feature",
+                            "line": 86
+                        },
+                        {
+                            "name": "Konfirmasi kata sandi tidak cocok",
+                            "time": 0.709,
+                            "status": "passed",
+                            "file": "features\\profil.feature",
+                            "line": 96
+                        },
+                        {
+                            "name": "NIK tidak dapat diubah melalui permintaan",
+                            "time": 0.704,
+                            "status": "passed",
+                            "file": "features\\profil.feature",
+                            "line": 101
+                        },
+                        {
+                            "name": "Pengguna hanya mengubah profilnya sendiri",
+                            "time": 0.917,
+                            "status": "passed",
+                            "file": "features\\profil.feature",
+                            "line": 108
+                        }
+                    ]
+                },
+                {
+                    "name": "Register",
+                    "file": "features\\register.feature",
+                    "tests": 9,
+                    "skipped": 0,
+                    "failed": 0,
+                    "pending": 0,
+                    "undefined": 0,
+                    "time": 4.012,
+                    "scenarios": [
+                        {
+                            "name": "Berhasil registrasi dengan NIK yang terdapat pada data kependudukan",
+                            "time": 0.932,
+                            "status": "passed",
+                            "file": "features\\register.feature",
+                            "line": 23
+                        },
+                        {
+                            "name": "Berpindah ke halaman Masuk dari halaman Registrasi",
+                            "time": 0.709,
+                            "status": "passed",
+                            "file": "features\\register.feature",
+                            "line": 28
+                        },
+                        {
+                            "name": "Registrasi gagal karena kata sandi lemah",
+                            "time": 0.06,
+                            "status": "passed",
+                            "file": "features\\register.feature",
+                            "line": 37
+                        },
+                        {
+                            "name": "Registrasi gagal karena konfirmasi kata sandi tidak cocok",
+                            "time": 0.059,
+                            "status": "passed",
+                            "file": "features\\register.feature",
+                            "line": 46
+                        },
+                        {
+                            "name": "Registrasi gagal karena format NIK tidak valid",
+                            "time": 0.059,
+                            "status": "passed",
+                            "file": "features\\register.feature",
+                            "line": 55
+                        },
+                        {
+                            "name": "Registrasi gagal karena NIK sudah terdaftar",
+                            "time": 0.276,
+                            "status": "passed",
+                            "file": "features\\register.feature",
+                            "line": 65
+                        },
+                        {
+                            "name": "Berhasil registrasi dengan NIK 16 digit yang tidak ditemukan pada data kependudukan",
+                            "time": 0.929,
+                            "status": "passed",
+                            "file": "features\\register.feature",
+                            "line": 75
+                        },
+                        {
+                            "name": "Registrasi gagal karena surel sudah terdaftar",
+                            "time": 0.287,
+                            "status": "passed",
+                            "file": "features\\register.feature",
+                            "line": 85
+                        },
+                        {
+                            "name": "Registrasi gagal karena kolom kosong",
+                            "time": 0.065,
+                            "status": "passed",
+                            "file": "features\\register.feature",
+                            "line": 94
+                        }
+                    ]
+                },
+                {
+                    "name": "Mengelola status pengajuan",
+                    "file": "features\\status-pengajuan.feature",
+                    "tests": 15,
+                    "skipped": 0,
+                    "failed": 0,
+                    "pending": 0,
+                    "undefined": 0,
+                    "time": 5.567,
+                    "scenarios": [
+                        {
+                            "name": "Melihat daftar pengajuan",
+                            "time": 0.282,
+                            "status": "passed",
+                            "file": "features\\status-pengajuan.feature",
+                            "line": 10
+                        },
+                        {
+                            "name": "Tidak memiliki pengajuan",
+                            "time": 0.272,
+                            "status": "passed",
+                            "file": "features\\status-pengajuan.feature",
+                            "line": 16
+                        },
+                        {
+                            "name": "Melihat pengajuan milik sendiri",
+                            "time": 0.496,
+                            "status": "passed",
+                            "file": "features\\status-pengajuan.feature",
+                            "line": 23
+                        },
+                        {
+                            "name": "Melacak nomor pengajuan valid",
+                            "time": 0.27,
+                            "status": "passed",
+                            "file": "features\\status-pengajuan.feature",
+                            "line": 28
+                        },
+                        {
+                            "name": "Melacak nomor tidak ditemukan",
+                            "time": 0.274,
+                            "status": "passed",
+                            "file": "features\\status-pengajuan.feature",
+                            "line": 33
+                        },
+                        {
+                            "name": "Melacak tanpa mengisi nomor",
+                            "time": 0.275,
+                            "status": "passed",
+                            "file": "features\\status-pengajuan.feature",
+                            "line": 38
+                        },
+                        {
+                            "name": "Melihat detail pengajuan",
+                            "time": 0.284,
+                            "status": "passed",
+                            "file": "features\\status-pengajuan.feature",
+                            "line": 43
+                        },
+                        {
+                            "name": "Melihat timeline pengajuan",
+                            "time": 0.289,
+                            "status": "passed",
+                            "file": "features\\status-pengajuan.feature",
+                            "line": 48
+                        },
+                        {
+                            "name": "Melihat tahapan yang sudah selesai",
+                            "time": 0.28,
+                            "status": "passed",
+                            "file": "features\\status-pengajuan.feature",
+                            "line": 53
+                        },
+                        {
+                            "name": "Melihat tahapan yang sedang berlangsung",
+                            "time": 0.293,
+                            "status": "passed",
+                            "file": "features\\status-pengajuan.feature",
+                            "line": 58
+                        },
+                        {
+                            "name": "Melihat catatan revisi",
+                            "time": 0.281,
+                            "status": "passed",
+                            "file": "features\\status-pengajuan.feature",
+                            "line": 63
+                        },
+                        {
+                            "name": "Melihat alasan penolakan",
+                            "time": 0.282,
+                            "status": "passed",
+                            "file": "features\\status-pengajuan.feature",
+                            "line": 68
+                        },
+                        {
+                            "name": "Mengunduh akta yang sudah diterbitkan",
+                            "time": 0.276,
+                            "status": "passed",
+                            "file": "features\\status-pengajuan.feature",
+                            "line": 73
+                        },
+                        {
+                            "name": "Tidak bisa mengunduh akta sebelum diterbitkan",
+                            "time": 0.293,
+                            "status": "passed",
+                            "file": "features\\status-pengajuan.feature",
+                            "line": 78
+                        },
+                        {
+                            "name": "Menampilkan status terbaru setelah perubahan",
+                            "time": 0.282,
+                            "status": "passed",
+                            "file": "features\\status-pengajuan.feature",
+                            "line": 83
+                        }
+                    ]
+                },
+                {
+                    "name": "Memverifikasi Berkas Pengajuan",
+                    "file": "features\\verifikasi-berkas.feature",
+                    "tests": 11,
+                    "skipped": 0,
+                    "failed": 0,
+                    "pending": 0,
+                    "undefined": 0,
+                    "time": 8.695,
+                    "scenarios": [
+                        {
+                            "name": "Melihat daftar antrean pengajuan",
+                            "time": 0.736,
+                            "status": "passed",
+                            "file": "features\\verifikasi-berkas.feature",
+                            "line": 10
+                        },
+                        {
+                            "name": "Melihat detail pengajuan",
+                            "time": 0.727,
+                            "status": "passed",
+                            "file": "features\\verifikasi-berkas.feature",
+                            "line": 17
+                        },
+                        {
+                            "name": "Menyetujui berkas yang valid",
+                            "time": 0.708,
+                            "status": "passed",
+                            "file": "features\\verifikasi-berkas.feature",
+                            "line": 24
+                        },
+                        {
+                            "name": "Meminta revisi berkas",
+                            "time": 0.706,
+                            "status": "passed",
+                            "file": "features\\verifikasi-berkas.feature",
+                            "line": 31
+                        },
+                        {
+                            "name": "Menandai berkas sebagai anomali",
+                            "time": 0.706,
+                            "status": "passed",
+                            "file": "features\\verifikasi-berkas.feature",
+                            "line": 38
+                        },
+                        {
+                            "name": "Mencegah persetujuan ketika dokumen wajib belum lengkap",
+                            "time": 0.722,
+                            "status": "passed",
+                            "file": "features\\verifikasi-berkas.feature",
+                            "line": 45
+                        },
+                        {
+                            "name": "Mencegah alasan revisi yang kosong",
+                            "time": 0.703,
+                            "status": "passed",
+                            "file": "features\\verifikasi-berkas.feature",
+                            "line": 52
+                        },
+                        {
+                            "name": "Mencegah alasan revisi yang terlalu pendek",
+                            "time": 0.701,
+                            "status": "passed",
+                            "file": "features\\verifikasi-berkas.feature",
+                            "line": 59
+                        },
+                        {
+                            "name": "Mencegah catatan anomali yang kosong",
+                            "time": 0.7,
+                            "status": "passed",
+                            "file": "features\\verifikasi-berkas.feature",
+                            "line": 66
+                        },
+                        {
+                            "name": "Mencegah pengguna non-verifikator membuka halaman verifikasi",
+                            "time": 0.701,
+                            "status": "passed",
+                            "file": "features\\verifikasi-berkas.feature",
+                            "line": 72
+                        },
+                        {
+                            "name": "Mencegah pengguna non-verifikator menyetujui pengajuan",
+                            "time": 0.729,
+                            "status": "passed",
+                            "file": "features\\verifikasi-berkas.feature",
+                            "line": 79
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

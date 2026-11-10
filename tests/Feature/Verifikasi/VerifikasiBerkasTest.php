@@ -35,7 +35,7 @@ function aktifkanDriverOpenAiVerifikasiBerkas(): void
 }
 
 /**
- * Membuat laporan yang berada dalam antrean verifikasi dengan data SIAK valid.
+ * Membuat laporan yang berada dalam antrean verifikasi dengan data uji valid.
  *
  * @param  array<string, mixed>  $timpa
  */
@@ -104,7 +104,6 @@ function catatPerbandinganAiVerifikasiBerkas(LaporanKematian $laporan): Analisis
                     'label' => 'Nama Almarhum',
                     'nilai_pemohon' => 'Suharto Wiryo',
                     'nilai_ekstraksi' => 'Suharto Wiryo',
-                    'nilai_siak' => 'Suharto Wiryo',
                     'status' => 'cocok',
                     'keyakinan' => 0.95,
                     'catatan' => [],
@@ -211,7 +210,7 @@ it('menghitung kelengkapan sesuai aturan wajib konfigurasi', function () {
         ->assertSee('Opsional');
 });
 
-it('mewajibkan alasan override saat menyetujui berkas yang kurang', function () {
+it('menolak persetujuan selama masih ada berkas wajib yang kurang', function () {
     Storage::fake('local');
 
     [$pemohon, $verifikator] = buatAkunDemo();
@@ -229,26 +228,17 @@ it('mewajibkan alasan override saat menyetujui berkas yang kurang', function () 
 
     $this->from(route('verifikasi.show', $laporan))
         ->actingAs($verifikator)
-        ->post(route('verifikasi.setujui', $laporan), ['catatan' => 'Coba setujui'])
+        ->post(route('verifikasi.setujui', $laporan), [
+            'catatan' => 'Coba setujui',
+            'alasan_override' => 'Sudah dikonfirmasi langsung ke pemohon.',
+        ])
         ->assertRedirect(route('verifikasi.show', $laporan))
-        ->assertSessionHasErrors('alasan_override');
+        ->assertSessionHasErrors('dokumen');
 
     expect($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
         ->and(HasilVerifikasi::where('id_laporan', $laporan->id_laporan)->count())->toBe(0)
         ->and($kurang)->toBe(BerkasPendukung::JENIS_KTP_PELAPOR);
 
-    $this->actingAs($verifikator)
-        ->post(route('verifikasi.setujui', $laporan), [
-            'catatan' => 'Berkas kurang, tetapi verifikator memilih menyetujui.',
-            'alasan_override' => 'Sudah dikonfirmasi langsung ke pemohon.',
-        ])
-        ->assertRedirect(route('verifikasi.index'));
-
-    $hasil = HasilVerifikasi::where('id_laporan', $laporan->id_laporan)->firstOrFail();
-
-    expect($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE)
-        ->and($hasil->alasan_override)->toBe('Sudah dikonfirmasi langsung ke pemohon.')
-        ->and($hasil->deteksi_otomatis['anomali'])->not->toBeEmpty();
 });
 
 it('meminta revisi dengan catatan dan menyimpan hasil verifikasi', function () {
@@ -293,7 +283,7 @@ it('menandai anomali dan menyimpan hasil verifikasi', function () {
     $this->actingAs($verifikator)
         ->post(route('verifikasi.anomali', $laporan), [
             'jenis_anomali' => AnomaliDokumen::JENIS_PERBEDAAN_IDENTITAS,
-            'deskripsi' => 'NIK pada dokumen berbeda dengan data SIAK.',
+            'deskripsi' => 'NIK pada dokumen berbeda dengan isian pemohon.',
             'alasan_override' => 'Verifikator menilai perlu rekonsiliasi.',
         ])
         ->assertRedirect(route('verifikasi.index'))
@@ -307,12 +297,12 @@ it('menandai anomali dan menyimpan hasil verifikasi', function () {
 
     expect($hasil->id_pengguna)->toBe($verifikator->id_pengguna)
         ->and($hasil->status_verifikasi)->toBe(HasilVerifikasi::STATUS_ANOMALI)
-        ->and($hasil->catatan)->toBe('NIK pada dokumen berbeda dengan data SIAK.');
+        ->and($hasil->catatan)->toBe('NIK pada dokumen berbeda dengan isian pemohon.');
 
     $anomali = AnomaliDokumen::where('id_verifikasi', $hasil->id_verifikasi)->firstOrFail();
 
     expect($anomali->jenis_anomali)->toBe(AnomaliDokumen::JENIS_PERBEDAAN_IDENTITAS)
-        ->and($anomali->deskripsi)->toBe('NIK pada dokumen berbeda dengan data SIAK.')
+        ->and($anomali->deskripsi)->toBe('NIK pada dokumen berbeda dengan isian pemohon.')
         ->and($anomali->status_rekonsiliasi)->toBe(AnomaliDokumen::STATUS_TERBUKA);
 
     expect(LogAudit::where('aksi', 'menandai_anomali_berkas')->count())->toBe(1);
@@ -1027,6 +1017,7 @@ it('mengurutkan antrean menurut tanggal saat keparahan sama dan keparahan mengal
         'nik_almarhum' => '3471031203559001',
         'nama_almarhum' => 'Suharto Wiryo',
         'jenis_kelamin' => 'L',
+        'tanggal_kematian' => now()->subDays(5),
         'tanggal_pengajuan' => now()->subDays(3),
     ]);
     lengkapiBerkasVerifikasiBerkas($bersihLama);
@@ -1036,6 +1027,7 @@ it('mengurutkan antrean menurut tanggal saat keparahan sama dan keparahan mengal
         'nik_almarhum' => '3471105701829028',
         'nama_almarhum' => 'Retno Palupi',
         'jenis_kelamin' => 'P',
+        'tanggal_kematian' => now()->subDays(5),
         'tanggal_pengajuan' => now()->subDays(2),
     ]);
     lengkapiBerkasVerifikasiBerkas($bersihBaru);
@@ -1043,12 +1035,10 @@ it('mengurutkan antrean menurut tanggal saat keparahan sama dan keparahan mengal
     $fatalTerbaru = buatLaporanAntreanVerifikasi($pemohon, [
         'no_pengajuan' => 'SD-20261028-0003',
         'nik_almarhum' => '3471136204709016',
-        'nama_almarhum' => 'dr. Retno Wulandari',
+        'nama_almarhum' => 'Retno Wulandari',
         'jenis_kelamin' => 'P',
         'tanggal_pengajuan' => now(),
     ]);
-    lengkapiBerkasVerifikasiBerkas($fatalTerbaru);
-
     $respons = $this->actingAs($verifikator)
         ->get(route('verifikasi.index'))
         ->assertOk();

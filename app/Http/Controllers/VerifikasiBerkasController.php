@@ -404,6 +404,17 @@ class VerifikasiBerkasController extends Controller
 
             $this->pastikanBisaDiverifikasi($laporanTerkunci);
 
+            if ($tindakan === self::TINDAKAN_SETUJUI) {
+                $dokumenKurang = $this->kelengkapanDokumen($laporanTerkunci)['kurang'];
+
+                if ($dokumenKurang !== []) {
+                    throw ValidationException::withMessages([
+                        'dokumen' => 'Persetujuan ditolak karena berkas wajib belum lengkap: '
+                            .implode(', ', $dokumenKurang).'.',
+                    ]);
+                }
+            }
+
             $analisis = $this->mesin->analisis($laporanTerkunci, false);
             $disarankan = $this->mesin->tindakanDisarankan($analisis);
             $alasanOverride = trim((string) ($data['alasan_override'] ?? ''));

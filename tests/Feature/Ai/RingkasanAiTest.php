@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
- * Laporan menunggu verifikasi dengan data almarhum dari data dummy SIAK.
+ * Laporan menunggu verifikasi dengan data almarhum untuk diringkas.
  *
  * @param  array<string, mixed>  $timpa
  */
@@ -52,7 +52,7 @@ function lampirkanSuratRingkasan(LaporanKematian $laporan, string $namaFile = 's
 }
 
 /**
- * Menyusun struktur hasil perbandingan lengkap dengan nilai NIK asli.
+ * Menyusun struktur hasil perbandingan antara isian dan ekstraksi.
  *
  * @param  array<string, string>  $status
  * @return array<string, mixed>
@@ -70,22 +70,18 @@ function susunPerbandinganRingkasan(array $status = []): array
         'nama_almarhum' => [
             'pemohon' => 'Suharto Wiryo',
             'ekstraksi' => 'Suharto Wiryo',
-            'siak' => 'Suharto Wiryo',
         ],
         'nik' => [
             'pemohon' => '3471031203559001',
             'ekstraksi' => '3471031203559001',
-            'siak' => '3471031203559001',
         ],
         'tanggal_kematian' => [
             'pemohon' => '2026-10-01',
             'ekstraksi' => '2026-10-01',
-            'siak' => null,
         ],
         'tempat_kematian' => [
             'pemohon' => 'RSUD Kota Yogyakarta',
             'ekstraksi' => 'RSUD Kota Yogyakarta',
-            'siak' => null,
         ],
     ];
 
@@ -104,7 +100,6 @@ function susunPerbandinganRingkasan(array $status = []): array
             'label' => $label[$kunci],
             'nilai_pemohon' => $nilai[$kunci]['pemohon'],
             'nilai_ekstraksi' => $nilai[$kunci]['ekstraksi'],
-            'nilai_siak' => $nilai[$kunci]['siak'],
             'status' => $nilaiStatus,
             'catatan' => [],
             'keyakinan' => 0.9,
@@ -160,7 +155,7 @@ function aktifkanDriverOpenAiRingkasan(): void
  */
 function responRingkasanOpenAi(
     string $ringkasan = 'Ditemukan perbedaan pada NIK yang perlu diperiksa.',
-    array $saran = ['Cocokkan NIK pada dokumen asli dengan data SIAK.'],
+    array $saran = ['Periksa kembali NIK pada dokumen asli.'],
 ) {
     return Http::response([
         'output' => [[

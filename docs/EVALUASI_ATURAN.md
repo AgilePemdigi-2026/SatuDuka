@@ -2,6 +2,11 @@
 
 Dokumen ini dihasilkan oleh `php artisan aturan:evaluasi` pada 31 Oktober 2026 08:42 WIB.
 
+> Laporan historis ini dibuat sebelum pencocokan SIAK dihapus. Aturan dan metrik yang memuat
+> `SIAK_*`, `NIK_TIDAK_DITEMUKAN`, `JENIS_KELAMIN_TIDAK_COCOK`, `NAMA_BEDA_TIPIS`, atau
+> `ALAMAT_DI_LUAR_WILAYAH` tidak berlaku pada alur verifikasi saat ini. Jangan gunakan angka lama
+> sebagai ukuran akurasi mesin sekarang.
+
 Label berasal dari rancangan kasus uji, sehingga evaluasi ini menguji kebenaran implementasi aturan, BUKAN akurasi terhadap data kependudukan nyata.
 
 ## Ringkasan

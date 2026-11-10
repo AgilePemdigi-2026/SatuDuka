@@ -35,7 +35,7 @@
             <x-ui.alert variant="warning">
                 <p class="font-semibold">Layanan eksternal tidak tersedia</p>
                 <p class="mt-1 font-normal">
-                    Data SIAK atau hasil ekstraksi surat keterangan tidak dapat dimuat. Kolom terkait ditandai
+                    Hasil ekstraksi surat keterangan tidak dapat dimuat. Kolom terkait ditandai
                     "tidak tersedia"; rekonsiliasi tetap dapat dilanjutkan secara manual.
                 </p>
             </x-ui.alert>
@@ -43,8 +43,8 @@
 
         <x-ui.card title="Komparasi Data">
             <p class="text-sm text-muted">
-                Bandingkan isian pemohon, data master SIAK, dan hasil ekstraksi surat keterangan. Data acuan yang
-                sah ditentukan oleh verifikator berdasarkan bukti otentik.
+                Tinjau isian pemohon dan hasil ekstraksi surat keterangan. Keputusan dan koreksi data ditentukan
+                oleh verifikator berdasarkan bukti otentik.
             </p>
 
             <div class="mt-4 overflow-x-auto">
@@ -53,7 +53,6 @@
                         <tr class="border-b border-line text-xs uppercase tracking-wide text-muted">
                             <th class="py-2 pr-3">Kolom</th>
                             <th class="px-3 py-2">Data Pemohon</th>
-                            <th class="px-3 py-2">Data SIAK</th>
                             <th class="px-3 py-2">Ekstraksi Surat Keterangan</th>
                             <th class="pl-3 py-2">Status</th>
                         </tr>
@@ -63,13 +62,6 @@
                             <tr class="border-b border-line last:border-0 align-top">
                                 <td class="py-3 pr-3 font-semibold text-ink">{{ $baris['label'] }}</td>
                                 <td class="px-3 py-3 text-ink">{{ $baris['nilai_pemohon'] ?: '—' }}</td>
-                                <td class="px-3 py-3">
-                                    @if ($siakTersedia)
-                                        <span class="text-ink">{{ $baris['nilai_siak'] ?: '—' }}</span>
-                                    @else
-                                        <span class="text-muted italic">Tidak tersedia</span>
-                                    @endif
-                                </td>
                                 <td class="px-3 py-3">
                                     @if ($ekstraksiTersedia)
                                         <span class="text-ink">{{ $baris['nilai_ekstraksi'] ?: '—' }}</span>
@@ -240,6 +232,5 @@
         </x-ui.card>
     </div>
 @endsection
-
 
 
