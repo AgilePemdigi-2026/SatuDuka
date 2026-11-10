@@ -1,0 +1,38 @@
+
+services:
+  satuduka:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    restart: unless-stopped
+
+    environment:
+      APP_NAME: SatuDuka
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY:?}
+      APP_URL: ${APP_URL:?}
+
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /var/www/html/storage/app/satuduka.sqlite
+
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: sync
+      LOG_CHANNEL: stderr
+
+    volumes:
+      - satuduka_data:/var/www/html/storage/app
+
+    expose:
+      - "80"
+
+    command: >
+      sh -c "touch /var/www/html/storage/app/satuduka.sqlite &&
+             chown -R www-data:www-data /var/www/html/storage/app &&
+             php artisan migrate --force &&
+             exec apache2-foreground"
+
+volumes:
+  satuduka_data:
