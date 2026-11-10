@@ -17,6 +17,7 @@ services:
 
       DB_CONNECTION: sqlite
       DB_DATABASE: /var/www/html/storage/app/satuduka.sqlite
+      DB_SQLITE_DATABASE: /var/www/html/storage/app/satuduka.sqlite
 
       SESSION_DRIVER: database
       CACHE_STORE: database
