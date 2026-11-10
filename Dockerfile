@@ -16,7 +16,7 @@ FROM php:8.3-apache
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git unzip libpq-dev libzip-dev libicu-dev \
     libonig-dev libpng-dev libjpeg62-turbo-dev \
-    libfreetype6-dev \
+    libfreetype6-dev libsqlite3-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
        pdo_pgsql pdo_sqlite mbstring zip intl bcmath gd \
