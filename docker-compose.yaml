@@ -14,6 +14,7 @@ services:
       APP_KEY: ${APP_KEY:?}
       SATUDUKA_NIK_HASH_KEY: ${SATUDUKA_NIK_HASH_KEY:?}
       APP_URL: ${APP_URL:?}
+      ASSET_URL: ${APP_URL:?}
 
       DB_CONNECTION: sqlite
       DB_DATABASE: /var/www/html/storage/app/satuduka.sqlite
