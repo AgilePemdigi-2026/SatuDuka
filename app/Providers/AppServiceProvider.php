@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\View as Tampilan;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -76,6 +77,9 @@ class AppServiceProvider extends ServiceProvider
                 .'DINONAKTIFKAN. Nyalakan SATUDUKA_IZINKAN_MOCK_DEMO=true hanya '
                 .'untuk demo terkontrol.'
             );
+        }
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
         }
 
         View::composer('verifikasi.show', function (Tampilan $view): void {
