@@ -9,7 +9,12 @@
 @endsection
 
 @section('aksi_header')
-    <a href="{{ route('laporan.baru') }}" class="btn btn-brand btn-sm">Ajukan Laporan Baru</a>
+    <a href="{{ route('laporan.baru') }}"
+        class="btn btn-brand"
+        style="flex-shrink: 0; white-space: nowrap; min-height: 44px; padding: 10px 20px; font-size: 13px; border-radius: 12px; box-shadow: 0 4px 12px rgba(30, 58, 95, .12);">
+        <span aria-hidden="true" style="font-size: 19px; line-height: 1; font-weight: 500;">+</span>
+        <span>Ajukan Laporan Baru</span>
+    </a>
 @endsection
 
 @section('konten')
