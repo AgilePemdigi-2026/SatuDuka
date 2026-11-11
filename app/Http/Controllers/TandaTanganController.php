@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\DokumenResmi;
@@ -70,10 +69,14 @@ class TandaTanganController extends Controller
     ];
 
     public function __construct(
-        private readonly TTEService $tte,
         private readonly LayananDokumenResmi $dokumenResmi,
         private readonly LayananTandaTanganVisual $tandaTanganVisual,
     ) {}
+
+    private function layananTte(): TTEService
+    {
+        return app(TTEService::class);
+    }
 
     /**
      * Daftar dokumen beserta statistik, pencarian, dan filter status.
@@ -82,44 +85,35 @@ class TandaTanganController extends Controller
     {
         $status = trim((string) $request->query('status', ''));
         $status = in_array($status, self::STATUS_DOKUMEN_TAMPIL, true) ? $status : '';
-
         $cari = trim((string) $request->query('cari', ''));
-
         $query = DokumenResmi::query()
             ->with(['laporanKematian.pemohon', 'pejabat'])
             ->whereIn('status_ttd', self::STATUS_DOKUMEN_TAMPIL);
-
         if ($status !== '') {
             $query->where('status_ttd', $status);
         }
-
         if ($cari !== '') {
             $pola = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_strtolower($cari)).'%';
             $hashNik = PengindeksNik::hash($cari);
-
             $query->whereHas('laporanKematian', function ($subquery) use ($pola, $hashNik): void {
                 $subquery
                     ->whereRaw('LOWER(no_pengajuan) LIKE ? ESCAPE ?', [$pola, '\\'])
                     ->orWhereRaw('LOWER(nama_almarhum) LIKE ? ESCAPE ?', [$pola, '\\']);
-
                 if ($hashNik !== null) {
                     $subquery->orWhere('nik_almarhum_hash', $hashNik);
                 }
             });
         }
-
         $daftar = $query
             ->orderByDesc('dibuat_pada')
             ->orderByDesc('id_dokumen')
             ->paginate(10)
             ->withQueryString();
-
         $statistik = [
             'menunggu' => DokumenResmi::query()->where('status_ttd', DokumenResmi::STATUS_MENUNGGU)->count(),
             'selesai' => DokumenResmi::query()->where('status_ttd', DokumenResmi::STATUS_SELESAI)->count(),
             'dikembalikan' => DokumenResmi::query()->where('status_ttd', DokumenResmi::STATUS_DIKEMBALIKAN)->count(),
         ];
-
         return view('tanda_tangan.index', [
             'daftar' => $daftar,
             'statistik' => $statistik,
@@ -134,16 +128,12 @@ class TandaTanganController extends Controller
     public function show(LaporanKematian $laporan): Response
     {
         $dokumen = $this->dokumenUntukTampil($laporan);
-
         $laporan->loadMissing('pemohon');
-
         $berkas = (string) ($dokumen->file_dokumen ?? '');
         $berkasAda = $berkas !== '' && Storage::disk(LayananDokumenResmi::DISK)->exists($berkas);
-
         $galat = session('errors');
         $bukaModal = $galat instanceof MessageBag
             && ($galat->has('pin') || $galat->has('tanda_tangan'));
-
         return response()
             ->view('tanda_tangan.show', [
                 'laporan' => $laporan,
@@ -165,16 +155,23 @@ class TandaTanganController extends Controller
      */
     public function tandatangani(Request $request, LaporanKematian $laporan): RedirectResponse
     {
+        if (
+            app()->environment('production')
+            && config('satuduka.tte_driver', 'mock') === 'mock'
+        ) {
+            return back()->withErrors([
+                'tanda_tangan' => 'Tanda tangan elektronik belum tersedia di server produksi. Hubungi administrator untuk mengaktifkan penyedia TTE resmi.',
+            ]);
+        }
+
         $pengguna = $request->user();
         $kunci = $this->kunciTte($pengguna);
-
         $data = $request->validate([
             'pin' => ['required', 'digits:6'],
         ], [
             'pin.required' => 'PIN/OTP wajib diisi.',
             'pin.digits' => 'PIN/OTP harus 6 digit angka.',
         ]);
-
         // Penguncian diperiksa SEBELUM PIN divalidasi ke layanan TTE.
         if (LayananPenguncian::terkunci($kunci)) {
             LayananAudit::catat(
@@ -186,20 +183,16 @@ class TandaTanganController extends Controller
                 layananEksternal: LogAudit::LAYANAN_TTE,
                 hasil: LogAudit::HASIL_GAGAL,
             );
-
             return back()->with('galat', self::PESAN_TERKUNCI);
         }
-
         // Validasi tanda tangan visual sebelum PIN diverifikasi: kegagalan di
         // sini TIDAK menambah hitungan PIN salah.
         $tandaTangan = $this->tandaTanganVisual->periksa($request->input('tanda_tangan'));
-
         if (! $tandaTangan['berhasil']) {
             return back()->withErrors(['tanda_tangan' => (string) $tandaTangan['pesan']]);
         }
-
         try {
-            $sah = $this->tte->verifikasiKredensial($pengguna, $data['pin']);
+            $sah = $this->layananTte()->verifikasiKredensial($pengguna, $data['pin']);
         } catch (TteTidakTersedia) {
             LayananAudit::catat(
                 aksi: 'memeriksa_layanan_eksternal',
@@ -210,17 +203,14 @@ class TandaTanganController extends Controller
                 layananEksternal: LogAudit::LAYANAN_TTE,
                 hasil: LogAudit::HASIL_GAGAL,
             );
-
             return back()->with('galat', self::PESAN_LAYANAN_GAGAL);
         }
-
         if (! $sah) {
             $percobaan = LayananPenguncian::catatGagalDanKunciBilaPerlu(
                 kunci: $kunci,
                 maksGagal: LayananPenguncian::MAKS_GAGAL_TTE,
                 pengguna: $pengguna,
             );
-
             // Detail audit hanya berisi nomor percobaan, tanpa kredensial.
             LayananAudit::catat(
                 aksi: 'gagal_verifikasi_tte',
@@ -231,24 +221,20 @@ class TandaTanganController extends Controller
                 layananEksternal: LogAudit::LAYANAN_TTE,
                 hasil: LogAudit::HASIL_GAGAL,
             );
-
             return back()->with(
                 'galat',
                 LayananPenguncian::terkunci($kunci) ? self::PESAN_TERKUNCI : self::PESAN_KREDENSIAL_SALAH,
             );
         }
-
         DB::transaction(function () use ($request, $laporan, $tandaTangan): void {
             $laporanTerkunci = LaporanKematian::query()
                 ->whereKey($laporan->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
-
             $dokumen = DokumenResmi::query()
                 ->where('id_laporan', $laporanTerkunci->id_laporan)
                 ->lockForUpdate()
                 ->first();
-
             abort_unless(
                 $laporanTerkunci->status_pengajuan === LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE
                     && $dokumen !== null
@@ -256,7 +242,6 @@ class TandaTanganController extends Controller
                 409,
                 'Dokumen ini sudah tidak menunggu tanda tangan.',
             );
-
             $dokumen->update([
                 'status_ttd' => DokumenResmi::STATUS_SELESAI,
                 'id_pengguna' => $request->user()->id_pengguna,
@@ -265,18 +250,16 @@ class TandaTanganController extends Controller
                 'tanda_tangan_visual' => $tandaTangan['base64'],
                 'tanda_tangan_hash' => $tandaTangan['hash'],
             ]);
-
             $laporanTerkunci->update([
                 'status_pengajuan' => LaporanKematian::STATUS_SELESAI,
             ]);
-
             LayananAudit::catat(
                 aksi: 'menandatangani_dokumen',
                 objek: 'dokumen_resmi',
                 idObjek: $dokumen->id_dokumen,
                 detail: [
                     'no_pengajuan' => $laporanTerkunci->no_pengajuan,
-                    'penyedia' => $this->tte->namaPenyedia(),
+                    'penyedia' => $this->layananTte()->namaPenyedia(),
                     'tanda_tangan_visual' => true,
                     'tanda_tangan_hash' => $tandaTangan['hash'],
                 ],
@@ -285,28 +268,22 @@ class TandaTanganController extends Controller
                 hasil: LogAudit::HASIL_SUKSES,
             );
         });
-
         // Kredensial benar: hitungan kegagalan direset.
         LayananPenguncian::buka($kunci);
-
         // Berkas PDF diterbitkan setelah status tersimpan; kegagalan render
         // tidak membatalkan penandatanganan dan dapat dipulihkan kemudian.
         $dokumen = DokumenResmi::query()
             ->where('id_laporan', $laporan->id_laporan)
             ->first();
-
         $berkasSiap = $dokumen !== null && $this->dokumenResmi->terbitkan($dokumen);
-
         $pengalihan = redirect()
             ->route('tanda_tangan.index')
             ->with('sukses', $berkasSiap
                 ? 'Dokumen berhasil ditandatangani secara elektronik.'
                 : 'Dokumen berhasil ditandatangani. Berkas PDF sedang disiapkan dan dapat diterbitkan ulang.');
-
         if (! $berkasSiap) {
             $pengalihan->with('galat', 'Dokumen resmi sedang disiapkan.');
         }
-
         return $pengalihan;
     }
 
@@ -323,34 +300,27 @@ class TandaTanganController extends Controller
                 ->whereKey($laporan->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
-
             abort_unless(
                 $laporanTerkunci->status_pengajuan === LaporanKematian::STATUS_SELESAI,
                 409,
                 'Dokumen belum ditandatangani.',
             );
-
             $dokumen = DokumenResmi::query()
                 ->where('id_laporan', $laporanTerkunci->id_laporan)
                 ->lockForUpdate()
                 ->first();
-
             abort_unless(
                 $dokumen !== null && $dokumen->status_ttd === DokumenResmi::STATUS_SELESAI,
                 409,
                 'Dokumen belum ditandatangani.',
             );
-
             return $dokumen;
         });
-
         // Bersihkan rujukan berkas yang hilang dari disk sebelum menerbitkan.
         $this->dokumenResmi->bersihkanBerkasHilang($dokumen);
-
         if ($this->dokumenResmi->terbitkan($dokumen)) {
             return back()->with('sukses', 'Berkas dokumen resmi berhasil disiapkan.');
         }
-
         return back()->with('galat', 'Berkas dokumen gagal dibuat. Coba lagi atau gunakan perintah dokumen:terbitkan.');
     }
 
@@ -360,7 +330,6 @@ class TandaTanganController extends Controller
     public function unduh(Request $request, LaporanKematian $laporan): RedirectResponse|StreamedResponse
     {
         $dokumen = $laporan->dokumenResmi;
-
         abort_unless(
             $dokumen !== null
                 && $laporan->status_pengajuan === LaporanKematian::STATUS_SELESAI
@@ -368,13 +337,10 @@ class TandaTanganController extends Controller
             403,
             'Dokumen belum dapat diunduh.',
         );
-
         $jalur = (string) ($dokumen->file_dokumen ?? '');
-
         if ($jalur === '' || ! Storage::disk(LayananDokumenResmi::DISK)->exists($jalur)) {
             return back()->with('galat', 'Dokumen resmi sedang disiapkan.');
         }
-
         LayananAudit::catat(
             aksi: 'mengunduh_dokumen',
             objek: 'dokumen_resmi',
@@ -383,9 +349,7 @@ class TandaTanganController extends Controller
             pengguna: $request->user(),
             hasil: LogAudit::HASIL_SUKSES,
         );
-
         $namaBerkas = $this->namaBerkasUnduhan($dokumen);
-
         return Storage::disk(LayananDokumenResmi::DISK)->download($jalur, $namaBerkas, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="'.$namaBerkas.'"',
@@ -405,18 +369,15 @@ class TandaTanganController extends Controller
             'alasan.required' => 'Alasan pengembalian wajib diisi.',
             'alasan.min' => 'Alasan pengembalian minimal 5 karakter.',
         ]);
-
         DB::transaction(function () use ($request, $laporan, $data): void {
             $laporanTerkunci = LaporanKematian::query()
                 ->whereKey($laporan->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
-
             $dokumen = DokumenResmi::query()
                 ->where('id_laporan', $laporanTerkunci->id_laporan)
                 ->lockForUpdate()
                 ->first();
-
             abort_unless(
                 $laporanTerkunci->status_pengajuan === LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE
                     && $dokumen !== null
@@ -424,19 +385,15 @@ class TandaTanganController extends Controller
                 409,
                 'Dokumen ini sudah tidak menunggu tanda tangan.',
             );
-
             $alasan = trim((string) $data['alasan']);
-
             $dokumen->update([
                 'status_ttd' => DokumenResmi::STATUS_DIKEMBALIKAN,
                 'alasan_pengembalian' => $alasan,
             ]);
-
             $laporanTerkunci->update([
                 'status_pengajuan' => LaporanKematian::STATUS_DIKEMBALIKAN,
                 'catatan_revisi' => $alasan,
             ]);
-
             LayananAudit::catat(
                 aksi: 'mengembalikan_dokumen',
                 objek: 'dokumen_resmi',
@@ -450,7 +407,6 @@ class TandaTanganController extends Controller
                 hasil: LogAudit::HASIL_SUKSES,
             );
         });
-
         return redirect()
             ->route('tanda_tangan.index')
             ->with('sukses', 'Dokumen dikembalikan untuk perbaikan.');
@@ -462,14 +418,12 @@ class TandaTanganController extends Controller
     private function dokumenUntukTampil(LaporanKematian $laporan): DokumenResmi
     {
         $dokumen = $laporan->dokumenResmi;
-
         abort_unless(
             $dokumen !== null
                 && in_array($laporan->status_pengajuan, self::STATUS_LAPORAN_TAMPIL, true)
                 && in_array($dokumen->status_ttd, self::STATUS_DOKUMEN_TAMPIL, true),
             404,
         );
-
         return $dokumen;
     }
 
@@ -487,7 +441,6 @@ class TandaTanganController extends Controller
     private function namaBerkasUnduhan(DokumenResmi $dokumen): string
     {
         $nomor = preg_replace('/[^A-Za-z0-9\-_]/', '', (string) ($dokumen->no_dokumen ?? '')) ?? '';
-
         return ($nomor === '' ? 'dokumen-resmi' : 'Akta_Kematian_'.$nomor).'.pdf';
     }
 }
