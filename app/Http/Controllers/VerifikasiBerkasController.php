@@ -7,7 +7,6 @@ use App\Models\BerkasPendukung;
 use App\Models\HasilVerifikasi;
 use App\Models\LaporanKematian;
 use App\Services\LayananAudit;
-use App\Support\DataSIAK;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -80,9 +79,9 @@ class VerifikasiBerkasController extends Controller
         return view('verifikasi.index', compact('pengajuan', 'ringkasan', 'statusFilter'));
     }
 
-    /**
-     * Detail berkas dan pencocokan data SIAK.
-     */
+/**
+ * Menampilkan detail berkas untuk diperiksa verifikator.
+ */
     public function show(LaporanKematian $laporan): View
     {
         abort_unless(
@@ -96,29 +95,14 @@ class VerifikasiBerkasController extends Controller
             'hasilVerifikasi.verifikator',
         ]);
 
-        $dataSIAK = DataSIAK::cariNik($laporan->nik_almarhum);
         $dokumenWajib = BerkasPendukung::DAFTAR_JENIS;
-        
-        // Gunakan helper method dokumenKurang() agar konsisten
-        $dokumenKurang = $this->dokumenKurang($laporan);
-
-        $hasilPencocokan = [
-            'ditemukan_di_siak' => $dataSIAK !== null,
-            'nik_sesuai' => $dataSIAK !== null
-                && ($dataSIAK['nik'] ?? null) === $laporan->nik_almarhum,
-            'nama_sesuai' => $dataSIAK !== null
-                && mb_strtolower(trim($dataSIAK['nama_lengkap'] ?? ''))
-                    === mb_strtolower(trim($laporan->nama_almarhum)),
-            'dokumen_kurang' => $dokumenKurang,
-        ];
 
         return view('verifikasi.show', compact(
             'laporan',
-            'dataSIAK',
-            'hasilPencocokan',
             'dokumenWajib'
         ));
     }
+
 
     /**
      * Menyetujui pengajuan yang lolos pemeriksaan.
@@ -144,23 +128,6 @@ class VerifikasiBerkasController extends Controller
                 ->withInput();
         }
 
-        $dataSIAK = DataSIAK::cariNik($laporan->nik_almarhum);
-
-        if ($dataSIAK === null) {
-            return back()->withErrors([
-                'siak' => 'Data SIAK tidak ditemukan. Lakukan pemeriksaan manual sebelum mengambil keputusan.',
-            ])->withInput();
-        }
-
-        $nikSesuai = ($dataSIAK['nik'] ?? null) === $laporan->nik_almarhum;
-        $namaSesuai = mb_strtolower(trim($dataSIAK['nama_lengkap'] ?? ''))
-            === mb_strtolower(trim($laporan->nama_almarhum));
-
-        if (! $nikSesuai || ! $namaSesuai) {
-            return back()->withErrors([
-                'siak' => 'Data identitas tidak cocok. Tandai sebagai anomali atau lakukan pemeriksaan sesuai prosedur.',
-            ])->withInput();
-        }
 
         DB::transaction(function () use ($request, $laporan, $data) {
             // Kunci record laporan untuk menghindari race condition
@@ -179,7 +146,7 @@ class VerifikasiBerkasController extends Controller
                 'id_laporan' => $laporanTerkunci->id_laporan,
                 'id_pengguna' => $request->user()->id_pengguna,
                 'status_verifikasi' => HasilVerifikasi::STATUS_DITERIMA,
-                'catatan' => $data['catatan'] ?? 'Berkas lengkap dan identitas sesuai.',
+                'catatan' => $data['catatan'] ?? 'Berkas telah diperiksa dan dinyatakan lengkap oleh verifikator.',
                 'tanggal_verifikasi' => now(),
             ]);
 

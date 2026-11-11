@@ -2,7 +2,7 @@
 @extends('tata_letak.verifikator')
 
 @section('judul', 'Detail Verifikasi Berkas')
-@section('subjudul', 'Periksa data pemohon, kelengkapan dokumen, dan kesesuaian SIAK sebelum memutuskan.')
+@section('subjudul', 'Periksa data pemohon dan kelengkapan dokumen sebelum menentukan keputusan verifikasi.')
 @section('tanpa_error_global', '1')
 @section('aksi_header')
     <a href="{{ route('verifikasi.index') }}" class="btn btn-outline btn-sm" style="margin-bottom: 12px;">
@@ -136,37 +136,6 @@
                     </div>
                 @endforeach
             </div>
-        </div>
-    </section>
-
-    <!-- Pencocokan SIAK -->
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">Pencocokan Data SIAK</h2>
-        </div>
-
-        <div class="card-body">
-            @if ($hasilPencocokan['ditemukan_di_siak'])
-                <div class="info-grid">
-                    <div class="match-row">
-                        <span>Kesesuaian NIK</span>
-                        <span class="badge {{ $hasilPencocokan['nik_sesuai'] ? 'badge-ok' : 'badge-bad' }}">
-                            {{ $hasilPencocokan['nik_sesuai'] ? 'Sesuai' : 'Tidak Sesuai' }}
-                        </span>
-                    </div>
-
-                    <div class="match-row">
-                        <span>Kesesuaian Nama</span>
-                        <span class="badge {{ $hasilPencocokan['nama_sesuai'] ? 'badge-ok' : 'badge-bad' }}">
-                            {{ $hasilPencocokan['nama_sesuai'] ? 'Sesuai' : 'Tidak Sesuai' }}
-                        </span>
-                    </div>
-                </div>
-            @else
-                <div class="alert alert-warn">
-                    Data tidak ditemukan pada SIAK dummy. Lakukan pemeriksaan manual.
-                </div>
-            @endif
         </div>
     </section>
 
