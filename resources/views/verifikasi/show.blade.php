@@ -1,12 +1,11 @@
-```blade
 @extends('tata_letak.verifikator')
 
 @section('judul', 'Detail Verifikasi Berkas')
 @section('subjudul', 'Periksa data pemohon, kelengkapan dokumen, dan kesesuaian SIAK sebelum memutuskan.')
 @section('tanpa_error_global', '1')
 @section('aksi_header')
-    <a href="{{ route('verifikasi.index') }}" class="btn btn-outline btn-sm" style="margin-bottom: 12px;">
-        <span aria-hidden="true">←</span> Kembali ke Antrean
+    <a href="{{ route('verifikasi.index') }}" class="btn btn-outline btn-sm">
+        <span aria-hidden="true">←</span> Kembali
     </a>
 @endsection
 
@@ -23,12 +22,6 @@
 
 <div class="stack page-narrow">
 
-    <div class="toolbar">
-        <span class="badge badge-brand" style="padding: 8px 16px;">
-            No. Pengajuan: {{ $laporan->no_pengajuan }}
-        </span>
-    </div>
-
     @if ($errors->any())
         <div role="alert" class="alert alert-err" style="margin: 0;">
             <strong>Periksa kembali pengajuan ini.</strong>
@@ -44,6 +37,9 @@
     <section class="card">
         <div class="card-head">
             <h2 class="card-title">Informasi Pemohon &amp; Almarhum</h2>
+            <span class="badge badge-brand" style="padding: 8px 16px;">
+                No. Pengajuan: {{ $laporan->no_pengajuan }}
+            </span>
         </div>
         <div class="card-body">
             <dl class="info-grid" style="margin: 0;">
@@ -174,14 +170,6 @@
     <section class="card">
         <div class="card-head decision-header">
             <h2 class="card-title">Keputusan Verifikasi</h2>
-            <label for="pilihan-keputusan" class="decision-selector">
-                <span class="field-label">Pilihan Keputusan</span>
-                <select id="pilihan-keputusan" name="keputusan" class="field">
-                    <option value="setujui" @selected(old('keputusan', 'setujui') === 'setujui')>Setujui Berkas</option>
-                    <option value="tolak" @selected(old('keputusan') === 'tolak')>Tolak Berkas</option>
-                    <option value="anomali" @selected(old('keputusan') === 'anomali')>Alihkan ke Rekonsiliasi</option>
-                </select>
-            </label>
         </div>
 
         <div class="card-body">
@@ -195,6 +183,15 @@
                 class="decision-box"
             >
                 @csrf
+
+                <label for="pilihan-keputusan" class="decision-selector">
+                    <span class="field-label">Pilihan Keputusan</span>
+                    <select id="pilihan-keputusan" name="keputusan" class="field">
+                        <option value="setujui" @selected(old('keputusan', 'setujui') === 'setujui')>Setujui Berkas</option>
+                        <option value="tolak" @selected(old('keputusan') === 'tolak')>Tolak Berkas</option>
+                        <option value="anomali" @selected(old('keputusan') === 'anomali')>Alihkan ke Rekonsiliasi</option>
+                    </select>
+                </label>
 
                 <div id="kolom-setujui" data-decision-fields>
                     <h3>Setujui Berkas</h3>
@@ -405,7 +402,7 @@
         color: var(--muted);
         text-align: center;
     }
-    .decision-selector { width: min(250px, 100%); }
+    .decision-selector { display: block; width: min(250px, 100%); }
     .decision-selector .field-label { margin-bottom: 6px; }
     .decision-box > [data-decision-fields] > h3 { font-size: 15px; font-weight: 700; color: var(--ink); }
     .decision-box > [data-decision-fields] > .hint { font-size: 12.5px; color: var(--muted); margin: 4px 0 16px; }
