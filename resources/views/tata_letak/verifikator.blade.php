@@ -52,6 +52,8 @@
         .skd-main { flex: 1; min-width: 0; }
         .skd-container { max-width: 1180px; margin: 0 auto; padding: 36px 44px 56px; }
         .skd-topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 32px; }
+        .skd-topbar-detail { flex-direction: column; align-items: stretch; gap: 20px; }
+        .skd-topbar-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
         .skd-heading { display: flex; flex: 1; min-width: 0; align-items: center; justify-content: space-between; gap: 24px; }
         .skd-heading-copy { min-width: 0; }
         .skd-title { font-size: 28px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; color: var(--ink); }
@@ -71,9 +73,12 @@
 
         .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
         .stat { position: relative; background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 26px 20px 22px; text-align: center; box-shadow: 0 1px 3px rgba(15,23,42,.05); overflow: hidden; }
-        .stat::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--brand); }
-        .stat-label { font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
-        .stat-value { font-size: 40px; font-weight: 800; letter-spacing: -.02em; line-height: 1; color: var(--brand); margin: 14px 0 10px; }
+        .stat::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--stat-color, var(--brand)); }
+        .stat-label { font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--stat-color, var(--muted)); }
+        .stat-value { font-size: 40px; font-weight: 800; letter-spacing: -.02em; line-height: 1; color: var(--stat-color, var(--brand)); margin: 14px 0 10px; }
+        .stat-waiting { --stat-color: #D99A24; background: #FFF8E9; }
+        .stat-anomaly { --stat-color: #D65F52; background: #FFF1EF; }
+        .stat-complete { --stat-color: #31936C; background: #EDF8F2; }
         .stat-note { font-size: 12px; color: var(--faint); }
 
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; font-family: inherit; font-weight: 600; font-size: 14px; padding: 11px 22px; cursor: pointer; border: 1px solid transparent; transition: all .15s ease; }
@@ -171,6 +176,7 @@
 <body>
 <div class="skd-app">
 
+    @unless (auth()->user()->adalahVerifikator())
     <aside class="skd-side">
         <div>
             <div class="skd-brand">
@@ -208,10 +214,25 @@
 
         <p class="skd-foot">&copy; {{ date('Y') }} SKD Indonesia</p>
     </aside>
+    @endunless
 
     <div class="skd-main">
         <main class="skd-container">
 
+            @hasSection('aksi_header')
+            <div class="skd-topbar skd-topbar-detail">
+                <div class="skd-topbar-actions">
+                    @yield('aksi_header')
+                    @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
+                </div>
+                <div class="skd-heading-copy">
+                    <h1 class="skd-title">@yield('judul', 'Verifikasi')</h1>
+                    @hasSection('subjudul')
+                        <p class="skd-sub">@yield('subjudul')</p>
+                    @endif
+                </div>
+            </div>
+            @else
             <div class="skd-topbar">
                 <div class="skd-heading">
                     <div class="skd-heading-copy">
@@ -220,10 +241,10 @@
                             <p class="skd-sub">@yield('subjudul')</p>
                         @endif
                     </div>
-                    @yield('aksi_header')
                 </div>
                 @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
             </div>
+            @endif
 
             @if (session('sukses') || session('success'))
                 <div class="alert alert-ok">{{ session('sukses') ?? session('success') }}</div>

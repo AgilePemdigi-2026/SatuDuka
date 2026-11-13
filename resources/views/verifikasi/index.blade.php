@@ -12,15 +12,15 @@
             <p class="stat-label">Total Permohonan</p>
             <p class="stat-value">{{ $ringkasan['total'] }}</p>
         </div>
-        <div class="stat">
+        <div class="stat stat-waiting">
             <p class="stat-label">Menunggu Verifikasi</p>
             <p class="stat-value">{{ $ringkasan['menunggu'] }}</p>
         </div>
-        <div class="stat">
+        <div class="stat stat-anomaly">
             <p class="stat-label">Anomali Perlu Rekonsiliasi</p>
             <p class="stat-value">{{ $ringkasan['rekonsiliasi'] }}</p>
         </div>
-        <div class="stat">
+        <div class="stat stat-complete">
             <p class="stat-label">Selesai</p>
             <p class="stat-value">{{ $ringkasan['selesai'] }}</p>
         </div>
@@ -96,7 +96,7 @@
                                 <td style="color: var(--muted);">
                                     {{ $item->tanggal_pengajuan ? \Carbon\Carbon::parse($item->tanggal_pengajuan)->format('d/m/Y') : '-' }}
                                 </td>
-                                <td><span class="badge {{ $warnaStatus }}"><span class="badge-dot"></span>{{ $labelStatus }}</span></td>
+                                <td><span class="badge {{ $warnaStatus }}">{{ $labelStatus }}</span></td>
                                 <td class="c">
                                     @if ($item->status_pengajuan === \App\Models\LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
                                         <a href="{{ route('verifikasi.show', $item) }}" class="btn btn-brand btn-sm">Verifikasi</a>
