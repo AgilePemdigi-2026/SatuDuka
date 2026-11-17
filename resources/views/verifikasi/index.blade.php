@@ -68,6 +68,7 @@
                     <thead>
                         <tr>
                             <th style="width: 70px;">No.</th>
+                            <th>No. Pengajuan</th>
                             <th>NIK</th>
                             <th>Nama</th>
                             <th>Tanggal Masuk</th>
@@ -91,6 +92,7 @@
                             @endphp
                             <tr>
                                 <td style="color: var(--faint);">{{ $pengajuan->firstItem() + $index }}.</td>
+                                <td class="num" style="font-weight: 500; color: var(--ink);">{{ $item->no_pengajuan }}</td>
                                 <td class="num" style="font-weight: 500; color: var(--ink);">{{ $item->nik_almarhum }}</td>
                                 <td style="font-weight: 600; color: var(--ink);">{{ $item->nama_almarhum }}</td>
                                 <td style="color: var(--muted);">

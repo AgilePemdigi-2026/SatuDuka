@@ -28,3 +28,56 @@
         @apply bg-canvas text-ink-soft font-sans antialiased;
     }
 }
+
+@layer components {
+    .stat {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #e5eaf1;
+        border-radius: 20px;
+        background: #fff;
+        padding: 26px 20px 22px;
+        text-align: center;
+        box-shadow: 0 1px 3px rgb(15 23 42 / 5%);
+    }
+
+    .stat::before {
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        height: 4px;
+        background: var(--stat-color, #1e3a5f);
+        content: "";
+    }
+
+    .stat-label {
+        color: var(--stat-color, #64748b);
+        font-size: 11.5px;
+        font-weight: 600;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
+
+    .stat-value {
+        margin: 14px 0 0;
+        color: var(--stat-color, #1e3a5f);
+        font-size: 40px;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.02em;
+        line-height: 1;
+    }
+
+    .stat-waiting {
+        --stat-color: #d99a24;
+    }
+
+    .stat-anomaly {
+        --stat-color: #d65f52;
+    }
+
+    .stat-complete {
+        --stat-color: #31936c;
+    }
+}
