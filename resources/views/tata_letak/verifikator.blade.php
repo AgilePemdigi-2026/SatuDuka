@@ -9,7 +9,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-
     <style>
         :root {
             --brand: #1E3A5F;
@@ -21,7 +20,6 @@
             --faint: #94A3B8;
             --bg: #F5F7FB;
         }
-
         *, *::before, *::after { box-sizing: border-box; }
         body { margin: 0; font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif; background: var(--bg); color: #1e293b; -webkit-font-smoothing: antialiased; }
         a { text-decoration: none; }
@@ -50,6 +48,7 @@
         .nav-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .5; flex-shrink: 0; }
         .nav-link.active .nav-dot { opacity: 1; }
         .skd-foot { font-size: 11px; text-align: center; color: var(--faint); padding-top: 18px; border-top: 1px solid var(--line); }
+
         .skd-main { flex: 1; min-width: 0; }
         .skd-container { max-width: 1180px; margin: 0 auto; padding: 36px 44px 56px; }
         .skd-topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 32px; }
@@ -78,7 +77,7 @@
         .stat-label { font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--stat-color, var(--muted)); }
         .stat-value { font-size: 40px; font-weight: 800; letter-spacing: -.02em; line-height: 1; color: var(--stat-color, var(--brand)); margin: 14px 0 10px; }
         .stat-waiting { --stat-color: #D99A24; background: #FFF; }
-        .stat-anomaly { --stat-color: #D65F52; background: #FFF; }
+        .stat-anomaly { --stat-color: #D65F52; background: #FFF }
         .stat-complete { --stat-color: #31936C; background: #FFF; }
         .stat-note { font-size: 12px; color: var(--faint); }
 
@@ -98,15 +97,17 @@
         .field { width: 100%; background: #fff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 11px 14px; font-family: inherit; font-size: 14px; color: var(--ink); outline: none; transition: all .15s ease; }
         .field:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(30,58,95,.12); }
         .decision-header .decision-select {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            padding-right: 42px !important;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364758B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 14px center;
-            background-size: 16px;
-        }
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    padding-right: 42px !important;
+
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364758B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+}
         .field::placeholder { color: var(--faint); }
         textarea.field { resize: vertical; }
         .field-label { display: block; font-size: 12.5px; font-weight: 600; color: #334155; margin-bottom: 6px; }
@@ -125,6 +126,7 @@
         .tbl th:first-child, .tbl td:first-child { padding-left: 28px; }
         .tbl th:last-child, .tbl td:last-child { padding-right: 28px; }
         .num { font-variant-numeric: tabular-nums; }
+
         .badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 5px 13px; font-size: 12px; font-weight: 600; white-space: nowrap; }
         .badge-brand { background: var(--brand-soft); color: var(--brand); }
         .badge-ok { background: #ecfdf5; color: #065f46; }
@@ -137,6 +139,7 @@
         .alert-ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; font-weight: 500; }
         .alert-err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
         .alert-warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-weight: 500; margin: 0; }
+
         .empty { text-align: center; padding: 64px 20px; }
         .empty-ic { width: 52px; height: 52px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 20px; font-weight: 700; }
         .pager { padding: 18px 28px; border-top: 1px solid var(--line); }
@@ -163,14 +166,7 @@
         .decision-box .hint { font-size: 12.5px; color: var(--muted); margin: 4px 0 16px; }
         .form-stack { display: flex; flex-direction: column; gap: 12px; }
 
-        /* Dashboard Pemohon tanpa sidebar. */
-        .skd-app.is-pemohon .skd-topbar { align-items: center; }
-        .skd-app.is-pemohon .skd-heading { flex-wrap: wrap; row-gap: 14px; }
-        .skd-app.is-pemohon .skd-heading-copy { flex: 1 1 360px; }
-
-        @media (max-width: 1100px) {
-            .stats { grid-template-columns: repeat(2, 1fr); }
-        }
+        @media (max-width: 1100px) { .stats { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 900px) {
             .skd-app { flex-direction: column; }
             .skd-side { width: 100%; height: auto; position: static; }
@@ -189,103 +185,89 @@
         }
     </style>
 </head>
-
 <body>
-<div class="skd-app {{ auth()->user()->adalahPemohon() ? 'is-pemohon' : '' }}">
+<div class="skd-app">
 
-    @unless (auth()->user()->adalahPemohon())
-        <aside class="skd-side">
-            <div>
-                <div class="skd-brand">
-                    <h1>SKD</h1>
-                    <p>Sistem Kependudukan Digital</p>
-                </div>
-
-                <nav class="skd-nav">
-                    @if (auth()->user()->adalahPemohon())
-                        <p class="skd-nav-label">Menu Utama</p>
-                        <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                            <span class="nav-dot"></span>Dashboard
-                        </a>
-                        <a href="{{ route('laporan.baru') }}" class="nav-link {{ request()->routeIs('laporan.baru') ? 'active' : '' }}">
-                            <span class="nav-dot"></span>Ajukan Laporan Baru
-                        </a>
-                        <a href="{{ route('pengajuan.status') }}" class="nav-link {{ request()->routeIs('pengajuan.*') ? 'active' : '' }}">
-                            <span class="nav-dot"></span>Status Pengajuan
-                        </a>
-                    @elseif (auth()->user()->adalahPejabat())
-                        <p class="skd-nav-label">Menu Utama</p>
-                        <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                            <span class="nav-dot"></span>Dashboard
-                        </a>
-                        <a href="{{ route('tanda_tangan.index') }}" class="nav-link {{ request()->routeIs('tanda_tangan.*') ? 'active' : '' }}">
-                            <span class="nav-dot"></span>Tanda Tangan Dokumen
-                        </a>
-                    @else
-                        <p class="skd-nav-label">Menu Utama</p>
-                        <a href="{{ route('verifikasi.index') }}" class="nav-link {{ request()->routeIs('verifikasi.index') ? 'active' : '' }}">
-                            <span class="nav-dot"></span>Dashboard
-                        </a>
-                        <a href="#" class="nav-link {{ request()->routeIs('verifikasi.show') ? 'active' : '' }}">
-                            <span class="nav-dot"></span>Verifikasi &amp; Rekonsiliasi
-                        </a>
-                        <a href="#" class="nav-link">
-                            <span class="nav-dot"></span>Approve / Reject Berkas
-                        </a>
-                        <p class="skd-nav-label" style="margin-top: 22px;">Lainnya</p>
-                        <a href="#" class="nav-link">
-                            <span class="nav-dot"></span>Pengaturan
-                        </a>
-                    @endif
-                </nav>
+    @unless (auth()->user()->adalahVerifikator() || auth()->user()->adalahPejabat())
+    <aside class="skd-side">
+        <div>
+            <div class="skd-brand">
+                <h1>SKD</h1>
+                <p>Sistem Kependudukan Digital</p>
             </div>
 
-            <p class="skd-foot">&copy; {{ date('Y') }} SKD Indonesia</p>
-        </aside>
+            <nav class="skd-nav">
+                @if (auth()->user()->adalahPemohon())
+                    <p class="skd-nav-label">Menu Utama</p>
+                    <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Dashboard
+                    </a>
+                    <a href="{{ route('laporan.baru') }}" class="nav-link {{ request()->routeIs('laporan.baru') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Ajukan Laporan Baru
+                    </a>
+                    <a href="{{ route('pengajuan.status') }}" class="nav-link {{ request()->routeIs('pengajuan.*') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Status Pengajuan
+                    </a>
+                @elseif (auth()->user()->adalahPejabat())
+                    <p class="skd-nav-label">Menu Utama</p>
+                    <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Dashboard
+                    </a>
+                    <a href="{{ route('tanda_tangan.index') }}" class="nav-link {{ request()->routeIs('tanda_tangan.*') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Tanda Tangan Dokumen
+                    </a>
+                @else
+                    <p class="skd-nav-label">Menu Utama</p>
+                    <a href="{{ route('verifikasi.index') }}" class="nav-link {{ request()->routeIs('verifikasi.index') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Dashboard
+                    </a>
+                    <a href="#" class="nav-link {{ request()->routeIs('verifikasi.show') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Verifikasi &amp; Rekonsiliasi
+                    </a>
+                    <a href="#" class="nav-link"><span class="nav-dot"></span>Approve / Reject Berkas</a>
+
+                    <p class="skd-nav-label" style="margin-top: 22px;">Lainnya</p>
+                    <a href="#" class="nav-link"><span class="nav-dot"></span>Pengaturan</a>
+                @endif
+            </nav>
+        </div>
+
+        <p class="skd-foot">&copy; {{ date('Y') }} SKD Indonesia</p>
+    </aside>
     @endunless
 
     <div class="skd-main">
         <main class="skd-container">
 
-            {{-- Header detail untuk Verifikator.
-                 Dashboard Pemohon tetap memakai header sejajar. --}}
-            @if (! auth()->user()->adalahPemohon() && trim($__env->yieldContent('aksi_header')) !== '')
-                <div class="skd-topbar skd-topbar-detail">
-                    <div class="skd-topbar-actions">
-                        @yield('aksi_header')
-                        @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
-                    </div>
-
+            @hasSection('aksi_header')
+            <div class="skd-topbar skd-topbar-detail">
+                <div class="skd-topbar-actions">
+                    @yield('aksi_header')
+                    @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
+                </div>
+                <div class="skd-heading-copy">
+                    <h1 class="skd-title">@yield('judul', 'Verifikasi')</h1>
+                    @hasSection('subjudul')
+                        <p class="skd-sub">@yield('subjudul')</p>
+                    @endif
+                </div>
+            </div>
+            @else
+            <div class="skd-topbar">
+                <div class="skd-heading">
                     <div class="skd-heading-copy">
                         <h1 class="skd-title">@yield('judul', 'Verifikasi')</h1>
-
                         @hasSection('subjudul')
                             <p class="skd-sub">@yield('subjudul')</p>
                         @endif
                     </div>
                 </div>
-            @else
-                <div class="skd-topbar">
-                    <div class="skd-heading">
-                        <div class="skd-heading-copy">
-                            <h1 class="skd-title">@yield('judul', 'Verifikasi')</h1>
-
-                            @hasSection('subjudul')
-                                <p class="skd-sub">@yield('subjudul')</p>
-                            @endif
-                        </div>
-
-                        @yield('aksi_header')
-                    </div>
-
-                    @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
-                </div>
+                @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
+            </div>
             @endif
 
             @if (session('sukses') || session('success'))
-                <div class="alert alert-ok">
-                    {{ session('sukses') ?? session('success') }}
-                </div>
+                <div class="alert alert-ok">{{ session('sukses') ?? session('success') }}</div>
             @endif
 
             @if ($errors->any() && ! trim($__env->yieldContent('tanpa_error_global')))
@@ -302,6 +284,7 @@
             @yield('konten')
         </main>
     </div>
+
 </div>
 </body>
 </html>
