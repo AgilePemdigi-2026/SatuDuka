@@ -6,8 +6,11 @@ use App\Models\AnalisisAi;
 use App\Models\BerkasPendukung;
 use App\Models\LaporanKematian;
 use App\Services\Ai\AIService;
+use App\Services\Ai\DeepSeekService;
+use App\Services\Ai\GeminiService;
 use App\Services\Ai\MockAIService;
 use App\Services\Ai\OpenAiService;
+use App\Services\Ai\TesseractService;
 use App\Services\Dokumen\PembuatPdf;
 use App\Services\Dokumen\PembuatPdfDompdf;
 use App\Services\Tte\PabrikTte;
@@ -28,16 +31,28 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(AIService::class, function (): AIService {
-            if (config('ai.driver') === 'openai') {
-                return new OpenAiService(
+            return match (config('ai.driver')) {
+                'openai' => new OpenAiService(
                     apiKey: (string) config('ai.openai.api_key', ''),
                     baseUrl: (string) config('ai.openai.base_url', 'https://api.openai.com/v1'),
                     model: (string) config('ai.openai.model', 'gpt-4.1-mini'),
                     timeout: (int) config('ai.timeout', 20),
-                );
-            }
-
-            return new MockAIService;
+                ),
+                'gemini' => new GeminiService(
+                    apiKey: (string) config('ai.gemini.api_key', ''),
+                    baseUrl: (string) config('ai.gemini.base_url', 'https://generativelanguage.googleapis.com/v1beta'),
+                    model: (string) config('ai.gemini.model', 'gemini-2.5-flash'),
+                    timeout: (int) config('ai.timeout', 20),
+                ),
+                'deepseek' => new DeepSeekService(
+                    apiKey: (string) config('ai.deepseek.api_key', ''),
+                    baseUrl: (string) config('ai.deepseek.base_url', 'https://api.deepseek.com'),
+                    model: (string) config('ai.deepseek.model', 'deepseek-chat'),
+                    timeout: (int) config('ai.timeout', 20),
+                ),
+                'tesseract' => new TesseractService,
+                default => new MockAIService,
+            };
         });
 
         $this->app->bind(TTEService::class, function ($app): TTEService {

@@ -7,6 +7,7 @@ use App\Models\AnomaliDokumen;
 use App\Models\BerkasPendukung;
 use App\Models\HasilVerifikasi;
 use App\Models\LaporanKematian;
+use App\Services\Ai\LayananAnalisisAi;
 use App\Services\LayananAudit;
 use App\Support\DataSIAK;
 use Illuminate\Http\RedirectResponse;
@@ -108,9 +109,16 @@ class VerifikasiBerkasController extends Controller
             ->orderByDesc('id_analisis')
             ->first();
 
+        $ringkasanAi = $laporan->analisisAi()
+            ->where('jenis', AnalisisAi::JENIS_RINGKASAN)
+            ->where('status', AnalisisAi::STATUS_BERHASIL)
+            ->orderByDesc('dibuat_pada')
+            ->orderByDesc('id_analisis')
+            ->first();
+
         $dataSIAK = DataSIAK::cariNik($laporan->nik_almarhum);
         $dokumenWajib = BerkasPendukung::DAFTAR_JENIS;
-        
+
         // Gunakan helper method dokumenKurang() agar konsisten
         $dokumenKurang = $this->dokumenKurang($laporan);
 
@@ -129,7 +137,8 @@ class VerifikasiBerkasController extends Controller
             'dataSIAK',
             'hasilPencocokan',
             'dokumenWajib',
-            'analisisKesesuaian'
+            'analisisKesesuaian',
+            'ringkasanAi'
         ));
     }
 
@@ -152,7 +161,7 @@ class VerifikasiBerkasController extends Controller
             return back()
                 ->withErrors([
                     'dokumen' => 'Pengajuan belum dapat disetujui. Dokumen kurang: '
-                        . implode(', ', $dokumenKurang),
+                        .implode(', ', $dokumenKurang),
                 ])
                 ->withInput();
         }
@@ -360,8 +369,8 @@ class VerifikasiBerkasController extends Controller
 
         return Storage::disk('local')->response($path, $berkas->nama_file, [
             'Content-Type' => $mime,
-            'Content-Disposition' => 'inline; filename="' .
-                addcslashes(basename($berkas->nama_file), '"\\') . '"',
+            'Content-Disposition' => 'inline; filename="'.
+                addcslashes(basename($berkas->nama_file), '"\\').'"',
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'private, no-store',
         ]);
@@ -379,6 +388,45 @@ class VerifikasiBerkasController extends Controller
         return Storage::disk('local')->download($path, $berkas->nama_file, [
             'X-Content-Type-Options' => 'nosniff',
         ]);
+    }
+
+    /**
+     * Membuat ringkasan ketidaksesuaian berbantuan AI untuk verifikator.
+     */
+    public function ringkasanAi(
+        Request $request,
+        LaporanKematian $laporan,
+        LayananAnalisisAi $layananAi
+    ): RedirectResponse {
+        $this->pastikanMenunggu($laporan);
+
+        $catatanPerbandingan = AnalisisAi::query()
+            ->where('id_laporan', $laporan->id_laporan)
+            ->where('jenis', AnalisisAi::JENIS_PERBANDINGAN)
+            ->where('status', AnalisisAi::STATUS_BERHASIL)
+            ->latest('id_analisis')
+            ->first();
+
+        $perbandingan = is_array($catatanPerbandingan?->hasil)
+            ? $catatanPerbandingan->hasil
+            : ['kolom' => []];
+
+        $hasil = $layananAi->ringkas(
+            $laporan,
+            $perbandingan,
+            $request->user(),
+            'verifikator_detail'
+        );
+
+        if (! ($hasil['berhasil'] ?? false)) {
+            return redirect()
+                ->route('verifikasi.show', $laporan)
+                ->with('galat', $hasil['pesan'] ?? 'Analisis AI tidak tersedia, lanjutkan secara manual');
+        }
+
+        return redirect()
+            ->route('verifikasi.show', $laporan)
+            ->with('sukses', 'Ringkasan ketidaksesuaian AI berhasil dibuat.');
     }
 
     /**

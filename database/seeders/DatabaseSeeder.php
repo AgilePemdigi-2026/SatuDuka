@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             ReferensiWilayahSeeder::class,
             PenggunaSeeder::class,
             LaporanKematianSeeder::class,
+            BerkasDummySeeder::class,
             VerifikasiSeeder::class,
             LogAuditSeeder::class,
         ]);

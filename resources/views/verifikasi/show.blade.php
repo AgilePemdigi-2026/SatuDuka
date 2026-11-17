@@ -156,6 +156,43 @@
                         <span class="badge badge-brand">Analisis Tidak Tersedia</span>
                     @endif
                 </div>
+
+                <div class="doc-item" style="flex-direction: column; align-items: stretch; gap: 10px; margin-top: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <p class="doc-name" style="margin: 0;">Ringkasan Ketidaksesuaian (AI)</p>
+                        <form method="POST" action="{{ route('verifikasi.ringkasan_ai', $laporan) }}">
+                            @csrf
+                            <button type="submit" class="btn btn-brand" style="padding: 6px 12px; font-size: 12px;">
+                                Buat Ringkasan AI
+                            </button>
+                        </form>
+                    </div>
+
+                    @if (session('galat'))
+                        <div class="alert alert-danger" style="padding: 10px 12px; border-radius: 10px; background: #fef2f2; color: #991b1b; font-size: 13px;">
+                            {{ session('galat') }}
+                        </div>
+                    @endif
+
+                    @if (session('sukses'))
+                        <div class="alert alert-success" style="padding: 10px 12px; border-radius: 10px; background: #ecfdf5; color: #065f46; font-size: 13px;">
+                            {{ session('sukses') }}
+                        </div>
+                    @endif
+
+                    @if ($ringkasanAi && is_array($ringkasanAi->hasil))
+                        <p style="font-size: 13px; color: #334155; line-height: 1.5;">
+                            {{ $ringkasanAi->hasil['ringkasan'] ?? '-' }}
+                        </p>
+                        @if (! empty($ringkasanAi->hasil['saran']))
+                            <ul style="margin: 0; padding-left: 18px; font-size: 12px; color: #475569;">
+                                @foreach ($ringkasanAi->hasil['saran'] as $saran)
+                                    <li>{{ $saran }}</li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    @endif
+                </div>
             </div>
         </div>
     </section>

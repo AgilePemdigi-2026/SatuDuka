@@ -350,9 +350,12 @@ class LaporanController extends Controller
         $laporan = $this->laporanMilik($request, $laporan);
         $this->pastikanBolehDiubah($laporan);
 
-        $berkas = $laporan->berkasPendukung()
-            ->where('jenis_dokumen', BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN)
-            ->first();
+        $daftarBerkas = $laporan->berkasPendukung()
+            ->where('status_unggahan', BerkasPendukung::STATUS_BERHASIL)
+            ->get();
+
+        $berkas = $daftarBerkas
+            ->firstWhere('jenis_dokumen', BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN);
 
         if ($berkas === null) {
             return redirect()
@@ -367,6 +370,23 @@ class LaporanController extends Controller
                 ->to($this->alamatLangkah($laporan, 4))
                 ->with('galat', $hasil['pesan']);
         }
+
+        $hasilSemuaDokumen = [];
+        foreach ($daftarBerkas as $itemBerkas) {
+            $hasilItem = $itemBerkas->id_berkas === $berkas->id_berkas
+                ? $hasil
+                : $layanan->periksa($itemBerkas, $request->user(), 'pemohon_review');
+
+            $hasilSemuaDokumen[] = [
+                'nama_file' => $itemBerkas->nama_file,
+                'jenis_dokumen' => $itemBerkas->jenis_dokumen,
+                'berhasil' => $hasilItem['berhasil'] ?? false,
+                'skor' => $hasilItem['perbandingan']['skor'] ?? null,
+                'jumlah_beda' => $hasilItem['perbandingan']['jumlah_beda'] ?? 0,
+            ];
+        }
+
+        $hasil['semua_dokumen'] = $hasilSemuaDokumen;
 
         return redirect()
             ->to($this->alamatLangkah($laporan, 4))

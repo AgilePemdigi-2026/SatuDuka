@@ -1,6 +1,6 @@
 # Evaluasi Aturan Verifikasi
 
-Dokumen ini dihasilkan oleh `php artisan aturan:evaluasi` pada 31 Oktober 2026 08:42 WIB.
+Dokumen ini dihasilkan oleh `php artisan aturan:evaluasi` pada 2 November 2026 21:04 WIB.
 
 Label berasal dari rancangan kasus uji, sehingga evaluasi ini menguji kebenaran implementasi aturan, BUKAN akurasi terhadap data kependudukan nyata.
 
