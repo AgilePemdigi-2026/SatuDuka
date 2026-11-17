@@ -1,3 +1,4 @@
+
 @extends('tata_letak.verifikator')
 
 @section('judul', 'Dashboard Pemohon')
@@ -18,63 +19,197 @@
 @endsection
 
 @section('konten')
+
+    <style>
+        /*
+        |--------------------------------------------------------------------------
+        | Warna KPI Dashboard Pemohon
+        |--------------------------------------------------------------------------
+        | Posisi, ukuran, dan struktur KPI tetap mengikuti layout asli.
+        | Warna disesuaikan dengan badge status pengajuan.
+        */
+
+        /* Total Pengajuan - Navy */
+        .stat--total {
+            background: #ffffff;
+            border-color: #dbe4ef;
+        }
+
+        .stat--total::before {
+            background: #1e3a5f;
+        }
+
+        .stat--total .stat-label,
+        .stat--total .stat-value {
+            color: #1e3a5f;
+        }
+
+        /* Menunggu Verifikasi - Biru */
+        .stat--menunggu {
+            background: #eff8ff;
+            border-color: #bae6fd;
+        }
+
+        .stat--menunggu::before {
+            background: #0284c7;
+        }
+
+        .stat--menunggu .stat-label,
+        .stat--menunggu .stat-value {
+            color: #0369a1;
+        }
+
+        /* Perlu Perbaikan - Oranye */
+        .stat--perbaikan {
+            background: #fffbeb;
+            border-color: #fcd34d;
+        }
+
+        .stat--perbaikan::before {
+            background: #f59e0b;
+        }
+
+        .stat--perbaikan .stat-label,
+        .stat--perbaikan .stat-value {
+            color: #b45309;
+        }
+
+        /* Selesai - Hijau */
+        .stat--selesai {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+
+        .stat--selesai::before {
+            background: #16a34a;
+        }
+
+        .stat--selesai .stat-label,
+        .stat--selesai .stat-value {
+            color: #15803d;
+        }
+    </style>
+
+    {{-- Status Pengajuan --}}
     <section class="card" style="margin-top: 32px;">
         <div class="card-head">
             <div>
                 <h2 class="card-title">Status Pengajuan</h2>
-                <p class="card-desc">Ringkasan perkembangan seluruh pengajuan Anda.</p>
+                <p class="card-desc">
+                    Ringkasan perkembangan seluruh pengajuan Anda.
+                </p>
             </div>
         </div>
 
         <div class="card-body">
             <section class="stats">
-                <div class="stat">
-                    <p class="stat-label">Total Pengajuan</p>
-                    <p class="stat-value">{{ $statistikPemohon['total'] }}</p>
-                    <p class="stat-note">Semua pengajuan Anda</p>
+
+                {{-- KPI 1: Total Pengajuan --}}
+                <div class="stat stat--total">
+                    <p class="stat-label">
+                        Total Pengajuan
+                    </p>
+
+                    <p class="stat-value">
+                        {{ $statistikPemohon['total'] }}
+                    </p>
+
+                    <p class="stat-note">
+                        Semua pengajuan Anda
+                    </p>
                 </div>
-                <div class="stat">
-                    <p class="stat-label">Menunggu Verifikasi</p>
-                    <p class="stat-value">{{ $statistikPemohon['menunggu'] }}</p>
-                    <p class="stat-note">Sedang diperiksa petugas</p>
+
+                {{-- KPI 2: Menunggu Verifikasi --}}
+                <div class="stat stat--menunggu">
+                    <p class="stat-label">
+                        Menunggu Verifikasi
+                    </p>
+
+                    <p class="stat-value">
+                        {{ $statistikPemohon['menunggu'] }}
+                    </p>
+
+                    <p class="stat-note">
+                        Sedang diperiksa petugas
+                    </p>
                 </div>
-                <div class="stat">
-                    <p class="stat-label">Perlu Perbaikan</p>
-                    <p class="stat-value">{{ $statistikPemohon['perluPerbaikan'] }}</p>
-                    <p class="stat-note">Perlu ditindaklanjuti</p>
+
+                {{-- KPI 3: Perlu Perbaikan --}}
+                <div class="stat stat--perbaikan">
+                    <p class="stat-label">
+                        Perlu Perbaikan
+                    </p>
+
+                    <p class="stat-value">
+                        {{ $statistikPemohon['perluPerbaikan'] }}
+                    </p>
+
+                    <p class="stat-note">
+                        Perlu ditindaklanjuti
+                    </p>
                 </div>
-                <div class="stat">
-                    <p class="stat-label">Selesai</p>
-                    <p class="stat-value">{{ $statistikPemohon['selesai'] }}</p>
-                    <p class="stat-note">Pengajuan selesai diproses</p>
+
+                {{-- KPI 4: Selesai --}}
+                <div class="stat stat--selesai">
+                    <p class="stat-label">
+                        Selesai
+                    </p>
+
+                    <p class="stat-value">
+                        {{ $statistikPemohon['selesai'] }}
+                    </p>
+
+                    <p class="stat-note">
+                        Pengajuan selesai diproses
+                    </p>
                 </div>
+
             </section>
         </div>
     </section>
 
+    {{-- Perlu Tindakan Anda --}}
     @if ($perluTindakan->isNotEmpty())
         <section class="card" style="margin-top: 32px;">
             <div class="card-head">
                 <div>
-                    <h2 class="card-title">Perlu Tindakan Anda</h2>
-                    <p class="card-desc">Lengkapi draf atau perbaiki pengajuan yang dikembalikan.</p>
+                    <h2 class="card-title">
+                        Perlu Tindakan Anda
+                    </h2>
+
+                    <p class="card-desc">
+                        Lengkapi draf atau perbaiki pengajuan yang dikembalikan.
+                    </p>
                 </div>
             </div>
 
             <div class="card-body">
-                @include('dashboard.tabel_laporan', ['daftar' => $perluTindakan])
+                @include('dashboard.tabel_laporan', [
+                    'daftar' => $perluTindakan
+                ])
             </div>
         </section>
     @endif
 
+    {{-- Pengajuan Saya --}}
     <section class="card" style="margin-top: 32px;">
         <div class="card-head dashboard-card-head">
             <div>
-                <h2 class="card-title">Pengajuan Saya</h2>
-                <p class="card-desc">Pengajuan yang sedang diproses atau sudah selesai.</p>
+                <h2 class="card-title">
+                    Pengajuan Saya
+                </h2>
+
+                <p class="card-desc">
+                    Pengajuan yang sedang diproses atau sudah selesai.
+                </p>
             </div>
 
-            <form action="{{ route('pengajuan.status') }}" method="GET" class="search-form">
+            {{-- Form Pencarian --}}
+            <form
+                action="{{ route('pengajuan.status') }}"
+                method="GET"
+                class="search-form"
+            >
                 <input
                     type="text"
                     name="nomor"
@@ -83,12 +218,21 @@
                     aria-label="Cari berdasarkan nomor pengajuan"
                     value="{{ request('nomor') }}"
                 >
-                <button type="submit" class="btn btn-brand">Cari</button>
+
+                <button
+                    type="submit"
+                    class="btn btn-brand"
+                >
+                    Cari
+                </button>
             </form>
         </div>
 
         <div class="card-body">
-            @include('dashboard.tabel_laporan', ['daftar' => $pengajuanSaya])
+            @include('dashboard.tabel_laporan', [
+                'daftar' => $pengajuanSaya
+            ])
         </div>
     </section>
+
 @endsection
