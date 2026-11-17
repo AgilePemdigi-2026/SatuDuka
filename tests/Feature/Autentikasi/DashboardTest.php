@@ -25,15 +25,25 @@ it('menampilkan dashboard sesuai peran pengguna', function () {
         ->assertDontSee('Profil Saya');
 
     $this->actingAs($verifikator)->get(route('dashboard'))
+        ->assertRedirect(route('verifikasi.index'));
+
+    $this->actingAs($verifikator)->get(route('verifikasi.index'))
         ->assertOk()
         ->assertSee('Dashboard Verifikator')
-        ->assertSee('Menunggu Verifikasi')
-        ->assertSee('Buka Daftar Verifikasi');
+        ->assertSee('Semua Status')
+        ->assertDontSee('<aside class="skd-side">', false);
 
     $this->actingAs($pejabat)->get(route('dashboard'))
         ->assertOk()
         ->assertSee('Dashboard Pejabat Penanda Tangan')
         ->assertSee('Anda masuk sebagai Pejabat')
+        ->assertSee('class="stats"', false)
+        ->assertSee('class="stat stat-waiting"', false)
+        ->assertDontSee('<aside class="skd-side">', false)
+        ->assertDontSee('Dokumen yang telah disetujui verifikator dan menunggu tanda tangan elektronik.')
+        ->assertDontSee('Dokumen yang perlu ditandatangani akan muncul di sini.')
+        ->assertSee(route('tanda_tangan.index'))
+        ->assertSee('Buka Semua Dokumen')
         ->assertSee('Kelola Profil')
         ->assertDontSee('Profil Saya');
 });

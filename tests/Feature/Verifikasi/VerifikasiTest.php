@@ -170,8 +170,11 @@ it('menyediakan pengajuan demo dengan semua dokumen wajib untuk disetujui', func
         ->assertOk();
 
     $respons
-        ->assertSee('4 / 4 lengkap')
-        ->assertSee('Kembali ke Antrean')
+        ->assertSee('Informasi Pemohon &amp; Almarhum', false)
+        ->assertSee('No. Pengajuan:')
+        ->assertSee('Kembali')
+        ->assertDontSee('Kembali ke Antrean')
+        ->assertSee('Pilihan Keputusan')
         ->assertSee('Kelola Profil')
         ->assertSee('Keluar');
 

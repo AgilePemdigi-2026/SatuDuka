@@ -1,11 +1,11 @@
-```blade
 @extends('tata_letak.verifikator')
 
 @section('judul', 'Detail Verifikasi Berkas')
 @section('subjudul', 'Periksa data pemohon dan kelengkapan dokumen sebelum menentukan keputusan verifikasi.')
 @section('tanpa_error_global', '1')
+
 @section('aksi_header')
-    <a href="{{ route('verifikasi.index') }}" class="btn btn-outline btn-sm" style="margin-bottom: 12px;">
+    <a href="{{ route('verifikasi.index') }}" class="btn btn-outline btn-sm">
         <span aria-hidden="true">←</span> Kembali ke Antrean
     </a>
 @endsection
@@ -19,16 +19,12 @@
             && $item->status_unggahan === \App\Models\BerkasPendukung::STATUS_BERHASIL
         )
     )->count();
+
+    $bolehMemutuskan = $laporan->status_pengajuan === \App\Models\LaporanKematian::STATUS_MENUNGGU_VERIFIKASI;
+    $dikembalikan = $laporan->status_pengajuan === \App\Models\LaporanKematian::STATUS_DIKEMBALIKAN;
 @endphp
 
 <div class="stack page-narrow">
-
-    <div class="toolbar">
-        <span class="badge badge-brand" style="padding: 8px 16px;">
-            No. Pengajuan: {{ $laporan->no_pengajuan }}
-        </span>
-    </div>
-
     @if ($errors->any())
         <div role="alert" class="alert alert-err" style="margin: 0;">
             <strong>Periksa kembali pengajuan ini.</strong>
@@ -40,10 +36,23 @@
         </div>
     @endif
 
+    @if ($dikembalikan)
+        <div role="status" class="alert alert-warn" style="margin: 0;">
+            <strong>Dokumen dikembalikan oleh Pejabat</strong>
+            <p style="margin-top: 6px;">Alasan: {{ $laporan->dokumenResmi?->alasan_pengembalian ?: '-' }}</p>
+            <p style="margin-top: 6px;">
+                Pengajuan ini hanya dapat ditinjau kembali setelah pemohon memperbaiki dan mengirim ulang berkas.
+            </p>
+        </div>
+    @endif
+
     <!-- Informasi Pengajuan -->
     <section class="card">
         <div class="card-head">
             <h2 class="card-title">Informasi Pemohon &amp; Almarhum</h2>
+            <span class="badge badge-brand" style="padding: 8px 16px;">
+                No. Pengajuan: {{ $laporan->no_pengajuan }}
+            </span>
         </div>
         <div class="card-body">
             <dl class="info-grid" style="margin: 0;">
@@ -75,7 +84,7 @@
         </div>
     </section>
 
-    <!-- Pemeriksaan Dokumen -->
+    <!-- Pemeriksaan Kelengkapan Dokumen -->
     <section class="card">
         <div class="card-head">
             <h2 class="card-title">Pemeriksaan Kelengkapan Dokumen</h2>
@@ -83,7 +92,6 @@
                 {{ $jumlahTersedia }} / {{ $jumlahWajib }} lengkap
             </span>
         </div>
-
         <div class="card-body">
             <div class="doc-list">
                 @foreach ($dokumenWajib as $jenis)
@@ -99,20 +107,15 @@
                             <span class="doc-ic {{ $berkas ? 'ok' : 'bad' }}">
                                 {{ $berkas ? '✓' : '!' }}
                             </span>
-
                             <div style="min-width: 0;">
                                 <p class="doc-name">{{ $jenis }}</p>
-
                                 @if ($berkas)
                                     @php
                                         $ekstensi = strtolower(pathinfo($berkas->path_file, PATHINFO_EXTENSION));
                                         $tipe = $ekstensi === 'pdf'
                                             ? 'pdf'
-                                            : (in_array($ekstensi, ['png', 'jpg', 'jpeg'], true)
-                                                ? 'gambar'
-                                                : 'lain');
+                                            : (in_array($ekstensi, ['png', 'jpg', 'jpeg'], true) ? 'gambar' : 'lain');
                                     @endphp
-
                                     <button
                                         type="button"
                                         class="doc-file doc-file-btn js-pratinjau"
@@ -127,7 +130,6 @@
                                 @endif
                             </div>
                         </div>
-
                         @if ($berkas)
                             <span class="badge badge-ok">Tersedia</span>
                         @else
@@ -135,136 +137,126 @@
                         @endif
                     </div>
                 @endforeach
+
+                <div class="doc-item">
+                    <div class="doc-left">
+                        <span class="doc-ic {{ $analisisKesesuaian?->skor !== null ? 'ok' : 'bad' }}">
+                            {{ $analisisKesesuaian?->skor !== null ? '✓' : '!' }}
+                        </span>
+                        <p class="doc-name">Persentase Kesesuaian Hasil AI</p>
+                    </div>
+                    @if ($analisisKesesuaian?->skor !== null)
+                        <span class="badge badge-ok">
+                            {{ (int) round($analisisKesesuaian->skor * 100) }}%
+                        </span>
+                    @else
+                        <span class="badge badge-brand">Analisis Tidak Tersedia</span>
+                    @endif
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Keputusan Verifikasi -->
-    <section class="card">
-        <div class="card-head decision-header">
-            <h2 class="card-title">Keputusan Verifikasi</h2>
-            <label for="pilihan-keputusan" class="decision-selector">
-                <span class="field-label">Pilihan Keputusan</span>
-                <select id="pilihan-keputusan" name="keputusan" class="field">
+    @if ($bolehMemutuskan)
+        <!-- Keputusan Verifikasi; hanya ditampilkan untuk antrean yang menunggu verifikasi -->
+        <section class="card">
+            <div class="card-head decision-header">
+                <h2 class="card-title">Keputusan Verifikasi</h2>
+                <select
+                    id="pilihan-keputusan"
+                    name="keputusan"
+                    form="form-keputusan"
+                    class="field decision-select"
+                    aria-label="Pilihan Keputusan"
+                >
                     <option value="setujui" @selected(old('keputusan', 'setujui') === 'setujui')>Setujui Berkas</option>
                     <option value="tolak" @selected(old('keputusan') === 'tolak')>Tolak Berkas</option>
                     <option value="anomali" @selected(old('keputusan') === 'anomali')>Alihkan ke Rekonsiliasi</option>
                 </select>
-            </label>
-        </div>
+            </div>
 
-        <div class="card-body">
-            <form
-                id="form-keputusan"
-                method="POST"
-                action="{{ route('verifikasi.setujui', $laporan) }}"
-                data-action-setujui="{{ route('verifikasi.setujui', $laporan) }}"
-                data-action-tolak="{{ route('verifikasi.revisi', $laporan) }}"
-                data-action-anomali="{{ route('verifikasi.anomali', $laporan) }}"
-                class="decision-box"
-            >
-                @csrf
+            <div class="card-body">
+                <form
+                    id="form-keputusan"
+                    method="POST"
+                    action="{{ route('verifikasi.setujui', $laporan) }}"
+                    data-action-setujui="{{ route('verifikasi.setujui', $laporan) }}"
+                    data-action-tolak="{{ route('verifikasi.revisi', $laporan) }}"
+                    data-action-anomali="{{ route('verifikasi.anomali', $laporan) }}"
+                    class="decision-box"
+                >
+                    @csrf
 
-                <div id="kolom-setujui" data-decision-fields>
-                    <h3>Setujui Berkas</h3>
+                    <div id="kolom-setujui" data-decision-fields>
+                        <h3>Setujui Berkas</h3>
+                        <p class="hint">Gunakan jika persyaratan dan data sudah sesuai sepenuhnya.</p>
+                        <label for="catatan" class="field-label">Catatan Persetujuan (Opsional)</label>
+                        <textarea
+                            id="catatan"
+                            name="catatan"
+                            rows="3"
+                            class="field"
+                            placeholder="Tambahkan catatan jika ada..."
+                        >{{ old('catatan') }}</textarea>
+                    </div>
 
-                    <p class="hint">
-                        Gunakan jika persyaratan dan data sudah sesuai sepenuhnya.
-                    </p>
+                    <div id="kolom-tolak" data-decision-fields hidden>
+                        <h3>Tolak Berkas</h3>
+                        <p class="hint">
+                            Jelaskan alasan penolakan agar pemohon mengetahui berkas yang perlu diperbaiki.
+                        </p>
+                        <label for="alasan_penolakan" class="field-label">Alasan Penolakan</label>
+                        <textarea
+                            id="alasan_penolakan"
+                            name="catatan"
+                            rows="3"
+                            required
+                            minlength="5"
+                            maxlength="2000"
+                            disabled
+                            class="field"
+                            placeholder="Tuliskan alasan penolakan..."
+                        >{{ old('catatan') }}</textarea>
+                    </div>
 
-                    <label for="catatan" class="field-label">
-                        Catatan Persetujuan (Opsional)
-                    </label>
-
-                    <textarea
-                        id="catatan"
-                        name="catatan"
-                        rows="3"
-                        class="field"
-                        placeholder="Tambahkan catatan jika ada..."
-                    >{{ old('catatan') }}</textarea>
-                </div>
-
-                <div id="kolom-tolak" data-decision-fields hidden>
-                    <h3>Tolak Berkas</h3>
-
-                    <p class="hint">
-                        Jelaskan alasan penolakan agar pemohon mengetahui berkas yang perlu diperbaiki.
-                    </p>
-
-                    <label for="alasan_penolakan" class="field-label">
-                        Alasan Penolakan
-                    </label>
-
-                    <textarea
-                        id="alasan_penolakan"
-                        name="catatan"
-                        rows="3"
-                        required
-                        minlength="5"
-                        maxlength="2000"
-                        disabled
-                        class="field"
-                        placeholder="Tuliskan alasan penolakan..."
-                    >{{ old('catatan') }}</textarea>
-                </div>
-
-                <div id="kolom-anomali" data-decision-fields hidden>
-                    <h3>Tandai Kasus Anomali</h3>
-
-                    <p class="hint">
-                        Alihkan ke rekonsiliasi jika ditemukan ketidaksesuaian data.
-                    </p>
-
-                    <div class="form-stack">
-                        <div>
-                            <label for="jenis_anomali" class="field-label">
-                                Jenis Anomali
-                            </label>
-
-                            <select
-                                id="jenis_anomali"
-                                name="jenis_anomali"
-                                required
-                                disabled
-                                class="field"
-                            >
-                                <option value="">Pilih Jenis Anomali</option>
-                                <option value="Perbedaan Identitas" @selected(old('jenis_anomali') === 'Perbedaan Identitas')>Perbedaan Identitas</option>
-                                <option value="NIK Ganda" @selected(old('jenis_anomali') === 'NIK Ganda')>NIK Ganda</option>
-                                <option value="Dokumen Tidak Terbaca" @selected(old('jenis_anomali') === 'Dokumen Tidak Terbaca')>Dokumen Tidak Terbaca</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label for="deskripsi" class="field-label">
-                                Deskripsi
-                            </label>
-
-                            <textarea
-                                id="deskripsi"
-                                name="deskripsi"
-                                rows="3"
-                                required
-                                disabled
-                                class="field"
-                                placeholder="Jelaskan ketidaksesuaian..."
-                            >{{ old('deskripsi') }}</textarea>
+                    <div id="kolom-anomali" data-decision-fields hidden>
+                        <h3>Tandai Kasus Anomali</h3>
+                        <p class="hint">Alihkan ke rekonsiliasi jika ditemukan ketidaksesuaian data.</p>
+                        <div class="form-stack">
+                            <div>
+                                <label for="jenis_anomali" class="field-label">Jenis Anomali</label>
+                                <select id="jenis_anomali" name="jenis_anomali" required disabled class="field">
+                                    <option value="">Pilih Jenis Anomali</option>
+                                    <option value="Perbedaan Identitas" @selected(old('jenis_anomali') === 'Perbedaan Identitas')>Perbedaan Identitas</option>
+                                    <option value="NIK Ganda" @selected(old('jenis_anomali') === 'NIK Ganda')>NIK Ganda</option>
+                                    <option value="Dokumen Tidak Terbaca" @selected(old('jenis_anomali') === 'Dokumen Tidak Terbaca')>Dokumen Tidak Terbaca</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="deskripsi" class="field-label">Deskripsi</label>
+                                <textarea
+                                    id="deskripsi"
+                                    name="deskripsi"
+                                    rows="3"
+                                    required
+                                    disabled
+                                    class="field"
+                                    placeholder="Jelaskan ketidaksesuaian..."
+                                >{{ old('deskripsi') }}</textarea>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <button
-                    id="tombol-keputusan"
-                    type="submit"
-                    class="btn btn-green btn-block"
-                    {{ $jumlahTersedia !== $jumlahWajib ? 'disabled' : '' }}
-                >
-                    Setujui Berkas
-                </button>
-            </form>
-        </div>
-    </section>
+                    <button
+                        id="tombol-keputusan"
+                        type="submit"
+                        class="btn btn-green btn-block"
+                        @disabled($jumlahTersedia !== $jumlahWajib)
+                    >Setujui Berkas</button>
+                </form>
+            </div>
+        </section>
+    @endif
 </div>
 
 <!-- Modal Pratinjau Berkas -->
@@ -272,13 +264,11 @@
     <div class="dlg-box">
         <div class="dlg-head">
             <strong id="dlg-judul" class="dlg-judul"></strong>
-
             <div class="dlg-aksi">
                 <a id="dlg-unduh" href="#" class="btn btn-brand btn-sm">Unduh</a>
                 <button type="button" id="dlg-tutup" class="btn btn-outline btn-sm">Tutup</button>
             </div>
         </div>
-
         <div id="dlg-isi" class="dlg-isi"></div>
     </div>
 </dialog>
@@ -296,10 +286,7 @@
         text-decoration: underline;
         text-underline-offset: 2px;
     }
-
-    .doc-file-btn:hover {
-        color: var(--brand-dark);
-    }
+    .doc-file-btn:hover { color: var(--brand-dark); }
 
     .dlg {
         margin: auto;
@@ -310,11 +297,7 @@
         height: 88vh;
         box-shadow: 0 24px 60px -12px rgba(15,23,42,.45);
     }
-
-    .dlg::backdrop {
-        background: rgba(15,23,42,.55);
-    }
-
+    .dlg::backdrop { background: rgba(15,23,42,.55); }
     .dlg-box {
         display: flex;
         flex-direction: column;
@@ -322,7 +305,6 @@
         height: 100%;
         background: #fff;
     }
-
     .dlg-head {
         display: flex;
         align-items: center;
@@ -331,7 +313,6 @@
         padding: 14px 20px;
         border-bottom: 1px solid var(--line);
     }
-
     .dlg-judul {
         font-size: 14px;
         color: var(--ink);
@@ -339,13 +320,7 @@
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-
-    .dlg-aksi {
-        display: flex;
-        gap: 8px;
-        flex-shrink: 0;
-    }
-
+    .dlg-aksi { display: flex; gap: 8px; flex-shrink: 0; }
     .dlg-isi {
         flex: 1;
         min-height: 0;
@@ -355,33 +330,47 @@
         justify-content: center;
         overflow: auto;
     }
-
-    .dlg-isi iframe {
-        width: 100%;
-        height: 100%;
-        border: 0;
-    }
-
-    .dlg-isi img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-    }
-
+    .dlg-isi iframe { width: 100%; height: 100%; border: 0; }
+    .dlg-isi img { max-width: 100%; max-height: 100%; object-fit: contain; }
     .dlg-pesan {
         padding: 24px;
         font-size: 14px;
         color: var(--muted);
         text-align: center;
     }
-    .decision-selector { width: min(250px, 100%); }
-    .decision-selector .field-label { margin-bottom: 6px; }
-    .decision-box > [data-decision-fields] > h3 { font-size: 15px; font-weight: 700; color: var(--ink); }
-    .decision-box > [data-decision-fields] > .hint { font-size: 12.5px; color: var(--muted); margin: 4px 0 16px; }
-
-    .decision-box button:disabled {
-        cursor: not-allowed;
-        opacity: .55;
+    .decision-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+    .decision-header .decision-select {
+        width: 220px !important;
+        min-width: 220px;
+        max-width: 220px;
+        flex: 0 0 220px;
+        padding-right: 38px !important;
+        background-position: right 16px center !important;
+    }
+    .decision-box > [data-decision-fields] > h3 {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--ink);
+    }
+    .decision-box > [data-decision-fields] > .hint {
+        font-size: 12.5px;
+        color: var(--muted);
+        margin: 4px 0 16px;
+    }
+    .decision-box button:disabled { cursor: not-allowed; opacity: .55; }
+    @media (max-width: 560px) {
+        .decision-header { align-items: stretch; flex-direction: column; }
+        .decision-header .decision-select {
+            width: 100% !important;
+            min-width: 0;
+            max-width: 100%;
+            flex: 1;
+        }
     }
 </style>
 
@@ -401,18 +390,16 @@
 
         document.querySelectorAll('.js-pratinjau').forEach(function (tombol) {
             tombol.addEventListener('click', function () {
-                var tipe = tombol.dataset.tipe;
-
                 judul.textContent = tombol.dataset.nama;
                 unduh.href = tombol.dataset.unduh;
                 isi.innerHTML = '';
 
-                if (tipe === 'pdf') {
+                if (tombol.dataset.tipe === 'pdf') {
                     var f = document.createElement('iframe');
                     f.src = tombol.dataset.pratinjau;
                     f.title = 'Pratinjau ' + tombol.dataset.nama;
                     isi.appendChild(f);
-                } else if (tipe === 'gambar') {
+                } else if (tombol.dataset.tipe === 'gambar') {
                     var g = document.createElement('img');
                     g.src = tombol.dataset.pratinjau;
                     g.alt = tombol.dataset.nama;
@@ -420,7 +407,6 @@
                 } else {
                     pesan('Jenis berkas ini tidak bisa dipratinjau. Gunakan tombol Unduh.');
                 }
-
                 dlg.showModal();
             });
         });
@@ -428,63 +414,65 @@
         document.getElementById('dlg-tutup').addEventListener('click', function () {
             dlg.close();
         });
-
-        var pilihanKeputusan = document.getElementById('pilihan-keputusan');
-        var formKeputusan = document.getElementById('form-keputusan');
-        var tombolKeputusan = document.getElementById('tombol-keputusan');
-        var konfigurasiKeputusan = {
-            setujui: {
-                action: formKeputusan.dataset.actionSetujui,
-                bagian: 'kolom-setujui',
-                label: 'Setujui Berkas',
-                warna: 'btn-green',
-                disabled: {{ $jumlahTersedia !== $jumlahWajib ? 'true' : 'false' }}
-            },
-            tolak: {
-                action: formKeputusan.dataset.actionTolak,
-                bagian: 'kolom-tolak',
-                label: 'Tolak Berkas',
-                warna: 'btn-red',
-                disabled: false
-            },
-            anomali: {
-                action: formKeputusan.dataset.actionAnomali,
-                bagian: 'kolom-anomali',
-                label: 'Alihkan ke Rekonsiliasi',
-                warna: 'btn-brand',
-                disabled: false
-            }
-        };
-
-        function perbaruiKeputusan() {
-            var keputusan = konfigurasiKeputusan[pilihanKeputusan.value];
-            formKeputusan.action = keputusan.action;
-            tombolKeputusan.textContent = keputusan.label;
-            tombolKeputusan.className = 'btn ' + keputusan.warna + ' btn-block';
-            tombolKeputusan.disabled = keputusan.disabled;
-
-            document.querySelectorAll('[data-decision-fields]').forEach(function (bagian) {
-                var aktif = bagian.id === keputusan.bagian;
-                bagian.hidden = !aktif;
-                bagian.querySelectorAll('input, select, textarea').forEach(function (field) {
-                    field.disabled = !aktif;
-                });
-            });
-        }
-
-        pilihanKeputusan.addEventListener('change', perbaruiKeputusan);
-        perbaruiKeputusan();
-
         dlg.addEventListener('click', function (e) {
-            if (e.target === dlg) {
-                dlg.close();
-            }
+            if (e.target === dlg) dlg.close();
         });
-
         dlg.addEventListener('close', function () {
             isi.innerHTML = '';
         });
+
+        // Pada status DIKEMBALIKAN, form keputusan memang tidak dirender.
+        // Karena itu JavaScript keputusan hanya berjalan bila form tersedia.
+        var pilihanKeputusan = document.getElementById('pilihan-keputusan');
+        var formKeputusan = document.getElementById('form-keputusan');
+        var tombolKeputusan = document.getElementById('tombol-keputusan');
+
+        if (pilihanKeputusan && formKeputusan && tombolKeputusan) {
+            var konfigurasiKeputusan = {
+                setujui: {
+                    action: formKeputusan.dataset.actionSetujui,
+                    bagian: 'kolom-setujui',
+                    label: 'Setujui Berkas',
+                    warna: 'btn-green',
+                    disabled: {{ $jumlahTersedia !== $jumlahWajib ? 'true' : 'false' }}
+                },
+                tolak: {
+                    action: formKeputusan.dataset.actionTolak,
+                    bagian: 'kolom-tolak',
+                    label: 'Tolak Berkas',
+                    warna: 'btn-red',
+                    disabled: false
+                },
+                anomali: {
+                    action: formKeputusan.dataset.actionAnomali,
+                    bagian: 'kolom-anomali',
+                    label: 'Alihkan ke Rekonsiliasi',
+                    warna: 'btn-brand',
+                    disabled: false
+                }
+            };
+
+            function perbaruiKeputusan() {
+                var keputusan = konfigurasiKeputusan[pilihanKeputusan.value];
+                if (!keputusan) return;
+
+                formKeputusan.action = keputusan.action;
+                tombolKeputusan.textContent = keputusan.label;
+                tombolKeputusan.className = 'btn ' + keputusan.warna + ' btn-block';
+                tombolKeputusan.disabled = keputusan.disabled;
+
+                document.querySelectorAll('[data-decision-fields]').forEach(function (bagian) {
+                    var aktif = bagian.id === keputusan.bagian;
+                    bagian.hidden = !aktif;
+                    bagian.querySelectorAll('input, select, textarea').forEach(function (field) {
+                        field.disabled = !aktif;
+                    });
+                });
+            }
+
+            pilihanKeputusan.addEventListener('change', perbaruiKeputusan);
+            perbaruiKeputusan();
+        }
     })();
 </script>
 @endsection
-```

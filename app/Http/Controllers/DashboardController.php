@@ -21,6 +21,10 @@ class DashboardController extends Controller
     {
         $pengguna = $request->user();
 
+        if ($pengguna->adalahVerifikator()) {
+            return redirect()->route('verifikasi.index');
+        }
+
         return match (true) {
             $pengguna->adalahPemohon() => view('dashboard.pemohon', [
                 'pengguna' => $pengguna,
@@ -55,28 +59,6 @@ class DashboardController extends Controller
                         ->where('status_pengajuan', LaporanKematian::STATUS_SELESAI)
                         ->count(),
                 ],
-            ]),
-            $pengguna->adalahVerifikator() => view('dashboard.verifikator', [
-                'pengguna' => $pengguna,
-                'statistik' => [
-                    'menunggu' => LaporanKematian::query()
-                        ->where('status_pengajuan', LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
-                        ->count(),
-                    'rekonsiliasi' => LaporanKematian::query()
-                        ->where('status_pengajuan', LaporanKematian::STATUS_DALAM_REKONSILIASI)
-                        ->count(),
-                    'selesai' => LaporanKematian::query()
-                        ->where('status_pengajuan', LaporanKematian::STATUS_SELESAI)
-                        ->count(),
-                ],
-                'antrean' => LaporanKematian::query()
-                    ->whereIn('status_pengajuan', [
-                        LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
-                        LaporanKematian::STATUS_DALAM_REKONSILIASI,
-                    ])
-                    ->orderBy('tanggal_pengajuan')
-                    ->limit(5)
-                    ->get(),
             ]),
             default => view('dashboard.pejabat', [
                 'pengguna' => $pengguna,

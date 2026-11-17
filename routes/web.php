@@ -92,7 +92,16 @@ Route::middleware(['auth', 'peran:pemohon'])->group(function () {
     Route::get('/notifikasi', [PusatNotifikasiController::class, 'indeks'])->name('notifikasi.index');
     Route::post('/notifikasi/tandai-semua', [PusatNotifikasiController::class, 'tandaiSemuaDibaca'])->name('notifikasi.tandai_semua');
 });
+// Pengalihan URL verifikasi lama ke URL baru.
+Route::middleware(['auth', 'peran:verifikator'])->group(function () {
+    Route::get('/verifikasi', function () {
+        return redirect()->route('verifikasi.index');
+    });
 
+    Route::get('/verifikasi/{laporan}', function (LaporanKematian $laporan) {
+        return redirect()->route('verifikasi.show', $laporan);
+    });
+});
 // Alur utama verifikasi berkas: persetujuan, perbaikan, revisi, dan anomali.
 Route::middleware(['auth', 'peran:verifikator'])
     ->prefix('verifikasi-berkas')

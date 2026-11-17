@@ -211,6 +211,73 @@ it('menghitung kelengkapan sesuai aturan wajib konfigurasi', function () {
         ->assertSee('Opsional');
 });
 
+it('menampilkan persentase kesesuaian dari perbandingan AI terbaru yang berhasil', function () {
+    Storage::fake('local');
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporan = buatLaporanAntreanVerifikasi($pemohon);
+
+    $laporan->analisisAi()->create([
+        'jenis' => AnalisisAi::JENIS_PERBANDINGAN,
+        'hasil' => ['skor' => 0.72],
+        'skor' => 0.72,
+        'model' => 'mock-ai-v1',
+        'status' => AnalisisAi::STATUS_BERHASIL,
+        'dibuat_pada' => now()->subDay(),
+    ]);
+    $laporan->analisisAi()->create([
+        'jenis' => AnalisisAi::JENIS_PERBANDINGAN,
+        'hasil' => ['skor' => 0.836],
+        'skor' => 0.836,
+        'model' => 'mock-ai-v1',
+        'status' => AnalisisAi::STATUS_BERHASIL,
+        'dibuat_pada' => now(),
+    ]);
+    $laporan->analisisAi()->create([
+        'jenis' => AnalisisAi::JENIS_PERBANDINGAN,
+        'hasil' => ['skor' => 0.99],
+        'skor' => 0.99,
+        'model' => 'mock-ai-v1',
+        'status' => AnalisisAi::STATUS_GAGAL,
+        'dibuat_pada' => now()->addMinute(),
+    ]);
+    $laporan->analisisAi()->create([
+        'jenis' => AnalisisAi::JENIS_EKSTRAKSI,
+        'hasil' => ['skor' => 0.99],
+        'skor' => 0.99,
+        'model' => 'mock-ai-v1',
+        'status' => AnalisisAi::STATUS_BERHASIL,
+        'dibuat_pada' => now()->addMinutes(2),
+    ]);
+
+    $this->actingAs($verifikator)
+        ->get(route('verifikasi.show', $laporan))
+        ->assertOk()
+        ->assertSee('Persentase Kesesuaian Hasil AI')
+        ->assertSee('84%')
+        ->assertDontSee('99%');
+});
+
+it('menampilkan keterangan saat belum ada perbandingan AI yang berhasil', function () {
+    Storage::fake('local');
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporan = buatLaporanAntreanVerifikasi($pemohon);
+
+    $laporan->analisisAi()->create([
+        'jenis' => AnalisisAi::JENIS_PERBANDINGAN,
+        'hasil' => ['pesan' => 'Layanan AI tidak tersedia.'],
+        'skor' => null,
+        'model' => 'mock-ai-v1',
+        'status' => AnalisisAi::STATUS_GAGAL,
+        'dibuat_pada' => now(),
+    ]);
+
+    $this->actingAs($verifikator)
+        ->get(route('verifikasi.show', $laporan))
+        ->assertOk()
+        ->assertSee('Persentase Kesesuaian Hasil AI')
+        ->assertSee('Analisis Tidak Tersedia');
+});
+
 it('mewajibkan alasan override saat menyetujui berkas yang kurang', function () {
     Storage::fake('local');
 
@@ -912,6 +979,10 @@ it('menampilkan seluruh status non-draf pada dashboard verifikator', function ()
             'Perlu Rekonsiliasi',
             'Selesai',
         ])
+        ->assertSee('stat-waiting', false)
+        ->assertSee('stat-anomaly', false)
+        ->assertSee('stat-complete', false)
+        ->assertDontSee('<span class="badge-dot"></span>', false)
         ->assertDontSee('<th>Berkas</th>', false);
 
     $ids = collect($respons->viewData('pengajuan')->items())

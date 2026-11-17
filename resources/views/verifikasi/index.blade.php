@@ -12,15 +12,15 @@
             <p class="stat-label">Total Permohonan</p>
             <p class="stat-value">{{ $ringkasan['total'] }}</p>
         </div>
-        <div class="stat">
+        <div class="stat stat-waiting">
             <p class="stat-label">Menunggu Verifikasi</p>
             <p class="stat-value">{{ $ringkasan['menunggu'] }}</p>
         </div>
-        <div class="stat">
+        <div class="stat stat-anomaly">
             <p class="stat-label">Anomali Perlu Rekonsiliasi</p>
             <p class="stat-value">{{ $ringkasan['rekonsiliasi'] }}</p>
         </div>
-        <div class="stat">
+        <div class="stat stat-complete">
             <p class="stat-label">Selesai</p>
             <p class="stat-value">{{ $ringkasan['selesai'] }}</p>
         </div>
@@ -68,6 +68,7 @@
                     <thead>
                         <tr>
                             <th style="width: 70px;">No.</th>
+                            <th>No. Pengajuan</th>
                             <th>NIK</th>
                             <th>Nama</th>
                             <th>Tanggal Masuk</th>
@@ -79,24 +80,25 @@
                         @foreach ($pengajuan as $index => $item)
                             @php
                                 [$labelStatus, $warnaStatus] = match ($item->status_pengajuan) {
-                                    \App\Models\LaporanKematian::STATUS_MENUNGGU_VERIFIKASI => ['Menunggu Verifikasi', 'badge-brand'],
+                                    \App\Models\LaporanKematian::STATUS_MENUNGGU_VERIFIKASI => ['Menunggu Verifikasi', 'badge-warning'],
                                     \App\Models\LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE => ['Disetujui', 'badge-brand'],
-                                    \App\Models\LaporanKematian::STATUS_DALAM_REKONSILIASI => ['Perlu Rekonsiliasi', 'badge-warning'],
+                                    \App\Models\LaporanKematian::STATUS_DALAM_REKONSILIASI => ['Perlu Rekonsiliasi', 'badge-bad'],
                                     \App\Models\LaporanKematian::STATUS_SELESAI => ['Selesai', 'badge-ok'],
                                     \App\Models\LaporanKematian::STATUS_DIKEMBALIKAN => ['Dikembalikan', 'badge-bad'],
-                                    \App\Models\LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI => ['Ditolak/Butuh Revisi', 'badge-warning'],
+                                    \App\Models\LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI => ['Ditolak/Butuh Revisi', 'badge-bad'],
                                     \App\Models\LaporanKematian::STATUS_MENUNGGU_PERBAIKAN => ['Menunggu Perbaikan', 'badge-warning'],
                                     default => ['Status lainnya', 'badge-brand'],
                                 };
                             @endphp
                             <tr>
                                 <td style="color: var(--faint);">{{ $pengajuan->firstItem() + $index }}.</td>
-                                <td class="num" style="font-weight: 500; color: var(--ink);">{{ $item->nik_almarhum }}</td>
+                                <td class="num" style="font-weight: 500; color: var(--ink);">{{ $item->no_pengajuan }}</td>
+                                <td class="num" style="font-weight: 500; color: var(--ink);">{{ \App\Support\MaskerNik::masker($item->nik_almarhum) ?? '-' }}</td>
                                 <td style="font-weight: 600; color: var(--ink);">{{ $item->nama_almarhum }}</td>
                                 <td style="color: var(--muted);">
                                     {{ $item->tanggal_pengajuan ? \Carbon\Carbon::parse($item->tanggal_pengajuan)->format('d/m/Y') : '-' }}
                                 </td>
-                                <td><span class="badge {{ $warnaStatus }}"><span class="badge-dot"></span>{{ $labelStatus }}</span></td>
+                                <td><span class="badge {{ $warnaStatus }}">{{ $labelStatus }}</span></td>
                                 <td class="c">
                                     @if ($item->status_pengajuan === \App\Models\LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
                                         <a href="{{ route('verifikasi.show', $item) }}" class="btn btn-brand btn-sm">Verifikasi</a>
