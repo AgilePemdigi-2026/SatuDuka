@@ -188,7 +188,7 @@
 <body>
 <div class="skd-app">
 
-    @unless (auth()->user()->adalahVerifikator())
+    @unless (auth()->user()->adalahVerifikator() || auth()->user()->adalahPejabat())
     <aside class="skd-side">
         <div>
             <div class="skd-brand">
@@ -207,6 +207,14 @@
                     </a>
                     <a href="{{ route('pengajuan.status') }}" class="nav-link {{ request()->routeIs('pengajuan.*') ? 'active' : '' }}">
                         <span class="nav-dot"></span>Status Pengajuan
+                    </a>
+                @elseif (auth()->user()->adalahPejabat())
+                    <p class="skd-nav-label">Menu Utama</p>
+                    <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Dashboard
+                    </a>
+                    <a href="{{ route('tanda_tangan.index') }}" class="nav-link {{ request()->routeIs('tanda_tangan.*') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Tanda Tangan Dokumen
                     </a>
                 @else
                     <p class="skd-nav-label">Menu Utama</p>

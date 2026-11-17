@@ -37,6 +37,13 @@ it('menampilkan dashboard sesuai peran pengguna', function () {
         ->assertOk()
         ->assertSee('Dashboard Pejabat Penanda Tangan')
         ->assertSee('Anda masuk sebagai Pejabat')
+        ->assertSee('class="stats"', false)
+        ->assertSee('class="stat stat-waiting"', false)
+        ->assertDontSee('<aside class="skd-side">', false)
+        ->assertDontSee('Dokumen yang telah disetujui verifikator dan menunggu tanda tangan elektronik.')
+        ->assertDontSee('Dokumen yang perlu ditandatangani akan muncul di sini.')
+        ->assertSee(route('tanda_tangan.index'))
+        ->assertSee('Buka Semua Dokumen')
         ->assertSee('Kelola Profil')
         ->assertDontSee('Profil Saya');
 });
