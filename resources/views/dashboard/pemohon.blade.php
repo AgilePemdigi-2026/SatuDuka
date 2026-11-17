@@ -25,68 +25,69 @@
         |--------------------------------------------------------------------------
         | Warna KPI Dashboard Pemohon
         |--------------------------------------------------------------------------
-        | Posisi, ukuran, dan struktur KPI tetap mengikuti layout asli.
-        | Warna disesuaikan dengan badge status pengajuan.
+        | Mengikuti KPI Verifikator.
+        | Kartu tetap putih. Hanya garis atas, label, dan angka yang berwarna.
+        | Ukuran, posisi, dan susunan KPI tetap menggunakan CSS layout asli.
         */
 
         /* Total Pengajuan - Navy */
-        .stat--total {
+        .stats .stat--total {
             background: #ffffff;
-            border-color: #dbe4ef;
+            border-color: #E5EAF1;
         }
 
-        .stat--total::before {
-            background: #1e3a5f;
+        .stats .stat--total::before {
+            background: #1E3A5F;
         }
 
-        .stat--total .stat-label,
-        .stat--total .stat-value {
-            color: #1e3a5f;
+        .stats .stat--total .stat-label,
+        .stats .stat--total .stat-value {
+            color: #1E3A5F;
         }
 
-        /* Menunggu Verifikasi - Biru */
-        .stat--menunggu {
-            background: #eff8ff;
-            border-color: #bae6fd;
+        /* Menunggu Verifikasi - Kuning */
+        .stats .stat--menunggu {
+            background: #ffffff;
+            border-color: #E5EAF1;
         }
 
-        .stat--menunggu::before {
-            background: #0284c7;
+        .stats .stat--menunggu::before {
+            background: #D99A24;
         }
 
-        .stat--menunggu .stat-label,
-        .stat--menunggu .stat-value {
-            color: #0369a1;
+        .stats .stat--menunggu .stat-label,
+        .stats .stat--menunggu .stat-value {
+            color: #D99A24;
         }
 
-        /* Perlu Perbaikan - Oranye */
-        .stat--perbaikan {
-            background: #fffbeb;
-            border-color: #fcd34d;
+        /* Perlu Perbaikan - Merah */
+        .stats .stat--perbaikan {
+            background: #ffffff;
+            border-color: #E5EAF1;
         }
 
-        .stat--perbaikan::before {
-            background: #f59e0b;
+        .stats .stat--perbaikan::before {
+            background: #dc2626;
         }
 
-        .stat--perbaikan .stat-label,
-        .stat--perbaikan .stat-value {
-            color: #b45309;
+        .stats .stat--perbaikan .stat-label,
+        .stats .stat--perbaikan .stat-value {
+            color: #dc2626;
         }
 
         /* Selesai - Hijau */
-        .stat--selesai {
-            background: #f0fdf4;
-            border-color: #86efac;
+        .stats .stat--selesai {
+            background: #ffffff;
+            border-color: #E5EAF1;
         }
 
-        .stat--selesai::before {
-            background: #16a34a;
+        .stats .stat--selesai::before {
+            background: #065f46;
         }
 
-        .stat--selesai .stat-label,
-        .stat--selesai .stat-value {
-            color: #15803d;
+        .stats .stat--selesai .stat-label,
+        .stats .stat--selesai .stat-value {
+            color: #065f46;
         }
     </style>
 
@@ -104,64 +105,40 @@
         <div class="card-body">
             <section class="stats">
 
-                {{-- KPI 1: Total Pengajuan --}}
+                {{-- Total Pengajuan --}}
                 <div class="stat stat--total">
-                    <p class="stat-label">
-                        Total Pengajuan
-                    </p>
-
+                    <p class="stat-label">Total Pengajuan</p>
                     <p class="stat-value">
                         {{ $statistikPemohon['total'] }}
                     </p>
-
-                    <p class="stat-note">
-                        Semua pengajuan Anda
-                    </p>
+                    <p class="stat-note">Semua pengajuan Anda</p>
                 </div>
 
-                {{-- KPI 2: Menunggu Verifikasi --}}
+                {{-- Menunggu Verifikasi --}}
                 <div class="stat stat--menunggu">
-                    <p class="stat-label">
-                        Menunggu Verifikasi
-                    </p>
-
+                    <p class="stat-label">Menunggu Verifikasi</p>
                     <p class="stat-value">
                         {{ $statistikPemohon['menunggu'] }}
                     </p>
-
-                    <p class="stat-note">
-                        Sedang diperiksa petugas
-                    </p>
+                    <p class="stat-note">Sedang diperiksa petugas</p>
                 </div>
 
-                {{-- KPI 3: Perlu Perbaikan --}}
+                {{-- Perlu Perbaikan --}}
                 <div class="stat stat--perbaikan">
-                    <p class="stat-label">
-                        Perlu Perbaikan
-                    </p>
-
+                    <p class="stat-label">Perlu Perbaikan</p>
                     <p class="stat-value">
                         {{ $statistikPemohon['perluPerbaikan'] }}
                     </p>
-
-                    <p class="stat-note">
-                        Perlu ditindaklanjuti
-                    </p>
+                    <p class="stat-note">Perlu ditindaklanjuti</p>
                 </div>
 
-                {{-- KPI 4: Selesai --}}
+                {{-- Selesai --}}
                 <div class="stat stat--selesai">
-                    <p class="stat-label">
-                        Selesai
-                    </p>
-
+                    <p class="stat-label">Selesai</p>
                     <p class="stat-value">
                         {{ $statistikPemohon['selesai'] }}
                     </p>
-
-                    <p class="stat-note">
-                        Pengajuan selesai diproses
-                    </p>
+                    <p class="stat-note">Pengajuan selesai diproses</p>
                 </div>
 
             </section>
@@ -173,10 +150,7 @@
         <section class="card" style="margin-top: 32px;">
             <div class="card-head">
                 <div>
-                    <h2 class="card-title">
-                        Perlu Tindakan Anda
-                    </h2>
-
+                    <h2 class="card-title">Perlu Tindakan Anda</h2>
                     <p class="card-desc">
                         Lengkapi draf atau perbaiki pengajuan yang dikembalikan.
                     </p>
@@ -195,16 +169,12 @@
     <section class="card" style="margin-top: 32px;">
         <div class="card-head dashboard-card-head">
             <div>
-                <h2 class="card-title">
-                    Pengajuan Saya
-                </h2>
-
+                <h2 class="card-title">Pengajuan Saya</h2>
                 <p class="card-desc">
                     Pengajuan yang sedang diproses atau sudah selesai.
                 </p>
             </div>
 
-            {{-- Form Pencarian --}}
             <form
                 action="{{ route('pengajuan.status') }}"
                 method="GET"
@@ -219,10 +189,7 @@
                     value="{{ request('nomor') }}"
                 >
 
-                <button
-                    type="submit"
-                    class="btn btn-brand"
-                >
+                <button type="submit" class="btn btn-brand">
                     Cari
                 </button>
             </form>
