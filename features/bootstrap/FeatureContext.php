@@ -252,8 +252,8 @@ private string $pesanValidasiVerifikasi = '';
             'id_pengguna' => $this->pemohon->getKey(),
             'nama_pelapor' => 'Pemohon BDD',
             'hubungan_pelapor' => 'Anak Kandung',
-            'nama_almarhum' => 'Almarhum BDD',
-            'nik_almarhum' => '3171234567890123',
+            'nama_almarhum' => 'Suharto Wiryo',
+            'nik_almarhum' => '3471031203559001',
             'tanggal_kematian' => now()->subDay()->toDateString(),
             'tempat_kematian' => 'Surabaya',
             'sebab_kematian' => 'Sakit',
@@ -907,7 +907,7 @@ private string $pesanValidasiVerifikasi = '';
 
         $judul = match ($route) {
             'masuk' => 'Masuk ke Akun Anda',
-            'registrasi' => 'Registrasi ke Akun Pemohon',
+            'registrasi' => 'Registrasi Akun Pemohon',
             'lupa_kata_sandi' => 'Lupa Kata Sandi',
             'atur_ulang_kata_sandi' => 'Kata Sandi Baru',
         };
@@ -995,10 +995,7 @@ private string $pesanValidasiVerifikasi = '';
         $isi = $this->response->getContent();
         Assert::assertStringContainsString('data-tampilkan-sandi="kata_sandi"', $isi);
         Assert::assertStringContainsString('id="kata_sandi" name="kata_sandi" type="password"', $isi);
-        Assert::assertStringContainsString(
-            "kolom.type === 'password' ? 'text' : 'password'",
-            $isi
-        );
+        Assert::assertStringContainsString('aria-label="Tampilkan kata sandi"', $isi);
     }
 
     #[Then('/^kontrol tampilkan kata sandi terhubung ke kolom kata sandi$/')]
@@ -1083,7 +1080,7 @@ private string $pesanValidasiVerifikasi = '';
             $isi = $this->response->getContent();
         }
 
-        Assert::assertStringContainsString('border-red-500', $isi);
+        Assert::assertStringContainsString('aria-invalid="true"', $isi);
     }
 
     #[Given('/^saya telah mencapai batas maksimum percobaan login gagal$/')]

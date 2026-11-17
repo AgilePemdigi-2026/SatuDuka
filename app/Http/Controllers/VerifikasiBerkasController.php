@@ -87,7 +87,10 @@ class VerifikasiBerkasController extends Controller
     public function show(LaporanKematian $laporan): View
     {
         abort_unless(
-            $laporan->status_pengajuan === LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+            in_array($laporan->status_pengajuan, [
+                LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+                LaporanKematian::STATUS_DIKEMBALIKAN,
+            ], true),
             404
         );
 
@@ -95,6 +98,7 @@ class VerifikasiBerkasController extends Controller
             'pemohon',
             'berkasPendukung',
             'hasilVerifikasi.verifikator',
+            'dokumenResmi',
         ]);
 
         $analisisKesesuaian = $laporan->analisisAi()
@@ -385,7 +389,10 @@ class VerifikasiBerkasController extends Controller
         BerkasPendukung $berkas
     ): string {
         abort_unless(
-            $laporan->status_pengajuan === LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+            in_array($laporan->status_pengajuan, [
+                LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+                LaporanKematian::STATUS_DIKEMBALIKAN,
+            ], true),
             404
         );
         abort_unless(
