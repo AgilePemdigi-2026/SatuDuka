@@ -131,67 +131,62 @@
                         @endif
                     </div>
                 @endforeach
+
+                <div class="doc-item">
+                    <div class="doc-left">
+                        <span class="doc-ic {{ $analisisKesesuaian?->skor !== null ? 'ok' : 'bad' }}">
+                            {{ $analisisKesesuaian?->skor !== null ? '✓' : '!' }}
+                        </span>
+                        <p class="doc-name">Persentase Kesesuaian Hasil AI</p>
+                    </div>
+
+                    @if ($analisisKesesuaian?->skor !== null)
+                        <span class="badge badge-ok">
+                            {{ (int) round($analisisKesesuaian->skor * 100) }}%
+                        </span>
+                    @else
+                        <span class="badge badge-brand">Analisis Tidak Tersedia</span>
+                    @endif
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Pencocokan SIAK -->
-    <section class="card">
-        <div class="card-head">
-            <h2 class="card-title">Pencocokan Data SIAK</h2>
-        </div>
 
-        <div class="card-body">
-            @if ($hasilPencocokan['ditemukan_di_siak'])
-                <div class="info-grid">
-                    <div class="match-row">
-                        <span>Kesesuaian NIK</span>
-                        <span class="badge {{ $hasilPencocokan['nik_sesuai'] ? 'badge-ok' : 'badge-bad' }}">
-                            {{ $hasilPencocokan['nik_sesuai'] ? 'Sesuai' : 'Tidak Sesuai' }}
-                        </span>
-                    </div>
+<!-- Keputusan Verifikasi -->
+<section class="card">
+    <div class="card-head decision-header">
+        <h2 class="card-title">Keputusan Verifikasi</h2>
 
-                    <div class="match-row">
-                        <span>Kesesuaian Nama</span>
-                        <span class="badge {{ $hasilPencocokan['nama_sesuai'] ? 'badge-ok' : 'badge-bad' }}">
-                            {{ $hasilPencocokan['nama_sesuai'] ? 'Sesuai' : 'Tidak Sesuai' }}
-                        </span>
-                    </div>
-                </div>
-            @else
-                <div class="alert alert-warn">
-                    Data tidak ditemukan pada SIAK dummy. Lakukan pemeriksaan manual.
-                </div>
-            @endif
-        </div>
-    </section>
+        <select
+            id="pilihan-keputusan"
+            name="keputusan"
+            form="form-keputusan"
+            class="field decision-select"
+        >
+            <option value="setujui" @selected(old('keputusan', 'setujui') === 'setujui')>
+                Setujui Berkas
+            </option>
+            <option value="tolak" @selected(old('keputusan') === 'tolak')>
+                Tolak Berkas
+            </option>
+            <option value="anomali" @selected(old('keputusan') === 'anomali')>
+                Alihkan ke Rekonsiliasi
+            </option>
+        </select>
+    </div>
 
-    <!-- Keputusan Verifikasi -->
-    <section class="card">
-        <div class="card-head decision-header">
-            <h2 class="card-title">Keputusan Verifikasi</h2>
-        </div>
-
-        <div class="card-body">
-            <form
-                id="form-keputusan"
-                method="POST"
-                action="{{ route('verifikasi.setujui', $laporan) }}"
-                data-action-setujui="{{ route('verifikasi.setujui', $laporan) }}"
-                data-action-tolak="{{ route('verifikasi.revisi', $laporan) }}"
-                data-action-anomali="{{ route('verifikasi.anomali', $laporan) }}"
-                class="decision-box"
-            >
-                @csrf
-
-                <label for="pilihan-keputusan" class="decision-selector">
-                    <span class="field-label">Pilihan Keputusan</span>
-                    <select id="pilihan-keputusan" name="keputusan" class="field">
-                        <option value="setujui" @selected(old('keputusan', 'setujui') === 'setujui')>Setujui Berkas</option>
-                        <option value="tolak" @selected(old('keputusan') === 'tolak')>Tolak Berkas</option>
-                        <option value="anomali" @selected(old('keputusan') === 'anomali')>Alihkan ke Rekonsiliasi</option>
-                    </select>
-                </label>
+    <div class="card-body">
+        <form
+            id="form-keputusan"
+            method="POST"
+            action="{{ route('verifikasi.setujui', $laporan) }}"
+            data-action-setujui="{{ route('verifikasi.setujui', $laporan) }}"
+            data-action-tolak="{{ route('verifikasi.revisi', $laporan) }}"
+            data-action-anomali="{{ route('verifikasi.anomali', $laporan) }}"
+            class="decision-box"
+        >
+            @csrf
 
                 <div id="kolom-setujui" data-decision-fields>
                     <h3>Setujui Berkas</h3>
@@ -402,14 +397,64 @@
         color: var(--muted);
         text-align: center;
     }
-    .decision-selector { display: block; width: min(250px, 100%); }
-    .decision-selector .field-label { margin-bottom: 6px; }
-    .decision-box > [data-decision-fields] > h3 { font-size: 15px; font-weight: 700; color: var(--ink); }
-    .decision-box > [data-decision-fields] > .hint { font-size: 12.5px; color: var(--muted); margin: 4px 0 16px; }
+
+    .decision-selector {
+        display: block;
+        width: min(250px, 100%);
+    }
+
+    .decision-selector .field-label {
+        margin-bottom: 6px;
+    }
+
+    /* Header Keputusan Verifikasi */
+    .decision-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    /* Dropdown kecil di sebelah kanan judul */
+    .decision-header .decision-select {
+        width: 220px !important;
+        min-width: 220px;
+        max-width: 220px;
+        flex: 0 0 220px;
+        padding-right: 38px !important;
+        background-position: right 16px center !important;
+    }
+
+    .decision-box > [data-decision-fields] > h3 {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--ink);
+    }
+
+    .decision-box > [data-decision-fields] > .hint {
+        font-size: 12.5px;
+        color: var(--muted);
+        margin: 4px 0 16px;
+    }
 
     .decision-box button:disabled {
         cursor: not-allowed;
         opacity: .55;
+    }
+
+    /* Tampilan responsif */
+    @media (max-width: 560px) {
+        .decision-header {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .decision-header .decision-select {
+            width: 100% !important;
+            min-width: 0;
+            max-width: 100%;
+            flex: 1;
+        }
     }
 </style>
 
@@ -515,4 +560,3 @@
     })();
 </script>
 @endsection
-```
