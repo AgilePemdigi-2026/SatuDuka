@@ -33,6 +33,14 @@
         </div>
     @endif
 
+    @if ($laporan->status_pengajuan === \App\Models\LaporanKematian::STATUS_DIKEMBALIKAN)
+        <div role="status" class="alert alert-warn" style="margin: 0;">
+            <strong>Dokumen dikembalikan oleh Pejabat</strong>
+            <p style="margin-top: 6px;">Alasan: {{ $laporan->dokumenResmi?->alasan_pengembalian ?: '-' }}</p>
+            <p style="margin-top: 6px;">Pengajuan ini hanya dapat ditinjau kembali setelah pemohon memperbaiki dan mengirim ulang berkas.</p>
+        </div>
+    @endif
+
     <!-- Informasi Pengajuan -->
     <section class="card">
         <div class="card-head">
@@ -153,6 +161,7 @@
     </section>
 
 
+@if ($laporan->status_pengajuan === \App\Models\LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
 <!-- Keputusan Verifikasi -->
 <section class="card">
     <div class="card-head decision-header">
@@ -288,6 +297,7 @@
             </form>
         </div>
     </section>
+    @endif
 </div>
 
 <!-- Modal Pratinjau Berkas -->

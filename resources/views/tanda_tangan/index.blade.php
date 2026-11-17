@@ -15,9 +15,18 @@
     </x-ui.page-header>
 
     <section class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <x-ui.stat label="Menunggu Tindakan" :value="$statistik['menunggu']" variant="warning" />
-        <x-ui.stat label="Selesai" :value="$statistik['selesai']" variant="success" />
-        <x-ui.stat label="Dikembalikan" :value="$statistik['dikembalikan']" variant="danger" />
+        <div class="stat stat-waiting">
+            <p class="stat-label">Menunggu Tindakan</p>
+            <p class="stat-value">{{ $statistik['menunggu'] }}</p>
+        </div>
+        <div class="stat stat-complete">
+            <p class="stat-label">Selesai</p>
+            <p class="stat-value">{{ $statistik['selesai'] }}</p>
+        </div>
+        <div class="stat stat-anomaly">
+            <p class="stat-label">Dikembalikan</p>
+            <p class="stat-value">{{ $statistik['dikembalikan'] }}</p>
+        </div>
     </section>
 
     <section class="mt-8">
