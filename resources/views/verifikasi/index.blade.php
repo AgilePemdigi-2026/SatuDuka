@@ -79,12 +79,12 @@
                         @foreach ($pengajuan as $index => $item)
                             @php
                                 [$labelStatus, $warnaStatus] = match ($item->status_pengajuan) {
-                                    \App\Models\LaporanKematian::STATUS_MENUNGGU_VERIFIKASI => ['Menunggu Verifikasi', 'badge-brand'],
+                                    \App\Models\LaporanKematian::STATUS_MENUNGGU_VERIFIKASI => ['Menunggu Verifikasi', 'badge-warning'],
                                     \App\Models\LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE => ['Disetujui', 'badge-brand'],
-                                    \App\Models\LaporanKematian::STATUS_DALAM_REKONSILIASI => ['Perlu Rekonsiliasi', 'badge-warning'],
+                                    \App\Models\LaporanKematian::STATUS_DALAM_REKONSILIASI => ['Perlu Rekonsiliasi', 'badge-bad'],
                                     \App\Models\LaporanKematian::STATUS_SELESAI => ['Selesai', 'badge-ok'],
                                     \App\Models\LaporanKematian::STATUS_DIKEMBALIKAN => ['Dikembalikan', 'badge-bad'],
-                                    \App\Models\LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI => ['Ditolak/Butuh Revisi', 'badge-warning'],
+                                    \App\Models\LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI => ['Ditolak/Butuh Revisi', 'badge-bad'],
                                     \App\Models\LaporanKematian::STATUS_MENUNGGU_PERBAIKAN => ['Menunggu Perbaikan', 'badge-warning'],
                                     default => ['Status lainnya', 'badge-brand'],
                                 };

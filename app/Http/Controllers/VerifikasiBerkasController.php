@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AnalisisAi;
 use App\Models\AnomaliDokumen;
 use App\Models\BerkasPendukung;
 use App\Models\HasilVerifikasi;
@@ -96,6 +97,13 @@ class VerifikasiBerkasController extends Controller
             'hasilVerifikasi.verifikator',
         ]);
 
+        $analisisKesesuaian = $laporan->analisisAi()
+            ->where('jenis', AnalisisAi::JENIS_PERBANDINGAN)
+            ->where('status', AnalisisAi::STATUS_BERHASIL)
+            ->orderByDesc('dibuat_pada')
+            ->orderByDesc('id_analisis')
+            ->first();
+
         $dataSIAK = DataSIAK::cariNik($laporan->nik_almarhum);
         $dokumenWajib = BerkasPendukung::DAFTAR_JENIS;
         
@@ -116,7 +124,8 @@ class VerifikasiBerkasController extends Controller
             'laporan',
             'dataSIAK',
             'hasilPencocokan',
-            'dokumenWajib'
+            'dokumenWajib',
+            'analisisKesesuaian'
         ));
     }
 
