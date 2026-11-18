@@ -24,7 +24,6 @@
         body { margin: 0; font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif; background: var(--bg); color: #1e293b; -webkit-font-smoothing: antialiased; }
         a { text-decoration: none; }
         h1, h2, h3, p { margin: 0; }
-
         /* ===== Kerangka ===== */
         .skd-app { display: flex; min-height: 100vh; }
         .skd-side {
@@ -48,12 +47,18 @@
         .nav-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .5; flex-shrink: 0; }
         .nav-link.active .nav-dot { opacity: 1; }
         .skd-foot { font-size: 11px; text-align: center; color: var(--faint); padding-top: 18px; border-top: 1px solid var(--line); }
-
         .skd-main { flex: 1; min-width: 0; }
         .skd-container { max-width: 1180px; margin: 0 auto; padding: 36px 44px 56px; }
         .skd-topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 32px; }
         .skd-topbar-detail { flex-direction: column; align-items: stretch; gap: 20px; }
         .skd-topbar-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        /* Header dashboard pemohon: avatar di kanan atas, CTA di kanan judul. */
+        .skd-topbar-pemohon { display: flex; flex-direction: column; align-items: stretch; gap: 20px; }
+        .skd-pemohon-avatar { display: flex; justify-content: flex-end; }
+        .skd-pemohon-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+        .skd-pemohon-title-row .skd-heading-copy { flex: 1; min-width: 0; }
+        .skd-pemohon-cta { flex-shrink: 0; }
+        .skd-pemohon-cta .btn { white-space: nowrap; }
         .skd-heading { display: flex; flex: 1; min-width: 0; align-items: center; justify-content: space-between; gap: 24px; }
         .skd-heading-copy { min-width: 0; }
         .skd-title { font-size: 28px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; color: var(--ink); }
@@ -62,7 +67,6 @@
         .skd-user-name { font-size: 14px; font-weight: 700; color: var(--ink); text-align: right; }
         .skd-user-role { font-size: 12px; color: var(--muted); text-align: right; }
         .skd-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--brand); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 15px; }
-
         /* ===== Komponen ===== */
         .stack { display: flex; flex-direction: column; gap: 28px; }
         .card { background: #fff; border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 1px 3px rgba(15,23,42,.05); overflow: hidden; }
@@ -70,7 +74,6 @@
         .card-title { font-size: 17px; font-weight: 700; color: var(--ink); }
         .card-desc { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
         .card-body { padding: 26px 28px; }
-
         .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
         .stat { position: relative; background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 26px 20px 22px; text-align: center; box-shadow: 0 1px 3px rgba(15,23,42,.05); overflow: hidden; }
         .stat::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--stat-color, var(--brand)); }
@@ -80,7 +83,6 @@
         .stat-anomaly { --stat-color: #D65F52; background: #FFF }
         .stat-complete { --stat-color: #31936C; background: #FFF; }
         .stat-note { font-size: 12px; color: var(--faint); }
-
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; font-family: inherit; font-weight: 600; font-size: 14px; padding: 11px 22px; cursor: pointer; border: 1px solid transparent; transition: all .15s ease; }
         .btn-sm { font-size: 12.5px; padding: 8px 20px; }
         .btn-pill { border-radius: 999px; }
@@ -92,58 +94,18 @@
         .btn-red:hover { background: #991b1b; }
         .btn-outline { background: #fff; color: #475569; border-color: #cbd5e1; }
         .btn-outline:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
-        .btn-block { width: 100%; }
-
-        .field { width: 100%; background: #fff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 11px 14px; font-family: inherit; font-size: 14px; color: var(--ink); outline: none; transition: all .15s ease; }
-        .field:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(30,58,95,.12); }
-        .decision-header .decision-select {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-
-    padding-right: 42px !important;
-
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364758B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    background-size: 16px;
-}
-        .field::placeholder { color: var(--faint); }
-        textarea.field { resize: vertical; }
-        .field-label { display: block; font-size: 12.5px; font-weight: 600; color: #334155; margin-bottom: 6px; }
-        .search-form { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
-        .search-input { width: 270px; max-width: 100%; border-radius: 999px; padding: 10px 20px; }
-        .dashboard-card-head { flex-wrap: nowrap; }
-        .dashboard-card-head > div { flex: 1; min-width: 0; }
-        .dashboard-card-head .search-form { flex-shrink: 0; }
-
-        .table-wrap { overflow-x: auto; }
-        .tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
-        .tbl th { background: #F4F7FB; color: var(--muted); font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; text-align: left; padding: 15px 18px; white-space: nowrap; }
-        .tbl td { padding: 18px; border-top: 1px solid var(--line); color: #334155; vertical-align: middle; }
-        .tbl tbody tr:hover td { background: #F8FAFD; }
-        .tbl .c { text-align: center; }
-        .tbl th:first-child, .tbl td:first-child { padding-left: 28px; }
-        .tbl th:last-child, .tbl td:last-child { padding-right: 28px; }
-        .num { font-variant-numeric: tabular-nums; }
-
-        .badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 5px 13px; font-size: 12px; font-weight: 600; white-space: nowrap; }
-        .badge-brand { background: var(--brand-soft); color: var(--brand); }
         .badge-ok { background: #ecfdf5; color: #065f46; }
         .badge-bad { background: #fef2f2; color: #dc2626; }
         .badge-warning { background: #fff7ed; color: #D99A24; }
         .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-
         .alert { border-radius: 16px; padding: 16px 20px; font-size: 14px; margin-bottom: 24px; }
         .alert ul { margin: 8px 0 0; padding-left: 20px; }
         .alert-ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; font-weight: 500; }
         .alert-err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
         .alert-warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-weight: 500; margin: 0; }
-
         .empty { text-align: center; padding: 64px 20px; }
         .empty-ic { width: 52px; height: 52px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 20px; font-weight: 700; }
         .pager { padding: 18px 28px; border-top: 1px solid var(--line); }
-
         /* ===== Halaman detail ===== */
         .page-narrow { max-width: 980px; }
         .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -165,7 +127,6 @@
         .decision-box h3 { font-size: 15px; font-weight: 700; color: var(--ink); }
         .decision-box .hint { font-size: 12.5px; color: var(--muted); margin: 4px 0 16px; }
         .form-stack { display: flex; flex-direction: column; gap: 12px; }
-
         @media (max-width: 1100px) { .stats { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 900px) {
             .skd-app { flex-direction: column; }
@@ -177,6 +138,10 @@
             .dashboard-card-head .search-form { width: 100%; }
             .dashboard-card-head .search-input { flex: 1; min-width: 0; }
         }
+        @media (max-width: 650px) {
+            .skd-pemohon-title-row { flex-direction: column; align-items: stretch; }
+            .skd-pemohon-cta .btn { width: 100%; }
+        }
         @media (max-width: 560px) {
             .stats { grid-template-columns: 1fr; }
             .dashboard-card-head .search-form { flex-wrap: wrap; }
@@ -187,71 +152,43 @@
 </head>
 <body>
 <div class="skd-app">
-
-    @unless (auth()->user()->adalahVerifikator() || auth()->user()->adalahPejabat())
-    <aside class="skd-side">
-        <div>
-            <div class="skd-brand">
-                <h1>SKD</h1>
-                <p>Sistem Kependudukan Digital</p>
-            </div>
-
-            <nav class="skd-nav">
-                @if (auth()->user()->adalahPemohon())
-                    <p class="skd-nav-label">Menu Utama</p>
-                    <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                        <span class="nav-dot"></span>Dashboard
-                    </a>
-                    <a href="{{ route('laporan.baru') }}" class="nav-link {{ request()->routeIs('laporan.baru') ? 'active' : '' }}">
-                        <span class="nav-dot"></span>Ajukan Laporan Baru
-                    </a>
-                    <a href="{{ route('pengajuan.status') }}" class="nav-link {{ request()->routeIs('pengajuan.*') ? 'active' : '' }}">
-                        <span class="nav-dot"></span>Status Pengajuan
-                    </a>
-                @elseif (auth()->user()->adalahPejabat())
-                    <p class="skd-nav-label">Menu Utama</p>
-                    <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                        <span class="nav-dot"></span>Dashboard
-                    </a>
-                    <a href="{{ route('tanda_tangan.index') }}" class="nav-link {{ request()->routeIs('tanda_tangan.*') ? 'active' : '' }}">
-                        <span class="nav-dot"></span>Tanda Tangan Dokumen
-                    </a>
-                @else
-                    <p class="skd-nav-label">Menu Utama</p>
-                    <a href="{{ route('verifikasi.index') }}" class="nav-link {{ request()->routeIs('verifikasi.index') ? 'active' : '' }}">
-                        <span class="nav-dot"></span>Dashboard
-                    </a>
-                    <a href="#" class="nav-link {{ request()->routeIs('verifikasi.show') ? 'active' : '' }}">
-                        <span class="nav-dot"></span>Verifikasi &amp; Rekonsiliasi
-                    </a>
-                    <a href="#" class="nav-link"><span class="nav-dot"></span>Approve / Reject Berkas</a>
-
-                    <p class="skd-nav-label" style="margin-top: 22px;">Lainnya</p>
-                    <a href="#" class="nav-link"><span class="nav-dot"></span>Pengaturan</a>
-                @endif
-            </nav>
-        </div>
-
-        <p class="skd-foot">&copy; {{ date('Y') }} SKD Indonesia</p>
-    </aside>
-    @endunless
-
+    {{-- Sidebar dinonaktifkan: navigasi pemohon kini melalui dashboard dan tombol aksi. --}}
     <div class="skd-main">
         <main class="skd-container">
-
             @hasSection('aksi_header')
-            <div class="skd-topbar skd-topbar-detail">
-                <div class="skd-topbar-actions">
-                    @yield('aksi_header')
-                    @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
-                </div>
-                <div class="skd-heading-copy">
-                    <h1 class="skd-title">@yield('judul', 'Verifikasi')</h1>
-                    @hasSection('subjudul')
-                        <p class="skd-sub">@yield('subjudul')</p>
-                    @endif
-                </div>
-            </div>
+                @if (auth()->user()?->adalahPemohon() && request()->routeIs('dashboard'))
+                    {{-- Khusus dashboard pemohon: tombol di kanan sejajar judul. --}}
+                    <div class="skd-topbar skd-topbar-pemohon">
+                        <div class="skd-pemohon-avatar">
+                            @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
+                        </div>
+                        <div class="skd-pemohon-title-row">
+                            <div class="skd-heading-copy">
+                                <h1 class="skd-title">@yield('judul', 'Dashboard Pemohon')</h1>
+                                @hasSection('subjudul')
+                                    <p class="skd-sub">@yield('subjudul')</p>
+                                @endif
+                            </div>
+                            <div class="skd-pemohon-cta">
+                                @yield('aksi_header')
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    {{-- Header halaman lain tetap seperti versi sebelumnya. --}}
+                    <div class="skd-topbar skd-topbar-detail">
+                        <div class="skd-topbar-actions">
+                            @yield('aksi_header')
+                            @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
+                        </div>
+                        <div class="skd-heading-copy">
+                            <h1 class="skd-title">@yield('judul', 'Verifikasi')</h1>
+                            @hasSection('subjudul')
+                                <p class="skd-sub">@yield('subjudul')</p>
+                            @endif
+                        </div>
+                    </div>
+                @endif
             @else
             <div class="skd-topbar">
                 <div class="skd-heading">
@@ -265,11 +202,9 @@
                 @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
             </div>
             @endif
-
             @if (session('sukses') || session('success'))
                 <div class="alert alert-ok">{{ session('sukses') ?? session('success') }}</div>
             @endif
-
             @if ($errors->any() && ! trim($__env->yieldContent('tanpa_error_global')))
                 <div role="alert" class="alert alert-err">
                     <strong>Perhatikan kendala berikut:</strong>
@@ -280,11 +215,9 @@
                     </ul>
                 </div>
             @endif
-
             @yield('konten')
         </main>
     </div>
-
 </div>
 </body>
 </html>
