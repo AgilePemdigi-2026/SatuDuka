@@ -1,56 +1,50 @@
 @if ($daftar->isEmpty())
-    <div class="mt-3 rounded-2xl border border-dashed border-line-strong bg-surface p-6 text-center text-sm text-muted">
+    <x-ui.empty judul="Belum ada pengajuan">
         {{ $kosong ?? 'Belum ada pengajuan yang diajukan' }}
-    </div>
+    </x-ui.empty>
 @else
     {{-- Tampilan Desktop (Tabel) --}}
-    <div class="table-wrap hidden sm:block">
-        <table class="tbl">
-            <thead>
-                <tr>
-                    <th>Nomor Pengajuan</th>
-                    <th>Almarhum/Almarhumah</th>
-                    <th>Tanggal Pengajuan</th>
-                    <th>Status &amp; Keterangan</th>
-                    <th class="c">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
+    <x-ui.table class="hidden md:block">
+        <x-slot:head>
+            <th>Nomor Pengajuan</th>
+            <th>Almarhum/Almarhumah</th>
+            <th>Tanggal Pengajuan</th>
+            <th>Status &amp; Keterangan</th>
+            <th class="text-center">Aksi</th>
+        </x-slot:head>
 
-                @foreach ($daftar as $laporan)
-                    @php
-                        $perluAlasan = in_array($laporan->status_pengajuan, [
-                            \App\Models\LaporanKematian::STATUS_DIKEMBALIKAN,
-                            \App\Models\LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI,
-                            \App\Models\LaporanKematian::STATUS_MENUNGGU_PERBAIKAN,
-                        ], true);
-                        $alasanPerbaikan = $perluAlasan ? $laporan->labelAlasanPerbaikan() : null;
-                    @endphp
-                    <tr>
-                        <td class="num" style="font-weight: 600; color: var(--ink);">
-                            {{ $laporan->no_pengajuan ?? 'Belum diterbitkan' }}
-                        </td>
-                        <td style="font-weight: 600; color: var(--ink);">{{ $laporan->labelNamaAlmarhum() }}</td>
-                        <td style="color: var(--muted);">{{ $laporan->labelTanggalPengajuan() }}</td>
-                        <td>
-                            @include('komponen.badge_status', ['status' => $laporan->status_pengajuan])
-                            @if ($alasanPerbaikan !== null)
-                                <p class="mt-1 text-xs font-medium text-red-600">
-                                    <span class="font-semibold">Alasan perbaikan:</span> {{ $alasanPerbaikan }}
-                                </p>
-                            @endif
-                        </td>
-                        <td class="c">
-                            @include('dashboard.aksi_laporan', ['laporan' => $laporan])
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
+        @foreach ($daftar as $laporan)
+            @php
+                $perluAlasan = in_array($laporan->status_pengajuan, [
+                    \App\Models\LaporanKematian::STATUS_DIKEMBALIKAN,
+                    \App\Models\LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI,
+                    \App\Models\LaporanKematian::STATUS_MENUNGGU_PERBAIKAN,
+                ], true);
+                $alasanPerbaikan = $perluAlasan ? $laporan->labelAlasanPerbaikan() : null;
+            @endphp
+            <tr>
+                <td class="whitespace-nowrap font-mono text-xs font-semibold text-ink">
+                    {{ $laporan->no_pengajuan ?? 'Belum diterbitkan' }}
+                </td>
+                <td class="font-semibold text-ink">{{ $laporan->labelNamaAlmarhum() }}</td>
+                <td class="text-muted">{{ $laporan->labelTanggalPengajuan() }}</td>
+                <td>
+                    @include('komponen.badge_status', ['status' => $laporan->status_pengajuan])
+                    @if ($alasanPerbaikan !== null)
+                        <p class="mt-1 text-xs font-medium text-[#b91c1c]">
+                            <span class="font-semibold">Alasan perbaikan:</span> {{ $alasanPerbaikan }}
+                        </p>
+                    @endif
+                </td>
+                <td class="text-center">
+                    @include('dashboard.aksi_laporan', ['laporan' => $laporan])
+                </td>
+            </tr>
+        @endforeach
+    </x-ui.table>
 
     {{-- Tampilan Mobile (Card List) --}}
-    <div class="mt-3 space-y-3 sm:hidden">
+    <div class="space-y-3 md:hidden">
         @foreach ($daftar as $laporan)
             @php
                 $perluAlasan = in_array($laporan->status_pengajuan, [
@@ -74,9 +68,9 @@
                 </p>
 
                 @if ($alasanPerbaikan !== null)
-                    <div class="mt-2 rounded-lg bg-amber-50 p-2 text-xs text-amber-800 border border-amber-200">
+                    <p class="mt-2 text-xs font-medium text-[#b91c1c]">
                         <span class="font-semibold">Alasan perbaikan:</span> {{ $alasanPerbaikan }}
-                    </div>
+                    </p>
                 @endif
 
                 <div class="mt-3">

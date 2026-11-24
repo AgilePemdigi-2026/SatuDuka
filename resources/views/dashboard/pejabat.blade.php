@@ -1,11 +1,9 @@
-@extends('tata_letak.verifikator')
+@extends('tata_letak.utama')
 
 @section('judul', 'Dashboard Pejabat Penanda Tangan')
 
-@section('subjudul')
-    Selamat datang, {{ $pengguna->nama_lengkap }}.
-    Anda masuk sebagai {{ $pengguna->labelPeran() }}.
-    Antrean dokumen untuk ditandatangani elektronik.
+@section('navigasi')
+    @include('komponen.menu_avatar', ['pengguna' => $pengguna])
 @endsection
 
 @section('konten')
@@ -13,83 +11,83 @@
         $totalDokumen = $statistik['menunggu'] + $statistik['selesai'] + $statistik['dikembalikan'];
     @endphp
 
-    <section class="stats">
-        <div class="stat stat-waiting">
-            <p class="stat-label">Menunggu Tindakan</p>
-            <p class="stat-value">{{ $statistik['menunggu'] }}</p>
-        </div>
+    <x-ui.page-header title="Dashboard Pejabat Penanda Tangan"
+        subtitle="Selamat datang, {{ $pengguna->nama_lengkap }}. Anda masuk sebagai {{ $pengguna->labelPeran() }}. Antrean dokumen untuk ditandatangani elektronik.">
+        <x-slot:aksi>
+            <x-ui.button :href="route('tanda_tangan.index')" variant="secondary">Buka Semua Dokumen</x-ui.button>
+        </x-slot:aksi>
+    </x-ui.page-header>
 
-        <div class="stat stat-complete">
-            <p class="stat-label">Selesai</p>
-            <p class="stat-value">{{ $statistik['selesai'] }}</p>
-        </div>
-
-        <div class="stat stat-anomaly">
-            <p class="stat-label">Dikembalikan</p>
-            <p class="stat-value">{{ $statistik['dikembalikan'] }}</p>
-        </div>
-
-        <div class="stat" style="--stat-color: var(--brand);">
-            <p class="stat-label">Total Dokumen</p>
-            <p class="stat-value">{{ $totalDokumen }}</p>
-        </div>
+    <section class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <x-ui.stat label="Menunggu Tindakan" :value="$statistik['menunggu']" variant="warning" />
+        <x-ui.stat label="Selesai" :value="$statistik['selesai']" variant="success" />
+        <x-ui.stat label="Dikembalikan" :value="$statistik['dikembalikan']" variant="danger" />
+        <x-ui.stat label="Total Dokumen" :value="$totalDokumen" variant="brand" />
     </section>
 
-    <section class="card" style="margin-top: 32px;">
-        <div class="card-head dashboard-card-head">
-            <div>
-                <h2 class="card-title">Antrean Tanda Tangan</h2>
+    <section class="mt-8">
+        <x-ui.card>
+            <div class="min-w-0">
+                <h2 class="text-lg font-semibold text-ink">Antrean Tanda Tangan</h2>
+                <p class="mt-1 text-sm text-muted">Dokumen yang menunggu tanda tangan elektronik Anda.</p>
             </div>
 
-            <a href="{{ route('tanda_tangan.index') }}" class="btn btn-outline">
-                Buka Semua Dokumen
-            </a>
-        </div>
+            @if ($dokumenMenunggu->isEmpty())
+                <x-ui.empty class="mt-4" ikon="✓" judul="Tidak Ada Antrean">
+                    Belum ada dokumen yang menunggu tanda tangan.
+                </x-ui.empty>
+            @else
+                <x-ui.table class="mt-4 hidden md:block">
+                    <x-slot:head>
+                        <th>No.</th>
+                        <th>Nomor Pengajuan</th>
+                        <th>Nama Almarhum/Almarhumah</th>
+                        <th>Tanggal Pengajuan</th>
+                        <th class="text-center">Aksi</th>
+                    </x-slot:head>
 
-        @if ($dokumenMenunggu->isEmpty())
-            <div class="empty">
-                <div class="empty-ic" aria-hidden="true">✓</div>
-                <h3 class="card-title">Tidak Ada Antrean</h3>
-            </div>
-        @else
-            <div class="table-wrap">
-                <table class="tbl">
-                    <thead>
+                    @foreach ($dokumenMenunggu as $index => $dokumen)
+                        @php($laporan = $dokumen->laporanKematian)
                         <tr>
-                            <th>No.</th>
-                            <th>Nomor Pengajuan</th>
-                            <th>Nama Almarhum/Almarhumah</th>
-                            <th>Tanggal Pengajuan</th>
-                            <th class="c">Aksi</th>
+                            <td class="text-faint">{{ $index + 1 }}.</td>
+                            <td class="whitespace-nowrap font-mono text-xs font-semibold text-ink">
+                                {{ $laporan?->no_pengajuan ?? '-' }}
+                            </td>
+                            <td class="font-semibold text-ink">{{ $laporan?->nama_almarhum ?? '-' }}</td>
+                            <td class="whitespace-nowrap text-muted">
+                                {{ $laporan?->tanggal_pengajuan?->format('d/m/Y') ?? '-' }}
+                            </td>
+                            <td class="text-center">
+                                @if ($laporan !== null)
+                                    <x-ui.button :href="route('tanda_tangan.show', $laporan)" size="sm">PERIKSA</x-ui.button>
+                                @endif
+                            </td>
                         </tr>
-                    </thead>
+                    @endforeach
+                </x-ui.table>
 
-                    <tbody>
-                        @foreach ($dokumenMenunggu as $index => $dokumen)
-                            @php($laporan = $dokumen->laporanKematian)
-                            <tr>
-                                <td>{{ $index + 1 }}.</td>
-                                <td class="num" style="font-weight: 600; color: var(--ink);">
-                                    {{ $laporan?->no_pengajuan ?? '-' }}
-                                </td>
-                                <td style="font-weight: 600; color: var(--ink);">
-                                    {{ $laporan?->nama_almarhum ?? '-' }}
-                                </td>
-                                <td class="num">
-                                    {{ $laporan?->tanggal_pengajuan?->format('d/m/Y') ?? '-' }}
-                                </td>
-                                <td class="c">
-                                    @if ($laporan !== null)
-                                        <a href="{{ route('tanda_tangan.show', $laporan) }}" class="btn btn-brand btn-sm">
-                                            Periksa
-                                        </a>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
+                <div class="mt-4 space-y-3 md:hidden">
+                    @foreach ($dokumenMenunggu as $dokumen)
+                        @php($laporan = $dokumen->laporanKematian)
+                        <x-ui.card padding="p-4">
+                            <span class="font-mono text-xs font-semibold text-ink">
+                                {{ $laporan?->no_pengajuan ?? '-' }}
+                            </span>
+
+                            <p class="mt-2 font-semibold text-ink">{{ $laporan?->nama_almarhum ?? '-' }}</p>
+                            <p class="mt-1 text-xs text-muted">
+                                Tanggal pengajuan: {{ $laporan?->tanggal_pengajuan?->format('d/m/Y') ?? '-' }}
+                            </p>
+
+                            @if ($laporan !== null)
+                                <div class="mt-3">
+                                    <x-ui.button :href="route('tanda_tangan.show', $laporan)" size="sm">PERIKSA</x-ui.button>
+                                </div>
+                            @endif
+                        </x-ui.card>
+                    @endforeach
+                </div>
+            @endif
+        </x-ui.card>
     </section>
 @endsection
