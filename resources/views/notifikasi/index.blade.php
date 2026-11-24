@@ -23,10 +23,15 @@
                 <x-ui.button type="submit" variant="secondary">Cari</x-ui.button>
             </form>
 
-            <form method="POST" action="{{ route('notifikasi.tandai_semua') }}" class="sm:shrink-0">
-                @csrf
-                <x-ui.button type="submit" variant="secondary" class="w-full sm:w-auto">Tandai Semua Dibaca</x-ui.button>
-            </form>
+            @if ($jumlahBelumDibaca > 0)
+                <form method="POST" action="{{ route('notifikasi.tandai_semua') }}" class="sm:shrink-0">
+                    @csrf
+                    <x-ui.button type="submit" variant="secondary" class="w-full sm:w-auto">
+                        <x-icon.check class="h-4 w-4" />
+                        Tandai Semua Dibaca
+                    </x-ui.button>
+                </form>
+            @endif
         </div>
 
         <!-- Filter Tabs -->
@@ -83,11 +88,14 @@
                     </div>
 
                     <!-- Tombol Aksi Kontekstual -->
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
                         @if (!$item->sudah_dibaca)
                             <form method="POST" action="{{ route('notifikasi.tandai', $item) }}">
                                 @csrf
-                                <x-ui.button type="submit" variant="ghost" size="sm">Tandai dibaca</x-ui.button>
+                                <x-ui.button type="submit" variant="secondary" size="sm">
+                                    <x-icon.check class="h-4 w-4" />
+                                    Tandai dibaca
+                                </x-ui.button>
                             </form>
                         @endif
 
@@ -99,6 +107,13 @@
                             <x-ui.button :href="route('pengajuan.detail', $item->laporan)" variant="secondary" size="sm">
                                 Lihat Status
                             </x-ui.button>
+                        @endif
+
+                        @if ($item->sudah_dibaca)
+                            <span class="inline-flex items-center gap-1.5 px-2 text-xs font-semibold text-faint">
+                                <x-icon.check class="h-4 w-4" />
+                                Sudah dibaca
+                            </span>
                         @endif
                     </div>
                 </div>
