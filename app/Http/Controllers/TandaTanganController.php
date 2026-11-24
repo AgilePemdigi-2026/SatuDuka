@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\DokumenResmi;
 use App\Models\LaporanKematian;
 use App\Models\LogAudit;
+use App\Models\Notifikasi;
 use App\Models\Pengguna;
 use App\Services\Dokumen\LayananDokumenResmi;
 use App\Services\Dokumen\LayananTandaTanganVisual;
 use App\Services\LayananAudit;
 use App\Services\LayananPenguncian;
+use App\Services\Notifikasi\NotifikasiService;
 use App\Services\Tte\TTEService;
 use App\Services\Tte\TteTidakTersedia;
 use App\Support\PengindeksNik;
@@ -73,6 +75,7 @@ class TandaTanganController extends Controller
         private readonly TTEService $tte,
         private readonly LayananDokumenResmi $dokumenResmi,
         private readonly LayananTandaTanganVisual $tandaTanganVisual,
+        private readonly NotifikasiService $notifikasi,
     ) {}
 
     /**
@@ -289,6 +292,15 @@ class TandaTanganController extends Controller
         // Kredensial benar: hitungan kegagalan direset.
         LayananPenguncian::buka($kunci);
 
+        $laporan->refresh();
+        $this->notifikasi->kirim(
+            $laporan->pemohon,
+            Notifikasi::JENIS_DOKUMEN_TERBIT,
+            'Dokumen Resmi Terbit',
+            'Akta kematian atas nama '.$laporan->nama_almarhum.' telah ditandatangani dan dapat diunduh.',
+            $laporan,
+        );
+
         // Berkas PDF diterbitkan setelah status tersimpan; kegagalan render
         // tidak membatalkan penandatanganan dan dapat dipulihkan kemudian.
         $dokumen = DokumenResmi::query()
@@ -450,6 +462,15 @@ class TandaTanganController extends Controller
                 hasil: LogAudit::HASIL_SUKSES,
             );
         });
+
+        $laporan->refresh();
+        $this->notifikasi->kirim(
+            $laporan->pemohon,
+            Notifikasi::JENIS_PERLU_DIPERBAIKI,
+            'Dokumen Dikembalikan Pejabat',
+            $data['alasan'],
+            $laporan,
+        );
 
         return redirect()
             ->route('tanda_tangan.index')

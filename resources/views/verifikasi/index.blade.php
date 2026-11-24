@@ -71,6 +71,7 @@
                             <th>No. Pengajuan</th>
                             <th>NIK</th>
                             <th>Nama</th>
+                            <th>Anomali</th>
                             <th>Tanggal Masuk</th>
                             <th>Status</th>
                             <th class="c">Aksi</th>
@@ -93,8 +94,24 @@
                             <tr>
                                 <td style="color: var(--faint);">{{ $pengajuan->firstItem() + $index }}.</td>
                                 <td class="num" style="font-weight: 500; color: var(--ink);">{{ $item->no_pengajuan }}</td>
-                                <td class="num" style="font-weight: 500; color: var(--ink);">{{ $item->nik_almarhum }}</td>
+                                <td class="num" style="font-weight: 500; color: var(--ink);">
+                                    {{ \App\Support\MaskerNik::masker($item->nik_almarhum) ?? '-' }}
+                                </td>
                                 <td style="font-weight: 600; color: var(--ink);">{{ $item->nama_almarhum }}</td>
+                                <td>
+                                    @php($anom = $item->getAttribute('ringkasan_anomali'))
+                                    @if (filled($anom['label'] ?? null))
+                                        <span class="md:hidden badge {{ $anom['varian'] }}">{{ $anom['label'] }}@if ($anom['lainnya'] > 0) +{{ $anom['lainnya'] }} lainnya @endif</span>
+                                        <span class="hidden md:block">
+                                            <span class="badge {{ $anom['varian'] }}">{{ $anom['label'] }}</span>
+                                            @if ($anom['lainnya'] > 0)
+                                                <span style="display: block; font-size: 11px; color: var(--muted);">+{{ $anom['lainnya'] }} lainnya</span>
+                                            @endif
+                                        </span>
+                                    @else
+                                        <span class="badge badge-ok">Bersih</span>
+                                    @endif
+                                </td>
                                 <td style="color: var(--muted);">
                                     {{ $item->tanggal_pengajuan ? \Carbon\Carbon::parse($item->tanggal_pengajuan)->format('d/m/Y') : '-' }}
                                 </td>

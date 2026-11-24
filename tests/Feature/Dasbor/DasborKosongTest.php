@@ -9,11 +9,16 @@
 it('menampilkan dasbor semua peran pada basis data kosong', function () {
     [$pemohon, $verifikator, $pejabat] = buatAkunDemo();
 
-    foreach ([$pemohon, $verifikator, $pejabat] as $pengguna) {
+    foreach ([$pemohon, $pejabat] as $pengguna) {
         $this->actingAs($pengguna)
             ->get(route('dashboard'))
             ->assertOk();
     }
+
+    // Verifikator diarahkan langsung ke antrean verifikasi.
+    $this->actingAs($verifikator)
+        ->get(route('dashboard'))
+        ->assertRedirect(route('verifikasi.index'));
 });
 
 it('menampilkan halaman antrean verifikator pada basis data kosong', function () {

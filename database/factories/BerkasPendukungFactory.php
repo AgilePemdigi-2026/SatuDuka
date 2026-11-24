@@ -24,13 +24,16 @@ class BerkasPendukungFactory extends Factory
     {
         $jenis = fake()->randomElement(BerkasPendukung::DAFTAR_JENIS);
 
-        $namaFile = Str::slug($jenis).'.'.fake()->randomElement(['pdf', 'jpg', 'png']);
+        $ekstensi = fake()->randomElement(['pdf', 'jpg', 'png']);
+        $namaFile = Str::slug($jenis).'.'.$ekstensi;
 
+        // Path unik per berkas (meniru unggahan nyata) agar isi dummy tidak
+        // pernah berbagi antar laporan dengan data yang berbeda.
         return [
             'id_laporan' => LaporanKematian::factory(),
             'jenis_dokumen' => $jenis,
             'nama_file' => $namaFile,
-            'path_file' => 'berkas/laporan/'.Str::slug($jenis).'/'.$namaFile,
+            'path_file' => 'berkas/laporan/'.Str::random(12).'/'.$namaFile,
             'status_unggahan' => BerkasPendukung::STATUS_BERHASIL,
             'tanggal_unggah' => now(),
         ];

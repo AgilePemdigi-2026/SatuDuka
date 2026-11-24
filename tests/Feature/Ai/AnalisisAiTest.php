@@ -5,9 +5,13 @@ use App\Models\BerkasPendukung;
 use App\Models\LaporanKematian;
 use App\Models\LogAudit;
 use App\Models\Pengguna;
+use App\Services\Ai\AiTidakTersedia;
+use App\Services\Dokumen\LayananBerkasContoh;
+use App\Services\Dokumen\PembuatPdf;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -312,4 +316,113 @@ it('menolak akses ai untuk peran lain', function () {
     lampirkanBerkasAi($laporan, BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN, 'surat-cocok.pdf');
 
     $this->actingAs($verifikator)->post(route('laporan.periksa_ai', $laporan))->assertForbidden();
+});
+
+it('mencatat penyebab kegagalan layanan ai tanpa data rahasia', function () {
+    Storage::fake('local');
+    [$pemohon] = buatAkunDemo();
+    $laporan = buatLaporanAi($pemohon);
+    lampirkanBerkasAi($laporan, BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN, 'surat-cocok.pdf');
+
+    aktifkanDriverOpenAi();
+    Http::fake([
+        'https://api.openai.test/v1/responses' => Http::response(['error' => ['message' => 'kunci salah']], 401),
+    ]);
+
+    Log::spy();
+
+    $this->actingAs($pemohon)->post(route('laporan.periksa_ai', $laporan))
+        ->assertRedirect()
+        ->assertSessionHas('galat', 'Analisis AI tidak tersedia, lanjutkan secara manual');
+
+    Http::assertSentCount(1);
+
+    Log::shouldHaveReceived('warning')
+        ->withArgs(function (string $pesan, array $konteks) use ($laporan): bool {
+            expect($pesan)->toBe('Layanan AI gagal')
+                ->and($konteks['pengecualian'])->toBe(AiTidakTersedia::class)
+                ->and($konteks['status_http'])->toBe(401)
+                ->and($konteks['penyebab'])->toBe('http')
+                ->and($konteks['model'])->toBe('model-uji')
+                ->and($konteks['pemicu'])->toBe('pemohon_review');
+
+            $teks = json_encode($konteks);
+
+            expect($teks)->not->toContain((string) $laporan->nik_almarhum)
+                ->and($teks)->not->toContain('kunci-uji')
+                ->and($teks)->not->toContain('ISI-DOKUMEN-RAHASIA');
+
+            return true;
+        })
+        ->once();
+});
+
+it('mencatat kegagalan waktu tunggu pada log tanpa status http', function () {
+    Storage::fake('local');
+    [$pemohon] = buatAkunDemo();
+    $laporan = buatLaporanAi($pemohon);
+    lampirkanBerkasAi($laporan, BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN, 'surat-cocok.pdf');
+
+    aktifkanDriverOpenAi();
+    Http::fake(fn () => throw new ConnectionException('Waktu habis'));
+
+    Log::spy();
+
+    $this->actingAs($pemohon)->post(route('laporan.periksa_ai', $laporan))->assertRedirect();
+
+    Log::shouldHaveReceived('warning')
+        ->withArgs(function (string $pesan, array $konteks): bool {
+            expect($pesan)->toBe('Layanan AI gagal')
+                ->and($konteks['pengecualian'])->toBe(AiTidakTersedia::class)
+                ->and($konteks['status_http'])->toBeNull()
+                ->and($konteks['penyebab'])->toBe('timeout');
+
+            return true;
+        })
+        ->once();
+});
+
+it('mencatat kegagalan deepseek tanpa mengulang permintaan dan tanpa kunci api', function () {
+    Storage::fake('local');
+    [$pemohon] = buatAkunDemo();
+    $laporan = buatLaporanAi($pemohon);
+    $berkas = lampirkanBerkasAi($laporan, BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN, 'surat-cocok.pdf');
+
+    // Driver DeepSeek hanya menerima teks, jadi dokumen harus bertext-layer.
+    (new LayananBerkasContoh(app(PembuatPdf::class)))->isi($berkas, true);
+
+    config([
+        'ai.driver' => 'deepseek',
+        'ai.deepseek.api_key' => 'kunci-rahasia-uji',
+        'ai.deepseek.base_url' => 'https://api.deepseek.test',
+        'ai.deepseek.model' => 'model-deepseek-uji',
+        'ai.timeout' => 5,
+    ]);
+
+    Http::fake([
+        'https://api.deepseek.test/chat/completions' => Http::response(['error' => ['message' => 'kunci salah']], 401),
+    ]);
+
+    Log::spy();
+
+    $this->actingAs($pemohon)->post(route('laporan.periksa_ai', $laporan))->assertRedirect();
+
+    Http::assertSentCount(1);
+
+    Log::shouldHaveReceived('warning')
+        ->withArgs(function (string $pesan, array $konteks) use ($laporan): bool {
+            expect($pesan)->toBe('Layanan AI gagal')
+                ->and($konteks['status_http'])->toBe(401)
+                ->and($konteks['penyebab'])->toBe('http')
+                ->and($konteks['model'])->toBe('model-deepseek-uji')
+                ->and($konteks['pemicu'])->toBe('pemohon_review');
+
+            $teks = json_encode($konteks);
+
+            expect($teks)->not->toContain('kunci-rahasia-uji')
+                ->and($teks)->not->toContain((string) $laporan->nik_almarhum);
+
+            return true;
+        })
+        ->once();
 });

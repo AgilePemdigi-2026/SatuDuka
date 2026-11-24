@@ -152,11 +152,11 @@ class FeatureContext implements Context
 
     private ?Pengguna $akunVerifikator = null;
 
-private ?Pengguna $akunPemohonBDD = null;
+    private ?Pengguna $akunPemohonBDD = null;
 
-private string $statusPengajuanAwal = '';
+    private string $statusPengajuanAwal = '';
 
-private string $pesanValidasiVerifikasi = '';
+    private string $pesanValidasiVerifikasi = '';
 
     public function __construct()
     {
@@ -1385,7 +1385,7 @@ private string $pesanValidasiVerifikasi = '';
         Assert::assertSame('pemohon-lain@example.test', $this->penggunaLain->fresh()->email);
     }
 
-        /*
+    /*
     |--------------------------------------------------------------------------
     | Verifikasi berkas pengajuan
     |--------------------------------------------------------------------------
@@ -1612,6 +1612,7 @@ private string $pesanValidasiVerifikasi = '';
     {
         $this->kirimAksiVerifikasi('revisi', [
             'catatan' => $alasan,
+            'alasan_override' => 'Verifikator memilih revisi langsung pada pemeriksaan manual.',
         ]);
     }
 
@@ -1647,6 +1648,7 @@ private string $pesanValidasiVerifikasi = '';
         $this->kirimAksiVerifikasi('anomali', [
             'jenis_anomali' => $jenis,
             'deskripsi' => $catatan,
+            'alasan_override' => 'Verifikator menilai berkas perlu rekonsiliasi.',
         ]);
     }
 
@@ -1702,14 +1704,14 @@ private string $pesanValidasiVerifikasi = '';
         );
     }
 
-    #[Then('persetujuan ditolak karena dokumen belum lengkap')]
-    public function persetujuanDitolakKarenaDokumenBelumLengkapBDD(): void
+    #[Then('persetujuan menuntut alasan override')]
+    public function persetujuanMenuntutAlasanOverrideBDD(): void
     {
         Assert::assertNotNull($this->response);
 
         Assert::assertTrue(
-            $this->bagGalatMemilikiKolom('dokumen'),
-            'Penolakan persetujuan seharusnya menampilkan dokumen yang kurang.'
+            $this->bagGalatMemilikiKolom('alasan_override'),
+            'Persetujuan berkas kurang seharusnya menuntut alasan override.'
         );
 
         Assert::assertSame(

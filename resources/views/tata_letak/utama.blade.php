@@ -24,6 +24,23 @@
             </div>
 
             <nav class="flex items-center gap-3">
+                @auth
+                    @if (auth()->user()->adalahPemohon())
+                        @php($jumlahBelumDibacaHeader = \App\Models\Notifikasi::query()
+                            ->where('id_pengguna', auth()->id())
+                            ->where('sudah_dibaca', false)
+                            ->count())
+                        <a href="{{ route('notifikasi.index') }}"
+                           class="relative rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-ink-soft hover:bg-canvas"
+                           aria-label="Pusat Notifikasi">
+                            Notifikasi
+                            @if ($jumlahBelumDibacaHeader > 0)
+                                <span class="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
+                                      style="background: #b91c1c;">{{ $jumlahBelumDibacaHeader }}</span>
+                            @endif
+                        </a>
+                    @endif
+                @endauth
                 @yield('navigasi')
             </nav>
         </div>
