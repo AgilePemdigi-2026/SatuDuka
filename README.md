@@ -76,11 +76,38 @@ ambang saat ini dipertahankan sampai ada konfirmasi Dukcapil.
 
 - **SIAK** hanya membaca data dummy `database/data/siak_dummy.json`; bukan data kependudukan nyata.
 - **AI** memakai `MockAIService` secara default; hasil hanya saran dan tidak mengubah status.
+  Cara mengaktifkan penyedia nyata ada di bagian [Mengaktifkan AI nyata](#mengaktifkan-ai-nyata).
 - **TTE** memakai `MockTTEService` dengan PIN dummy pada lokal/pengujian; driver mock ditolak pada
   produksi. Tanda tangan bersifat simulasi, bukan TTE tersertifikasi BSrE.
 - **Dokumen** yang dihasilkan adalah simulasi akademik, bukan akta resmi, dan tidak memiliki
   kekuatan hukum.
 - Status pengajuan hanya berubah lewat aksi pengguna; mesin aturan tidak menolak otomatis.
+
+## Mengaktifkan AI nyata
+
+Driver dipilih lewat `AI_DRIVER` (`mock` | `tesseract` | `deepseek` | `openai` | `gemini`).
+Pemilihan dilakukan `App\Services\Ai\PabrikAi`; driver yang salah ketik ditolak dengan
+`InvalidArgumentException`, dan `mock` ditolak dengan `LogicException` di luar `APP_ENV=local`
+maupun `testing` — produksi wajib memakai penyedia sungguhan.
+
+Langkah ringkas:
+
+1. Isi kunci penyedia di `.env` (jangan di-commit), misalnya `DEEPSEEK_API_KEY` beserta
+   `DEEPSEEK_BASE_URL` dan `DEEPSEEK_MODEL`, lalu set `AI_DRIVER=deepseek`.
+2. Pastikan ekstensi PHP **GD** aktif (wajib untuk tanda tangan) dan, bila dokumen berupa
+   gambar atau PDF hasil pindaian, pasang paket sistem berikut:
+   - `tesseract-ocr` (mesin OCR) dan `tesseract-ocr-ind` (bahasa Indonesia; tanpa paket ini
+     OCR memakai `eng` dengan akurasi lebih rendah),
+   - `poppler-utils` untuk `pdftoppm`, dipakai merasterisasi PDF tanpa text-layer sebelum OCR.
+   Pada Windows, isi `TESSERACT_BINARY` dan `PDFTOPPM_BINARY` dengan jalur lengkap program.
+3. Jalankan `php artisan config:clear` setelah mengubah `.env` agar konfigurasi tidak basi.
+4. Uji lewat alur nyata: unggah Surat Keterangan Kematian lalu tekan **Periksa dokumen (AI)**
+   pada langkah 4, atau tombol analisis AI di halaman verifikator.
+
+Bila penyedia gagal (kunci salah, kuota habis, waktu tunggu), pengajuan **tidak** ditolak:
+analisis ditandai gagal, pengguna diminta melanjutkan secara manual, dan penyebab ringkasnya
+dicatat pada `Log::warning('Layanan AI gagal')` (kelas pengecualian, status HTTP, penyebab,
+model, pemicu) tanpa NIK, isi dokumen, prompt, maupun kunci API.
 
 ## Enkripsi NIK
 
