@@ -285,7 +285,7 @@
             @if ($ringkasan !== null)
                 <x-ui.alert :variant="$ringkasanBerhasil ? 'success' : 'warning'" class="mt-4">
                     <strong>Ringkasan Ketidaksesuaian (AI)</strong>
-                    <p class="mt-1">{{ $ringkasan['ringkasan'] ?? '-' }}</p>
+                    <p class="mt-1">{{ $ringkasan['ringkasan'] ?? $ringkasan['pesan'] ?? '-' }}</p>
 
                     @if (! empty($ringkasan['saran']))
                         <ul class="mt-2 list-disc space-y-1 pl-5">

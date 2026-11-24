@@ -27,6 +27,17 @@ return [
         'window' => (int) env('AI_RATE_WINDOW', 60),
     ],
 
+    // Coba ulang saat penyedia membalas 429/503 (sibuk), bukan gagal permanen.
+    // `anggaran_detik` membatasi TOTAL waktu tunggu antarpercobaan; nilai itu
+    // dipangkas lagi di LayananAnalisisAi agar tetap di bawah AI_TIMEOUT dan
+    // batas eksekusi PHP (`batas_eksekusi_php`, bawaan 180 detik).
+    'retry' => [
+        'maks' => (int) env('AI_RETRY_MAKS', 2),
+        'jeda_ms' => (int) env('AI_RETRY_JEDA_MS', 800),
+        'anggaran_detik' => (int) env('AI_RETRY_ANGGARAN_DETIK', 20),
+        'batas_eksekusi_php' => (int) env('AI_BATAS_EKSEKUSI_PHP', 180),
+    ],
+
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
         'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),

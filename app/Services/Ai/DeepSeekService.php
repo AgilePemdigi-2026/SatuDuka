@@ -143,6 +143,13 @@ class DeepSeekService implements AIService
             throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.', penyebab: 'timeout');
         }
 
+        // 429/503 berarti penyedia sibuk, bukan dokumen gagal dianalisis.
+        $batasLaju = AiRateLimit::dari($respon);
+
+        if ($batasLaju !== null) {
+            throw $batasLaju;
+        }
+
         if ($respon->failed()) {
             throw new AiTidakTersedia(
                 'Layanan AI tidak dapat dihubungi.',

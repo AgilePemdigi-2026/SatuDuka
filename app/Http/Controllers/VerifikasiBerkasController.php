@@ -296,6 +296,13 @@ class VerifikasiBerkasController extends Controller
         $hasil = $this->layananAi->periksa($berkas, $request->user(), 'verifikator_detail');
 
         if (! $hasil['berhasil']) {
+            // 429/503 dari penyedia AI: tertunda, bukan gagal permanen.
+            if ($hasil['tertunda'] ?? false) {
+                return redirect()
+                    ->route('verifikasi.show', $laporan)
+                    ->with('info', $hasil['pesan']);
+            }
+
             return redirect()
                 ->route('verifikasi.show', $laporan)
                 ->with('galat', $hasil['pesan']);
@@ -333,6 +340,12 @@ class VerifikasiBerkasController extends Controller
         );
 
         if (! ($hasil['berhasil'] ?? false)) {
+            if ($hasil['tertunda'] ?? false) {
+                return redirect()
+                    ->route('verifikasi.show', $laporan)
+                    ->with('info', $hasil['pesan']);
+            }
+
             return redirect()
                 ->route('verifikasi.show', $laporan)
                 ->with('galat', $hasil['pesan'] ?? 'Analisis AI tidak tersedia, lanjutkan secara manual');

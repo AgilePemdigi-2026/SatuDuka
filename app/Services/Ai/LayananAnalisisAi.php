@@ -22,6 +22,12 @@ use Illuminate\Support\Facades\Storage;
  */
 class LayananAnalisisAi
 {
+    /**
+     * Pesan bagi pengguna saat penyedia AI sibuk (bukan gagal permanen).
+     */
+    public const PESAN_TERTUNDA = 'Layanan AI sedang sibuk (batas permintaan). '
+        .'Analisis belum ditandai gagal; coba lagi beberapa saat lagi.';
+
     public function __construct(
         private readonly AIService $ai,
         private readonly LayananPerbandinganData $perbandingan,
@@ -64,11 +70,17 @@ class LayananAnalisisAi
                 'analisis-ai:'.$hash,
                 max(60, (int) config('ai.cache_ttl', 3600)),
                 function () use ($berkas): array {
-                    $mentah = $this->ai->ekstrakSuratKematian($berkas);
+                    $mentah = $this->denganCobaUlang(
+                        fn () => $this->ai->ekstrakSuratKematian($berkas),
+                    );
 
                     return is_array($mentah) ? NikAnalisis::samarkanEkstraksi($mentah) : $mentah;
                 },
             );
+        } catch (AiRateLimit $e) {
+            $this->catatBatasLaju($e, $model, $pemicu);
+
+            return $this->tertunda($berkas, $laporan, $model, $pengguna, $pemicu, $hash, $e);
         } catch (\Throwable $e) {
             $this->catatKegagalan($e, $model, $pemicu);
 
@@ -167,7 +179,13 @@ class LayananAnalisisAi
         }
 
         try {
-            $hasil = $this->ai->ringkasKetidaksesuaian($perbandingan);
+            $hasil = $this->denganCobaUlang(
+                fn () => $this->ai->ringkasKetidaksesuaian($perbandingan),
+            );
+        } catch (AiRateLimit $e) {
+            $this->catatBatasLaju($e, $model, $pemicu);
+
+            return $this->tertundaRingkasan($laporan, $model, $pengguna, $pemicu, $e);
         } catch (\Throwable $e) {
             $this->catatKegagalan($e, $model, $pemicu);
 
@@ -243,6 +261,201 @@ class LayananAnalisisAi
         return [
             'berhasil' => false,
             'pesan' => 'Analisis AI tidak tersedia, lanjutkan secara manual',
+            'ringkasan' => null,
+            'saran' => [],
+            'model' => $model,
+        ];
+    }
+
+    /**
+     * Jalankan panggilan AI dan coba ulang HANYA saat penyedia sibuk.
+     *
+     * Batas: `ai.retry.maks` percobaan ulang (maksimal 2), dengan jeda singkat
+     * atau sesuai `Retry-After`. Seluruh waktu tunggu dibatasi
+     * `ai.retry.anggaran_detik` yang dipangkas agar total eksekusi tetap di
+     * bawah AI_TIMEOUT dan batas eksekusi PHP (180 detik). Bila penyedia
+     * meminta waktu tunggu melebihi anggaran, percobaan ulang dilewati dan
+     * pemanggil menandai hasil sebagai tertunda.
+     */
+    private function denganCobaUlang(callable $panggil): mixed
+    {
+        $maksCobaUlang = max(0, min(2, (int) config('ai.retry.maks', 2)));
+        $jedaDasar = max(0, (int) config('ai.retry.jeda_ms', 800));
+        $anggaran = $this->anggaranCobaUlang();
+        $mulai = microtime(true);
+        $percobaan = 0;
+
+        while (true) {
+            try {
+                return $panggil();
+            } catch (AiRateLimit $e) {
+                $percobaan++;
+
+                if ($percobaan > $maksCobaUlang) {
+                    throw $e;
+                }
+
+                $sisa = $anggaran - (microtime(true) - $mulai);
+
+                if ($sisa <= 0) {
+                    throw $e;
+                }
+
+                // Hormati Retry-After: bila penyedia meminta waktu lebih lama
+                // daripada sisa anggaran, jangan menunggu sia-sia.
+                if ($e->retryAfter !== null && $e->retryAfter > $sisa) {
+                    throw $e;
+                }
+
+                $jeda = $e->retryAfter !== null
+                    ? (float) $e->retryAfter
+                    : ($jedaDasar * $percobaan) / 1000;
+
+                $jeda = min($jeda, $sisa);
+
+                if ($jeda > 0) {
+                    usleep((int) round($jeda * 1_000_000));
+                }
+            }
+        }
+    }
+
+    /**
+     * Anggaran total waktu tunggu percobaan ulang (detik).
+     */
+    private function anggaranCobaUlang(): float
+    {
+        $timeout = max(1, (int) config('ai.timeout', 20));
+        $batasPhp = max(1, (int) config('ai.retry.batas_eksekusi_php', 180));
+        $anggaran = max(0.0, (float) config('ai.retry.anggaran_detik', 20));
+
+        // Sisakan ruang untuk satu percobaan penuh: timeout + anggaran harus
+        // tetap di bawah batas eksekusi PHP.
+        return max(0.0, min($anggaran, $timeout, $batasPhp - $timeout - 5));
+    }
+
+    /**
+     * Catat bahwa penyedia AI sibuk. Tidak ada isi dokumen/kunci yang dicatat.
+     */
+    private function catatBatasLaju(AiRateLimit $e, string $model, string $pemicu): void
+    {
+        Log::warning('Layanan AI sibuk (batas laju)', [
+            'pengecualian' => $e::class,
+            'status_http' => $e->statusHttp,
+            'retry_after' => $e->retryAfter,
+            'model' => $model,
+            'pemicu' => $pemicu,
+            'tertunda' => true,
+        ]);
+    }
+
+    /**
+     * Pesan bagi pengguna saat penyedia AI sibuk.
+     */
+    private function pesanTertunda(AiRateLimit $e): string
+    {
+        if ($e->retryAfter !== null && $e->retryAfter > 0) {
+            return 'Layanan AI sedang sibuk (batas permintaan). Coba lagi dalam ±'
+                .$e->retryAfter.' detik; analisis belum ditandai gagal.';
+        }
+
+        return self::PESAN_TERTUNDA;
+    }
+
+    /**
+     * Tandai ekstraksi sebagai tertunda (bukan gagal) agar dapat dicoba ulang.
+     *
+     * @return array{
+     *     berhasil: bool,
+     *     tertunda: bool,
+     *     pesan: string,
+     *     model: string,
+     *     ekstraksi: null,
+     *     perbandingan: null
+     * }
+     */
+    private function tertunda(
+        BerkasPendukung $berkas,
+        LaporanKematian $laporan,
+        string $model,
+        Pengguna $pengguna,
+        string $pemicu,
+        ?string $hash,
+        AiRateLimit $e,
+    ): array {
+        $pesan = $this->pesanTertunda($e);
+
+        $this->simpan(
+            laporan: $laporan,
+            berkas: $berkas,
+            jenis: AnalisisAi::JENIS_EKSTRAKSI,
+            hasil: [
+                'pesan' => $pesan,
+                'kode' => 'batas_laju',
+                'status_http' => $e->statusHttp,
+            ],
+            skor: null,
+            model: $model,
+            status: AnalisisAi::STATUS_TERTUNDA,
+            hash: $hash,
+        );
+
+        $this->audit($laporan, $model, $pemicu, $pengguna, 'Tertunda');
+
+        return [
+            'berhasil' => false,
+            'tertunda' => true,
+            'pesan' => $pesan,
+            'model' => $model,
+            'ekstraksi' => null,
+            'perbandingan' => null,
+        ];
+    }
+
+    /**
+     * Tandai ringkasan sebagai tertunda (bukan gagal).
+     *
+     * @return array{berhasil: bool, tertunda: bool, pesan: string, ringkasan: null, saran: list<string>, model: string}
+     */
+    private function tertundaRingkasan(
+        LaporanKematian $laporan,
+        string $model,
+        Pengguna $pengguna,
+        string $pemicu,
+        AiRateLimit $e,
+    ): array {
+        $pesan = $this->pesanTertunda($e);
+
+        AnalisisAi::create([
+            'id_laporan' => $laporan->id_laporan,
+            'id_berkas' => null,
+            'jenis' => AnalisisAi::JENIS_RINGKASAN,
+            'hasil' => [
+                'pesan' => $pesan,
+                'kode' => 'batas_laju',
+                'status_http' => $e->statusHttp,
+            ],
+            'skor' => null,
+            'model' => $model,
+            'status' => AnalisisAi::STATUS_TERTUNDA,
+            'hash_berkas' => null,
+            'dibuat_pada' => now(),
+        ]);
+
+        $this->audit(
+            laporan: $laporan,
+            model: $model,
+            pemicu: $pemicu,
+            pengguna: $pengguna,
+            hasil: 'Tertunda',
+            jenis: AnalisisAi::JENIS_RINGKASAN,
+            aksi: 'membuat_ringkasan_ai',
+        );
+
+        return [
+            'berhasil' => false,
+            'tertunda' => true,
+            'pesan' => $pesan,
             'ringkasan' => null,
             'saran' => [],
             'model' => $model,

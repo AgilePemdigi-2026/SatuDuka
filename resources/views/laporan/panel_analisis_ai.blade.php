@@ -1,5 +1,6 @@
 @php
     $berhasil = $analisis['berhasil'] ?? false;
+    $tertunda = $analisis['tertunda'] ?? false;
     $perbandingan = $analisis['perbandingan'] ?? null;
     $pesan = $analisis['pesan'] ?? null;
     $keyakinanPersen = (int) round(((float) ($perbandingan['skor'] ?? 0)) * 100);
@@ -25,7 +26,14 @@
         @endif
     </div>
 
-    @if (! $berhasil)
+    @if ($tertunda)
+        <x-ui.alert variant="warning" class="mt-3">
+            <p class="font-semibold">Analisis AI tertunda, coba lagi</p>
+            <p class="mt-1 font-normal">
+                {{ $pesan ?? 'Layanan AI sedang sibuk (batas permintaan). Analisis belum ditandai gagal; coba lagi beberapa saat lagi.' }}
+            </p>
+        </x-ui.alert>
+    @elseif (! $berhasil)
         <x-ui.alert variant="danger" class="mt-3">
             Analisis AI tidak tersedia, lanjutkan secara manual
         </x-ui.alert>

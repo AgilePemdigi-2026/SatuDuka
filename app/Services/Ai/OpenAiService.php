@@ -56,6 +56,14 @@ class OpenAiService implements AIService
             throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.', penyebab: 'timeout');
         }
 
+        // 429/503: penyedia sibuk. Jangan coba bentuk permintaan lain, karena
+        // itu hanya menambah permintaan tanpa peluang berhasil.
+        $batasLaju = AiRateLimit::dari($respon);
+
+        if ($batasLaju !== null) {
+            throw $batasLaju;
+        }
+
         if ($respon->failed()) {
             $teksDokumen = PenyaringTeksDokumen::teks($berkas->path_file, (string) $isi);
 
@@ -72,6 +80,12 @@ class OpenAiService implements AIService
         }
 
         if ($respon->failed()) {
+            $batasLaju = AiRateLimit::dari($respon);
+
+            if ($batasLaju !== null) {
+                throw $batasLaju;
+            }
+
             throw new AiTidakTersedia(
                 'Layanan AI tidak dapat dihubungi.',
                 statusHttp: $respon->status(),
@@ -132,6 +146,12 @@ class OpenAiService implements AIService
             throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.', penyebab: 'timeout');
         }
 
+        $batasLaju = AiRateLimit::dari($respon);
+
+        if ($batasLaju !== null) {
+            throw $batasLaju;
+        }
+
         if ($respon->failed()) {
             try {
                 $respon = Http::withToken($this->apiKey)
@@ -148,6 +168,12 @@ class OpenAiService implements AIService
         }
 
         if ($respon->failed()) {
+            $batasLaju = AiRateLimit::dari($respon);
+
+            if ($batasLaju !== null) {
+                throw $batasLaju;
+            }
+
             throw new AiTidakTersedia(
                 'Layanan AI tidak dapat dihubungi.',
                 statusHttp: $respon->status(),
