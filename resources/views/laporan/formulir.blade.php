@@ -7,6 +7,10 @@
     @include('komponen.menu_avatar', ['pengguna' => $pengguna])
 @endsection
 
+@section('sidebar')
+    @include('komponen.sidebar_pemohon')
+@endsection
+
 @section('konten')
     @php
         $judulLangkah = ['Data Pelapor', 'Data Almarhum', 'Unggah Berkas', 'Review'];

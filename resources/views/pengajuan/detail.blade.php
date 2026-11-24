@@ -7,6 +7,10 @@
     @include('komponen.menu_avatar', ['pengguna' => $pengguna])
 @endsection
 
+@section('sidebar')
+    @include('komponen.sidebar_pemohon')
+@endsection
+
 @section('konten')
     <div class="space-y-6">
         <div class="flex items-center justify-between gap-4 rounded-2xl border border-line bg-surface px-4 py-3">

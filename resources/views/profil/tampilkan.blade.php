@@ -8,6 +8,10 @@
     @include('komponen.menu_avatar', ['pengguna' => $pengguna])
 @endsection
 
+@section('sidebar')
+    @include('komponen.sidebar_pemohon')
+@endsection
+
 @section('konten')
     <div class="space-y-6">
         <x-ui.page-header

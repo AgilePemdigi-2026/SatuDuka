@@ -411,8 +411,8 @@ it('menggunakan desain dashboard pada halaman lacak status pengajuan', function 
 
     $this->actingAs($pemohon)->get(route('pengajuan.status'))
         ->assertOk()
-        ->assertSee('Poppins', false)
-        ->assertSee('skd-side', false)
+        ->assertSee('plus-jakarta-sans', false)
+        ->assertSee('Menu Utama')
         ->assertSee('Daftar Pengajuan')
         ->assertSee('Kembali ke Dashboard');
 });
