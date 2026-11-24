@@ -182,6 +182,21 @@ dan `<x-ui.select>`, grid 2 kolom di desktop (`sm:grid-cols-2`) dan 1 kolom di p
 "Lanjut"/"Ajukan" (primary) kanan. Unggah berkas: kotak putus-putus border `line-strong`, `rounded-xl`, ikon, teks bantuan.
 `panel_analisis_ai` dipertahankan logikanya, tampilannya: `<x-ui.notice>` dengan lencana keyakinan ekstraksi.
 
+### Panel keputusan (`verifikasi/keputusan`, `rekonsiliasi/keputusan`)
+Satu kartu berisi dropdown `<x-ui.select name="tindakan">` (label "Tindakan Verifikasi" / "Aksi Rekonsiliasi") di
+kolom kiri `lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]`, di bawahnya `<x-ui.notice>` berisi rekomendasi mesin
+(verifikasi) atau catatan audit (rekonsiliasi). Hanya panel tindakan yang dipilih yang tampil; panel lain diberi
+atribut `hidden` oleh `resources/js/app.js` lewat `[data-pilih-tindakan]` dan `[data-wadah-tindakan]`. Semua panel
+tetap dirender server-side agar halaman berfungsi tanpa JavaScript. Nilai awal dropdown = `old('tindakan',
+$tindakanDisarankan ?? 'setujui')` sehingga panel yang tadi dipakai terbuka kembali setelah validasi gagal. Tiap
+`<form>` tetap berdiri sendiri (route dan nama field tidak berubah) dan membawa `<input type="hidden"
+name="tindakan">`. Tombol submit: `primary` untuk tindakan yang direkomendasikan, `secondary` untuk lainnya,
+`danger` untuk "Tolak Anomali Fatal".
+
+Daftar anomali pada `verifikasi/show` memakai `<ul class="list-none space-y-3 p-0">`; tiap `<li>` satu baris kartu
+dengan aksen kiri `border-l-4` sesuai keparahan (fatal `#ef4444`, tinggi `#f59e0b`, sedang `#a5dcf3`, rendah
+`line-strong`), lencana keparahan + label di atas, pesan sebagai teks utama, "Rekomendasi: …" sebagai teks sekunder.
+
 ### Profil (`profil/tampilkan`)
 Avatar inisial lingkaran 64px (`profil/inisial`), kartu data dengan pasangan label/nilai seperti "Informasi Dokumen".
 

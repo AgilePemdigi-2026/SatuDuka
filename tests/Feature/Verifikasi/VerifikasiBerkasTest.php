@@ -730,6 +730,25 @@ it('menampilkan panel pemeriksaan aturan dan rekomendasi mesin', function () {
     expect($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI);
 });
 
+it('menampilkan dropdown tindakan verifikasi dengan nilai awal rekomendasi mesin', function () {
+    Storage::fake('local');
+
+    [$pemohon, $verifikator] = buatAkunDemo();
+    $laporan = buatLaporanAntreanVerifikasi($pemohon);
+
+    $this->actingAs($verifikator)
+        ->get(route('verifikasi.show', $laporan))
+        ->assertOk()
+        ->assertSee('Tindakan Verifikasi')
+        ->assertSee('data-pilih-tindakan="verifikasi"', false)
+        ->assertSee('Rekomendasi mesin')
+        // Panel tindakan tetap dirender semua agar halaman berfungsi tanpa JavaScript.
+        ->assertSee('data-panel-tindakan="setujui"', false)
+        ->assertSee('data-panel-tindakan="tolak_fatal"', false)
+        // Nilai awal dropdown mengikuti rekomendasi mesin (berkas tidak lengkap).
+        ->assertSee('<option value="minta_perbaikan" selected>', false);
+});
+
 it('mewajibkan alasan override saat tindakan berbeda dari rekomendasi mesin', function () {
     Storage::fake('local');
 

@@ -195,7 +195,7 @@
                     <p class="mt-1">Seluruh aturan yang dapat diperiksa mesin terpenuhi.</p>
                 </x-ui.notice>
             @else
-                <ul class="mt-4 space-y-3">
+                <ul class="mt-4 list-none space-y-3 p-0">
                     @foreach ($analisisAturan->anomali as $anomali)
                         @php
                             $varianKeparahan = match ($anomali->keparahan) {
@@ -205,19 +205,22 @@
                                 'rendah' => 'neutral',
                                 default => 'neutral',
                             };
+                            $aksenKeparahan = match ($anomali->keparahan) {
+                                'fatal' => 'border-l-[#ef4444]',
+                                'tinggi' => 'border-l-[#f59e0b]',
+                                'sedang' => 'border-l-[#a5dcf3]',
+                                default => 'border-l-line-strong',
+                            };
                             $labelAnomali = config(
                                 'verifikasi.taksonomi_anomali.'.$anomali->kode.'.label',
                                 $anomali->kode
                             );
                         @endphp
 
-                        <li class="rounded-xl border border-line bg-surface p-4">
-                            <div class="flex flex-wrap items-center justify-between gap-2">
-                                <div class="flex items-center gap-2">
-                                    <x-ui.badge :variant="$varianKeparahan">{{ ucfirst($anomali->keparahan) }}</x-ui.badge>
-                                    <span class="text-xs font-semibold text-ink-soft">{{ $labelAnomali }}</span>
-                                </div>
-                            </div>
+                        <li class="rounded-xl border border-line border-l-4 {{ $aksenKeparahan }} bg-surface p-4">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <x-ui.badge :variant="$varianKeparahan">{{ ucfirst($anomali->keparahan) }}</x-ui.badge>
+                                <span class="text-xs font-semibold text-ink-soft">{{ $labelAnomali }}</span>
                             </div>
                             <p class="mt-2 text-sm font-semibold text-ink">{{ $anomali->pesan }}</p>
                             <p class="mt-1 text-xs text-muted">Rekomendasi: {{ $anomali->rekomendasi }}</p>
@@ -229,8 +232,10 @@
 
         <x-ui.card>
             <div class="flex flex-wrap items-start justify-between gap-3">
-                <div class="flex items-center gap-2">
-                    <span class="flex h-8 w-8 items-center justify-center rounded-full font-bold {{ $analisisKesesuaian?->skor !== null ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning' }}">
+                <div class="flex items-center gap-3">
+                    <span
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold
+                            {{ $analisisKesesuaian?->skor !== null ? 'bg-[#dcfce7] text-[#15803d]' : 'bg-[#fef3c7] text-[#b45309]' }}">
                         {{ $analisisKesesuaian?->skor !== null ? '✓' : '!' }}
                     </span>
                     <h2 class="text-lg font-semibold text-ink">Persentase Kesesuaian Hasil AI</h2>
@@ -304,108 +309,7 @@
                 Keputusan sepenuhnya milik verifikator. Tindakan yang berbeda dari rekomendasi utama mesin wajib disertai alasan override.
             </p>
 
-            <div class="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <form method="POST" action="{{ route('verifikasi.setujui', $laporan) }}"
-                    class="flex flex-col justify-between gap-4 rounded-2xl border border-line bg-canvas p-5">
-                    @csrf
-
-                    <div>
-                        <h3 class="text-sm font-bold text-ink">Setujui Berkas</h3>
-                        <p class="mt-1 text-xs text-muted">
-                            Status menjadi Disetujui/Menunggu TTE dan dokumen resmi berstatus Menunggu dibuat.
-                        </p>
-
-                        <label for="catatan_setujui" class="{{ $kelasLabel }} mt-3">Catatan Persetujuan (Opsional)</label>
-                        <textarea id="catatan_setujui" name="catatan" rows="2" class="{{ $kelasArea }}"
-                            placeholder="Tambahkan catatan jika ada..."></textarea>
-                        @include('verifikasi.bagian_override', ['id' => 'alasan_setujui'])
-                    </div>
-
-                    <x-ui.button type="submit" class="w-full">Setujui Berkas</x-ui.button>
-                </form>
-
-                <form method="POST" action="{{ route('verifikasi.perbaikan', $laporan) }}"
-                    class="flex flex-col justify-between gap-4 rounded-2xl border border-line bg-canvas p-5">
-                    @csrf
-
-                    <div>
-                        <h3 class="text-sm font-bold text-ink">Minta Perbaikan Berkas</h3>
-                        <p class="mt-1 text-xs text-muted">
-                            Status menjadi Pending - Menunggu Perbaikan Berkas Pelapor.
-                        </p>
-
-                        <label for="catatan_perbaikan" class="{{ $kelasLabel }} mt-3">Catatan Perbaikan (Wajib)</label>
-                        <textarea id="catatan_perbaikan" name="catatan" rows="2" required minlength="5" maxlength="2000"
-                            class="{{ $kelasArea }}" placeholder="Jelaskan berkas yang perlu diperbaiki..."></textarea>
-                        @include('verifikasi.bagian_override', ['id' => 'alasan_perbaikan'])
-                    </div>
-
-                    <x-ui.button type="submit" variant="secondary" class="w-full">Minta Perbaikan</x-ui.button>
-                </form>
-
-                <form method="POST" action="{{ route('verifikasi.revisi', $laporan) }}"
-                    class="flex flex-col justify-between gap-4 rounded-2xl border border-line bg-canvas p-5">
-                    @csrf
-
-                    <div>
-                        <h3 class="text-sm font-bold text-ink">Tolak / Butuh Revisi</h3>
-                        <p class="mt-1 text-xs text-muted">
-                            Status menjadi Ditolak/Butuh Revisi beserta catatan untuk pemohon.
-                        </p>
-
-                        <label for="catatan_revisi" class="{{ $kelasLabel }} mt-3">Catatan Revisi (Wajib)</label>
-                        <textarea id="catatan_revisi" name="catatan" rows="2" required minlength="5" maxlength="2000"
-                            class="{{ $kelasArea }}" placeholder="Jelaskan alasan penolakan..."></textarea>
-                        @include('verifikasi.bagian_override', ['id' => 'alasan_revisi'])
-                    </div>
-
-                    <x-ui.button type="submit" variant="secondary" class="w-full">Kirim Catatan Revisi</x-ui.button>
-                </form>
-
-                <form method="POST" action="{{ route('verifikasi.anomali', $laporan) }}"
-                    class="flex flex-col justify-between gap-4 rounded-2xl border border-line bg-canvas p-5">
-                    @csrf
-
-                    <div>
-                        <h3 class="text-sm font-bold text-ink">Tandai Anomali</h3>
-                        <p class="mt-1 text-xs text-muted">Status menjadi Dalam Rekonsiliasi Anomali.</p>
-
-                        <div class="mt-3 space-y-2">
-                            <x-ui.select name="jenis_anomali" label="Jenis Anomali" placeholder="Pilih Jenis Anomali"
-                                :options="$opsiAnomali" required />
-
-                            <div>
-                                <label for="deskripsi" class="{{ $kelasLabel }}">Deskripsi</label>
-                                <textarea id="deskripsi" name="deskripsi" rows="2" required minlength="5" maxlength="2000"
-                                    class="{{ $kelasArea }}" placeholder="Jelaskan ketidaksesuaian..."></textarea>
-                            </div>
-
-                            @include('verifikasi.bagian_override', ['id' => 'alasan_anomali'])
-                        </div>
-                    </div>
-
-                    <x-ui.button type="submit" class="w-full">Simpan ke Rekonsiliasi</x-ui.button>
-                </form>
-
-                <form method="POST" action="{{ route('verifikasi.tolak_fatal', $laporan) }}"
-                    class="flex flex-col justify-between gap-4 rounded-2xl border border-line bg-canvas p-5 md:col-span-2 lg:col-span-1">
-                    @csrf
-
-                    <div>
-                        <h3 class="text-sm font-bold text-ink">Tolak Anomali Fatal</h3>
-                        <p class="mt-1 text-xs text-muted">
-                            Status menjadi Ditolak - Anomali Data Fatal. Gunakan hanya untuk anomali fatal.
-                        </p>
-
-                        <label for="catatan_fatal" class="{{ $kelasLabel }} mt-3">Catatan Penolakan (Wajib)</label>
-                        <textarea id="catatan_fatal" name="catatan" rows="2" required minlength="5" maxlength="2000"
-                            class="{{ $kelasArea }}" placeholder="Jelaskan alasan penolakan permanen..."></textarea>
-                        @include('verifikasi.bagian_override', ['id' => 'alasan_fatal'])
-                    </div>
-
-                    <x-ui.button type="submit" variant="secondary" class="w-full">Tolak Anomali Fatal</x-ui.button>
-                </form>
-            </div>
+            @include('verifikasi.keputusan')
         </x-ui.card>
     </div>
 

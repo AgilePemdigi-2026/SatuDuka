@@ -22,3 +22,27 @@ document.addEventListener('click', (peristiwa) => {
         terlihat ? 'Tampilkan kata sandi' : 'Sembunyikan kata sandi',
     );
 });
+
+// Panel keputusan: satu dropdown [data-pilih-tindakan] memilih panel
+// [data-panel-tindakan] yang tampil di dalam wadah [data-wadah-tindakan].
+// Tanpa JavaScript semua panel tetap tampil sehingga halaman tidak rusak.
+document.querySelectorAll('[data-pilih-tindakan]').forEach((pemilih) => {
+    const wadah = document.querySelector(
+        `[data-wadah-tindakan="${pemilih.dataset.pilihTindakan}"]`,
+    );
+
+    if (!wadah) {
+        return;
+    }
+
+    const panel = wadah.querySelectorAll('[data-panel-tindakan]');
+
+    const terapkan = () => {
+        panel.forEach((item) => {
+            item.hidden = item.dataset.panelTindakan !== pemilih.value;
+        });
+    };
+
+    pemilih.addEventListener('change', terapkan);
+    terapkan();
+});
