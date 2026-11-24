@@ -38,8 +38,7 @@
                            aria-label="Pusat Notifikasi">
                             Notifikasi
                             @if ($jumlahBelumDibacaHeader > 0)
-                                <span class="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white"
-                                      style="background: #b91c1c;">{{ $jumlahBelumDibacaHeader }}</span>
+                                <span class="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#b91c1c] px-1 text-[10px] font-bold text-white">{{ $jumlahBelumDibacaHeader }}</span>
                             @endif
                         </a>
                     @endif
