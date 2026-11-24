@@ -52,4 +52,12 @@ return [
         'timeout' => (int) env('TESSERACT_TIMEOUT', 30),
     ],
 
+    // Fallback OCR untuk PDF hasil pindaian yang tidak memiliki text-layer.
+    // `pdftoppm` berasal dari paket poppler-utils.
+    'pdf_ocr' => [
+        'binary' => env('PDFTOPPM_BINARY', 'pdftoppm'),
+        'maks_halaman' => (int) env('AI_PDF_OCR_MAKS_HALAMAN', 3),
+        'timeout' => (int) env('AI_PDF_OCR_TIMEOUT', 60),
+    ],
+
 ];
