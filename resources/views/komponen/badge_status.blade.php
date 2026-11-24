@@ -6,7 +6,7 @@
         \App\Models\LaporanKematian::STATUS_MENUNGGU_PERBAIKAN,
         \App\Models\LaporanKematian::STATUS_DITOLAK_BUTUH_REVISI,
         \App\Models\LaporanKematian::STATUS_DITOLAK_ANOMALI_FATAL => 'danger',
-        \App\Models\LaporanKematian::STATUS_DIKEMBALIKAN => 'danger',
+        \App\Models\LaporanKematian::STATUS_DIKEMBALIKAN => 'warning',
         \App\Models\LaporanKematian::STATUS_DISETUJUI_MENUNGGU_TTE => 'info',
         \App\Models\LaporanKematian::STATUS_SELESAI => 'success',
         default => 'neutral',

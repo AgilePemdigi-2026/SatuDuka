@@ -10,6 +10,8 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="flex min-h-screen flex-col">
+    @php($punyaSidebar = ! empty(trim($__env->yieldContent('sidebar'))))
+
     <header class="border-b border-line bg-surface">
         <div class="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <div class="flex min-w-0 items-center gap-2">
@@ -18,8 +20,9 @@
                         @yield('kembali')
                     </div>
                 @else
+                    {{-- Saat halaman punya navigasi samping, merek sudah tampil di sana. --}}
                     <a href="{{ url('/') }}"
-                        class="truncate text-xl font-extrabold tracking-tight text-ink">{{ config('app.name', 'SKD') }}</a>
+                        class="truncate text-xl font-extrabold tracking-tight text-ink {{ $punyaSidebar ? 'lg:hidden' : '' }}">{{ config('app.name', 'SKD') }}</a>
                 @endif
             </div>
 
@@ -46,38 +49,47 @@
         </div>
     </header>
 
-    <main class="mx-auto w-full max-w-6xl flex-grow px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        @if (session('sukses') || session('success'))
-            <x-ui.alert variant="success" class="mb-4">
-                {{ session('sukses') ?? session('success') }}
-            </x-ui.alert>
+    <div class="flex flex-1 flex-col lg:flex-row">
+        @hasSection('sidebar')
+            <aside
+                class="shrink-0 border-b border-line bg-surface lg:sticky lg:top-0 lg:h-screen lg:w-[260px] lg:overflow-y-auto lg:border-b-0 lg:border-r">
+                @yield('sidebar')
+            </aside>
         @endif
 
-        @if (session('info'))
-            <x-ui.alert variant="info" class="mb-4">
-                {{ session('info') }}
-            </x-ui.alert>
-        @endif
+        <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+            @if (session('sukses') || session('success'))
+                <x-ui.alert variant="success" class="mb-4">
+                    {{ session('sukses') ?? session('success') }}
+                </x-ui.alert>
+            @endif
 
-        @if (session('galat') || session('error'))
-            <x-ui.alert variant="danger" class="mb-4">
-                {{ session('galat') ?? session('error') }}
-            </x-ui.alert>
-        @endif
+            @if (session('info'))
+                <x-ui.alert variant="info" class="mb-4">
+                    {{ session('info') }}
+                </x-ui.alert>
+            @endif
 
-        @if ($errors->any())
-            <x-ui.alert variant="danger" class="mb-4">
-                <ul class="list-disc space-y-1 pl-5">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </x-ui.alert>
-        @endif
+            @if (session('galat') || session('error'))
+                <x-ui.alert variant="danger" class="mb-4">
+                    {{ session('galat') ?? session('error') }}
+                </x-ui.alert>
+            @endif
 
-        @yield('konten')
-        {{ $slot ?? '' }}
-    </main>
+            @if ($errors->any())
+                <x-ui.alert variant="danger" class="mb-4">
+                    <ul class="list-disc space-y-1 pl-5">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </x-ui.alert>
+            @endif
+
+            @yield('konten')
+            {{ $slot ?? '' }}
+        </main>
+    </div>
 
     <footer class="border-t border-line py-4 text-center text-xs text-faint">
         &copy; {{ date('Y') }} {{ config('app.name', 'SKD') }}
