@@ -76,11 +76,75 @@ ambang saat ini dipertahankan sampai ada konfirmasi Dukcapil.
 
 - **SIAK** hanya membaca data dummy `database/data/siak_dummy.json`; bukan data kependudukan nyata.
 - **AI** memakai `MockAIService` secara default; hasil hanya saran dan tidak mengubah status.
+  Cara mengaktifkan penyedia nyata ada di bagian [Mengaktifkan AI nyata](#mengaktifkan-ai-nyata).
 - **TTE** memakai `MockTTEService` dengan PIN dummy pada lokal/pengujian; driver mock ditolak pada
   produksi. Tanda tangan bersifat simulasi, bukan TTE tersertifikasi BSrE.
 - **Dokumen** yang dihasilkan adalah simulasi akademik, bukan akta resmi, dan tidak memiliki
   kekuatan hukum.
 - Status pengajuan hanya berubah lewat aksi pengguna; mesin aturan tidak menolak otomatis.
+
+## Mengaktifkan AI nyata
+
+Driver dipilih lewat `AI_DRIVER` (`mock` | `tesseract` | `deepseek` | `openai` | `gemini`).
+Pemilihan dilakukan `App\Services\Ai\PabrikAi`; driver yang salah ketik ditolak dengan
+`InvalidArgumentException`, dan `mock` ditolak dengan `LogicException` di luar `APP_ENV=local`
+maupun `testing` — produksi wajib memakai penyedia sungguhan.
+
+Langkah ringkas:
+
+1. Isi kunci penyedia di `.env` (jangan di-commit), misalnya `DEEPSEEK_API_KEY` beserta
+   `DEEPSEEK_BASE_URL` dan `DEEPSEEK_MODEL`, lalu set `AI_DRIVER=deepseek`.
+2. Pastikan ekstensi PHP **GD** aktif (wajib untuk tanda tangan) dan, bila dokumen berupa
+   gambar atau PDF hasil pindaian, pasang paket sistem berikut:
+   - `tesseract-ocr` (mesin OCR) dan `tesseract-ocr-ind` (bahasa Indonesia; tanpa paket ini
+     OCR memakai `eng` dengan akurasi lebih rendah),
+   - `poppler-utils` untuk `pdftoppm`, dipakai merasterisasi PDF tanpa text-layer sebelum OCR.
+   Pada Windows, isi `TESSERACT_BINARY` dan `PDFTOPPM_BINARY` dengan jalur lengkap program.
+3. Jalankan `php artisan config:clear` setelah mengubah `.env` agar konfigurasi tidak basi.
+4. Uji lewat alur nyata: unggah Surat Keterangan Kematian lalu tekan **Periksa dokumen (AI)**
+   pada langkah 4, atau tombol analisis AI di halaman verifikator.
+
+Bila penyedia gagal (kunci salah, kuota habis, waktu tunggu), pengajuan **tidak** ditolak:
+analisis ditandai gagal, pengguna diminta melanjutkan secara manual, dan penyebab ringkasnya
+dicatat pada `Log::warning('Layanan AI gagal')` (kelas pengecualian, status HTTP, penyebab,
+model, pemicu) tanpa NIK, isi dokumen, prompt, maupun kunci API.
+
+## Deploy Docker/Coolify
+
+Image dibangun dari `Dockerfile` (PHP 8.3 + Apache, Node hanya untuk build aset) dan
+`docker-compose.yaml`. Berkas itu sudah memasang `tesseract-ocr`, `tesseract-ocr-ind`,
+`tesseract-ocr-eng`, serta `poppler-utils`, dan menulis batas PHP
+(`upload_max_filesize=6M`, `post_max_size=40M`, `max_execution_time=180`,
+`memory_limit=512M`) ke `/usr/local/etc/php/conf.d/satuduka.ini`.
+
+Variabel lingkungan **wajib** diisi di server (Coolify → Environment), jangan di berkas repo:
+
+| Variabel | Wajib | Contoh/nilai bawaan |
+| --- | --- | --- |
+| `APP_KEY` | ya | hasil `php artisan key:generate --show` |
+| `SATUDUKA_NIK_HASH_KEY` | ya | kunci HMAC acak; kehilangan kunci ini membuat NIK tak bisa dicari |
+| `APP_URL` | ya | `https://satuduka.contoh.id` |
+| `DEEPSEEK_API_KEY` | ya (driver `deepseek`) | rahasia; compose gagal start bila kosong |
+| `AI_DRIVER` | tidak | `deepseek` |
+| `DEEPSEEK_BASE_URL` | tidak | `https://api.aivokey.dev/v1` |
+| `DEEPSEEK_MODEL` | tidak | `deepseek-v4.1-flash` |
+| `AI_TIMEOUT` | tidak | `90` (detik) |
+
+Catatan operasional:
+
+- `docker-compose.yaml` tidak memuat nilai rahasia apa pun; semua rahasia dibaca dari
+  environment. `.env` dan `.env.*` dikecualikan `.dockerignore` (kecuali `.env.example`).
+- Basis data memakai SQLite di volume `satuduka_data` (`storage/app/satuduka.sqlite`).
+  Volume ini harus persisten dan di-backup; memakai Postgres Supabase juga didukung lewat
+  `DB_CONNECTION=pgsql`.
+- **Peringatan TTE:** `TTE_DRIVER=mock` ditolak (`LogicException`) saat `APP_ENV=production`.
+  Sampai tim memutuskan penyedia TTE tersertifikasi (BSrE) atau strategi tanda tangan
+  produksi, alur tanda tangan **tidak akan berjalan di server** — ini keputusan tim, bukan
+  bug yang bisa diakali dengan menyalakan mock.
+- NIK demo (awalan `99`) hanya aktif bila `SATUDUKA_IZINKAN_MOCK_DEMO=true`; jangan
+  dinyalakan di produksi.
+- `MAIL_MAILER=log` tidak boleh dipakai di produksi karena tautan reset kata sandi akan
+  tertulis di log.
 
 ## Enkripsi NIK
 

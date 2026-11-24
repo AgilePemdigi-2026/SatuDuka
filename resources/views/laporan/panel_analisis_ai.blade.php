@@ -85,6 +85,29 @@
             </x-ui.alert>
         @endif
 
+        @if (! empty($analisis['semua_dokumen']) && count($analisis['semua_dokumen']) > 1)
+            <div class="mt-4 rounded-xl border border-line bg-surface p-3">
+                <p class="text-xs font-semibold uppercase tracking-wide text-muted">Pertimbangan Semua Dokumen Pendukung</p>
+                <ul class="mt-2 space-y-1 text-xs text-ink-soft">
+                    @foreach ($analisis['semua_dokumen'] as $dok)
+                        <li class="flex items-center justify-between gap-2">
+                            <span>{{ $dok['nama_file'] }}</span>
+                            <span>
+                                @if ($dok['berhasil'])
+                                    Keyakinan {{ (int) round(((float) ($dok['skor'] ?? 0)) * 100) }}%
+                                    @if (($dok['jumlah_beda'] ?? 0) > 0)
+                                        &middot; {{ $dok['jumlah_beda'] }} kolom berbeda
+                                    @endif
+                                @else
+                                    Tidak dapat dianalisis
+                                @endif
+                            </span>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <p class="mt-2 text-xs text-muted">
             Model: {{ $analisis['model'] ?? '-' }} &middot; Keyakinan ekstraksi: {{ $keyakinanPersen }}%
         </p>

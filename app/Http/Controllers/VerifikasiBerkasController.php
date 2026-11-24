@@ -8,10 +8,13 @@ use App\Models\BerkasPendukung;
 use App\Models\DokumenResmi;
 use App\Models\HasilVerifikasi;
 use App\Models\LaporanKematian;
+use App\Models\Notifikasi;
 use App\Services\Ai\LayananAnalisisAi;
 use App\Services\LayananAudit;
+use App\Services\Notifikasi\NotifikasiService;
 use App\Services\Verifikasi\HasilAnalisis;
 use App\Services\Verifikasi\MesinRekonsiliasi;
+use App\Support\PengindeksNik;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,21 +24,59 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * Alur utama verifikasi berkas oleh verifikator.
+ *
+ * Antrean mencakup seluruh status non-draf dengan pencarian yang memakai
+ * blind index NIK (kolom NIK terenkripsi tidak pernah dicari dengan LIKE).
+ * Mesin rekonsiliasi hanya menyarankan tindakan; keputusan tetap pada
+ * verifikator. Semua aksi berjalan dalam satu transaksi dengan lockForUpdate,
+ * menyimpan snapshot deteksi otomatis, dan dicatat ke log_audit.
+ */
 class VerifikasiBerkasController extends Controller
 {
     public const TINDAKAN_SETUJUI = 'setujui';
+
     public const TINDAKAN_PERBAIKAN = 'minta_perbaikan';
+
     public const TINDAKAN_REVISI = 'tolak_revisi';
+
     public const TINDAKAN_ANOMALI = 'tandai_anomali';
+
     public const TINDAKAN_FATAL = 'tolak_fatal';
 
+    /**
+     * Status pengajuan yang boleh diproses verifikator.
+     *
+     * @var list<string>
+     */
+    private const STATUS_BOLEH_DIVERIFIKASI = [
+        LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
+        LaporanKematian::STATUS_DALAM_REKONSILIASI,
+        LaporanKematian::STATUS_DIKEMBALIKAN,
+    ];
+
+    /**
+     * Jenis berkas yang boleh ditampilkan langsung di browser.
+     */
+    private const MIME_PRATINJAU = [
+        'pdf' => 'application/pdf',
+        'png' => 'image/png',
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+    ];
+
     public function __construct(
-        private readonly LayananAnalisisAi $layananAi,
         private readonly MesinRekonsiliasi $mesin,
+        private readonly LayananAnalisisAi $layananAi,
+        private readonly NotifikasiService $notifikasi,
     ) {}
 
     /**
-     * Daftar seluruh permohonan untuk pemantauan dan pemeriksaan.
+     * Antrean verifikasi: seluruh status non-draf dengan filter dan pencarian.
+     *
+     * Pencarian memakai blind index NIK; kolom `nik_almarhum` terenkripsi dan
+     * TIDAK PERNAH dicari dengan LIKE.
      */
     public function index(Request $request): View
     {
@@ -45,7 +86,6 @@ class VerifikasiBerkasController extends Controller
         ]);
 
         $statusFilter = $filter['status'] ?? 'semua';
-
         $query = LaporanKematian::query()
             ->with('pemohon')
             ->where('status_pengajuan', '!=', LaporanKematian::STATUS_DRAF)
@@ -66,37 +106,49 @@ class VerifikasiBerkasController extends Controller
         }
 
         if ($request->filled('cari')) {
-            $cari = trim((string) $request->input('cari'));
-            $polaCari = '%'.addcslashes($cari, '\\%_').'%';
+            $cari = mb_strtolower(trim((string) $request->input('cari')));
+            $escapedCari = str_replace(
+                ['\\', '%', '_'],
+                ['\\\\', '\\%', '\\_'],
+                $cari
+            );
+            $pola = '%'.$escapedCari.'%';
+            $hashNik = PengindeksNik::hash($cari);
 
-            $driver = DB::connection()->getDriverName();
-            $operatorPencarian = $driver === 'pgsql' ? 'ILIKE' : 'LIKE';
-            $klausaEscape = $driver === 'mysql'
-                ? "ESCAPE '\\\\'"
-                : "ESCAPE '\\'";
-
-            $query->where(function ($subquery) use (
-                $polaCari,
-                $operatorPencarian,
-                $klausaEscape
-            ) {
+            $query->where(function ($subquery) use ($pola, $hashNik) {
                 $subquery
-                    ->whereRaw(
-                        "no_pengajuan {$operatorPencarian} ? {$klausaEscape}",
-                        [$polaCari]
-                    )
-                    ->orWhereRaw(
-                        "nama_almarhum {$operatorPencarian} ? {$klausaEscape}",
-                        [$polaCari]
-                    )
-                    ->orWhereRaw(
-                        "nik_almarhum {$operatorPencarian} ? {$klausaEscape}",
-                        [$polaCari]
-                    );
+                    ->whereRaw('LOWER(no_pengajuan) LIKE ? ESCAPE ?', [$pola, '\\'])
+                    ->orWhereRaw('LOWER(nama_almarhum) LIKE ? ESCAPE ?', [$pola, '\\']);
+
+                if ($hashNik !== null) {
+                    $subquery->orWhere('nik_almarhum_hash', $hashNik);
+                }
             });
         }
 
         $pengajuan = $query->paginate(10)->withQueryString();
+
+        // Label anomali Indonesia untuk antrean: mesin hanya menyarankan,
+        // tampilan menunjukkan anomali teratas dan jumlah sisanya.
+        $pengajuan->getCollection()->transform(function (LaporanKematian $item): LaporanKematian {
+            $hasil = $this->mesin->analisis($item, false);
+            $teratas = $hasil->anomali[0] ?? null;
+
+            $item->setAttribute('ringkasan_anomali', [
+                'label' => $teratas
+                    ? (string) config('verifikasi.taksonomi_anomali.'.$teratas->kode.'.label', $teratas->kode)
+                    : null,
+                'varian' => match ($teratas?->keparahan) {
+                    'fatal' => 'badge-bad',
+                    'tinggi' => 'badge-warning',
+                    'sedang', 'rendah' => 'badge-brand',
+                    default => 'badge-brand',
+                },
+                'lainnya' => max(0, count($hasil->anomali) - 1),
+            ]);
+
+            return $item;
+        });
 
         $jumlahPerStatus = LaporanKematian::query()
             ->where('status_pengajuan', '!=', LaporanKematian::STATUS_DRAF)
@@ -106,48 +158,31 @@ class VerifikasiBerkasController extends Controller
 
         $ringkasan = [
             'total' => $jumlahPerStatus->sum(),
-            'menunggu' => (int) $jumlahPerStatus->get(
-                LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
-                0
-            ),
-            'rekonsiliasi' => (int) $jumlahPerStatus->get(
-                LaporanKematian::STATUS_DALAM_REKONSILIASI,
-                0
-            ),
-            'selesai' => (int) $jumlahPerStatus->get(
-                LaporanKematian::STATUS_SELESAI,
-                0
-            ),
+            'menunggu' => (int) $jumlahPerStatus->get(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI, 0),
+            'rekonsiliasi' => (int) $jumlahPerStatus->get(LaporanKematian::STATUS_DALAM_REKONSILIASI, 0),
+            'selesai' => (int) $jumlahPerStatus->get(LaporanKematian::STATUS_SELESAI, 0),
         ];
 
-        return view(
-            'verifikasi.index',
-            compact('pengajuan', 'ringkasan', 'statusFilter')
-        );
+        return view('verifikasi.index', compact('pengajuan', 'ringkasan', 'statusFilter'));
     }
 
     /**
-     * Menampilkan detail berkas untuk diperiksa verifikator.
+     * Detail berkas, panel aturan mesin, panel AI, dan keputusan verifikator.
      */
     public function show(LaporanKematian $laporan): View
     {
-        abort_unless(
-            in_array($laporan->status_pengajuan, [
-                LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
-                LaporanKematian::STATUS_DALAM_REKONSILIASI,
-                LaporanKematian::STATUS_DIKEMBALIKAN,
-            ], true),
-            404
-        );
+        $this->pastikanUntukTampil($laporan);
 
         $laporan->load([
             'pemohon',
             'berkasPendukung',
             'hasilVerifikasi.verifikator',
-            'dokumenResmi',
+            'analisisAi',
         ]);
 
-        // Ambil hasil analisis AI terakhir yang berhasil.
+        $analisis = $this->mesin->analisis($laporan);
+        $kelengkapan = $this->kelengkapanDokumen($laporan);
+        $ringkasan = $this->ringkasanTerakhir($laporan);
         $analisisKesesuaian = $laporan->analisisAi()
             ->where('jenis', AnalisisAi::JENIS_PERBANDINGAN)
             ->where('status', AnalisisAi::STATUS_BERHASIL)
@@ -155,22 +190,27 @@ class VerifikasiBerkasController extends Controller
             ->orderByDesc('id_analisis')
             ->first();
 
-        $dokumenWajib = BerkasPendukung::DAFTAR_JENIS;
-        $analisisAturan = $this->mesin->analisis($laporan);
-        $tindakanDisarankan = $this->mesin->tindakanDisarankan($analisisAturan);
-        $bannerManual = $analisisAturan->layananTidakTersedia;
-
-        return view('verifikasi.show', compact(
-            'laporan',
-            'dokumenWajib',
-            'analisisKesesuaian',
-            'analisisAturan',
-            'tindakanDisarankan',
-            'bannerManual',
-        ));
+        return view('verifikasi.show', [
+            'laporan' => $laporan,
+            'analisisAturan' => $analisis,
+            'analisisKesesuaian' => $analisisKesesuaian,
+            'tindakanDisarankan' => $this->mesin->tindakanDisarankan($analisis),
+            'bannerManual' => $analisis->layananTidakTersedia,
+            'dokumenTampil' => $kelengkapan['dokumen_tampil'],
+            'jenisWajibTunggal' => $kelengkapan['jenis_wajib_tunggal'],
+            'jenisBuktiKematian' => $kelengkapan['jenis_bukti_kematian'],
+            'adaBuktiKematian' => $kelengkapan['ada_bukti_kematian'],
+            'jumlahWajib' => $kelengkapan['jumlah_wajib'],
+            'jumlahTersedia' => $kelengkapan['jumlah_tersedia'],
+            'analisis' => session('analisis_ai'),
+            'ringkasan' => $ringkasan?->hasil,
+            'ringkasanBerhasil' => $ringkasan?->status === AnalisisAi::STATUS_BERHASIL,
+        ]);
     }
 
-    /** Menyetujui berkas. Mesin hanya memberikan rekomendasi; verifikator memutuskan. */
+    /**
+     * Menyetujui pengajuan dan membuat dokumen resmi berstatus Menunggu.
+     */
     public function setujui(Request $request, LaporanKematian $laporan): RedirectResponse
     {
         return $this->putuskan($request, $laporan, self::TINDAKAN_SETUJUI, [
@@ -178,28 +218,35 @@ class VerifikasiBerkasController extends Controller
         ], 'Berkas berhasil disetujui dan masuk tahap menunggu TTE.');
     }
 
-    /** Meminta pemohon memperbaiki berkas. */
+    /**
+     * Meminta perbaikan berkas oleh pemohon.
+     */
     public function mintaPerbaikan(Request $request, LaporanKematian $laporan): RedirectResponse
     {
         return $this->putuskan($request, $laporan, self::TINDAKAN_PERBAIKAN, [
             'catatan' => ['required', 'string', 'min:5', 'max:2000'],
-        ], 'Permintaan perbaikan berkas berhasil dikirim.');
+        ], 'permintaan perbaikan berkas berhasil dikirim.');
     }
 
-    /** Meminta revisi berkas. */
+    /**
+     * Menolak pengajuan dan meminta revisi.
+     */
     public function mintaRevisi(Request $request, LaporanKematian $laporan): RedirectResponse
     {
         return $this->putuskan($request, $laporan, self::TINDAKAN_REVISI, [
             'catatan' => ['required', 'string', 'min:5', 'max:2000'],
-        ], 'Catatan revisi berhasil disimpan.');
+        ], 'catatan revisi berhasil dikirim.');
     }
 
-    /** Menandai anomali untuk rekonsiliasi. */
+    /**
+     * Memindahkan pengajuan ke antrean rekonsiliasi anomali.
+     */
     public function tandaiAnomali(Request $request, LaporanKematian $laporan): RedirectResponse
     {
         return $this->putuskan($request, $laporan, self::TINDAKAN_ANOMALI, [
             'jenis_anomali' => [
-                'required', 'string',
+                'required',
+                'string',
                 Rule::in([
                     AnomaliDokumen::JENIS_NIK_GANDA,
                     AnomaliDokumen::JENIS_PERBEDAAN_IDENTITAS,
@@ -209,20 +256,21 @@ class VerifikasiBerkasController extends Controller
                 ]),
             ],
             'deskripsi' => ['required', 'string', 'min:5', 'max:2000'],
-        ], 'Berkas dialihkan ke proses rekonsiliasi anomali.');
+        ], 'berkas dialihkan ke proses rekonsiliasi anomali.');
     }
 
-    /** Menolak pengajuan dengan anomali fatal. */
+    /**
+     * Menolak permanen karena anomali data fatal.
+     */
     public function tolakFatal(Request $request, LaporanKematian $laporan): RedirectResponse
     {
         return $this->putuskan($request, $laporan, self::TINDAKAN_FATAL, [
             'catatan' => ['required', 'string', 'min:5', 'max:2000'],
-        ], 'Pengajuan ditolak karena anomali data fatal.');
+        ], 'pengajuan ditolak karena anomali data fatal.');
     }
 
     /**
-     * Membaca Surat Keterangan Kematian melalui layanan AI.
-     * Status pengajuan tidak diubah.
+     * Membaca dokumen dengan bantuan AI. Status pengajuan tidak diubah.
      */
     public function analisis(Request $request, LaporanKematian $laporan): RedirectResponse
     {
@@ -240,75 +288,63 @@ class VerifikasiBerkasController extends Controller
             ->first();
 
         if ($berkas === null) {
-            return redirect()->route('verifikasi.show', $laporan)
+            return redirect()
+                ->route('verifikasi.show', $laporan)
                 ->with('galat', 'Surat Keterangan Kematian tidak ditemukan.');
         }
 
         $hasil = $this->layananAi->periksa($berkas, $request->user(), 'verifikator_detail');
 
         if (! $hasil['berhasil']) {
-            return redirect()->route('verifikasi.show', $laporan)
+            return redirect()
+                ->route('verifikasi.show', $laporan)
                 ->with('galat', $hasil['pesan']);
         }
 
-        return redirect()->route('verifikasi.show', $laporan)
+        return redirect()
+            ->route('verifikasi.show', $laporan)
             ->with('analisis_ai', $hasil)
             ->with('sukses', 'Analisis AI selesai. Hasil bantuan AI, hanya saran.');
     }
 
     /**
-     * Merangkum hasil pemeriksaan AI terbaru, tanpa mengubah status.
+     * Membuat ringkasan ketidaksesuaian berbantuan AI untuk verifikator.
      */
     public function ringkasanAi(Request $request, LaporanKematian $laporan): RedirectResponse
     {
         $this->pastikanUntukTampil($laporan);
-        $berkas = $this->suratKeterangan($laporan);
 
-        if ($berkas === null) {
-            return redirect()->route('verifikasi.show', $laporan)
-                ->with('galat', 'Surat Keterangan Kematian tidak ditemukan.');
-        }
+        $catatanPerbandingan = AnalisisAi::query()
+            ->where('id_laporan', $laporan->id_laporan)
+            ->where('jenis', AnalisisAi::JENIS_PERBANDINGAN)
+            ->where('status', AnalisisAi::STATUS_BERHASIL)
+            ->latest('id_analisis')
+            ->first();
 
-        $perbandingan = $this->perbandinganTerakhir($laporan);
-
-        if ($perbandingan === null) {
-            $analisis = $this->layananAi->periksa($berkas, $request->user(), 'verifikator_ringkasan');
-            $perbandingan = $analisis['perbandingan'] ?? null;
-
-            if (! $analisis['berhasil'] || ! is_array($perbandingan)) {
-                return redirect()->route('verifikasi.show', $laporan)
-                    ->with('galat', $analisis['pesan'] ?? 'Analisis AI tidak tersedia, lanjutkan secara manual');
-            }
-        }
+        $perbandingan = is_array($catatanPerbandingan?->hasil)
+            ? $catatanPerbandingan->hasil
+            : ['kolom' => []];
 
         $hasil = $this->layananAi->ringkas(
             $laporan,
             $perbandingan,
             $request->user(),
-            'verifikator_ringkasan'
+            'verifikator_detail'
         );
 
-        if (! $hasil['berhasil']) {
-            return redirect()->route('verifikasi.show', $laporan)
-                ->with('galat', $hasil['pesan']);
+        if (! ($hasil['berhasil'] ?? false)) {
+            return redirect()
+                ->route('verifikasi.show', $laporan)
+                ->with('galat', $hasil['pesan'] ?? 'Analisis AI tidak tersedia, lanjutkan secara manual');
         }
 
-        return redirect()->route('verifikasi.show', $laporan)
+        return redirect()
+            ->route('verifikasi.show', $laporan)
             ->with('sukses', 'Ringkasan AI dibuat. Hasil bantuan AI, hanya saran.');
     }
 
     /**
-     * Jenis berkas yang boleh ditampilkan langsung di browser.
-     */
-    private const MIME_PRATINJAU = [
-        'pdf' => 'application/pdf',
-        'png' => 'image/png',
-        'jpg' => 'image/jpeg',
-        'jpeg' => 'image/jpeg',
-    ];
-
-    /**
-     * Menampilkan berkas langsung di browser.
+     * Menampilkan berkas langsung di browser (tanpa mengunduh).
      */
     public function pratinjau(
         LaporanKematian $laporan,
@@ -316,10 +352,7 @@ class VerifikasiBerkasController extends Controller
     ): StreamedResponse {
         $path = $this->jalurBerkas($laporan, $berkas);
 
-        $ekstensi = strtolower(
-            pathinfo($path, PATHINFO_EXTENSION)
-        );
-
+        $ekstensi = strtolower(pathinfo($path, PATHINFO_EXTENSION));
         $mime = self::MIME_PRATINJAU[$ekstensi] ?? null;
 
         abort_if(
@@ -328,24 +361,13 @@ class VerifikasiBerkasController extends Controller
             'Jenis berkas ini tidak bisa dipratinjau. Silakan unduh.'
         );
 
-        $respons = Storage::disk('local')->response(
-            $path,
-            $berkas->nama_file,
-            [
-                'Content-Type' => $mime,
-                'Content-Disposition' => 'inline; filename="'
-                    . addcslashes(
-                        basename($berkas->nama_file),
-                        '"\\\\'
-                    )
-                    . '"',
-                'X-Content-Type-Options' => 'nosniff',
-                'Cache-Control' => 'no-store, private',
-            ]
-        );
-        $respons->headers->set('Cache-Control', 'no-store, private');
-
-        return $respons;
+        return Storage::disk('local')->response($path, $berkas->nama_file, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'inline; filename="'.
+                addcslashes(basename($berkas->nama_file), '"\\').'"',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     /**
@@ -357,19 +379,16 @@ class VerifikasiBerkasController extends Controller
     ): StreamedResponse {
         $path = $this->jalurBerkas($laporan, $berkas);
 
-        $respons = Storage::disk('local')->download($path, $berkas->nama_file);
-        $respons->headers->set('X-Content-Type-Options', 'nosniff');
-        $respons->headers->set('Cache-Control', 'no-store, private');
+        $response = Storage::disk('local')->download($path, $berkas->nama_file);
 
-        return $respons;
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('Cache-Control', 'no-store, private');
+
+        return $response;
     }
 
     /**
-     * Memastikan berkas milik laporan dan tersedia di penyimpanan.
-     */
-    /**
-     * Keputusan atomik dan terkunci; tidak melibatkan SIAK.
-     * @param array<string, mixed> $aturanValidasi
+     * @param  array<string, mixed>  $aturanValidasi
      */
     private function putuskan(
         Request $request,
@@ -415,7 +434,9 @@ class VerifikasiBerkasController extends Controller
             ->with('sukses', $pesanSukses);
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * @param  array<string, mixed>  $data
+     */
     private function terapkanKeputusan(
         Request $request,
         LaporanKematian $laporan,
@@ -450,9 +471,11 @@ class VerifikasiBerkasController extends Controller
         ];
 
         abort_unless(isset($pemetaan[$tindakan]), 422, 'Tindakan verifikasi tidak dikenal.');
+
         [$statusBaru, $statusVerifikasi] = $pemetaan[$tindakan];
 
         $perubahan = ['status_pengajuan' => $statusBaru];
+
         if ($tindakan === self::TINDAKAN_SETUJUI) {
             $perubahan['catatan_revisi'] = null;
         } elseif ($catatan !== '') {
@@ -488,6 +511,8 @@ class VerifikasiBerkasController extends Controller
 
         $this->mesin->simpanKeputusan($hasil, $analisis, $alasanOverride);
 
+        $this->kirimNotifikasiKeputusan($laporan, $tindakan, $catatan);
+
         LayananAudit::catat(
             aksi: $this->namaAksiAudit($tindakan),
             objek: 'laporan_kematian',
@@ -505,6 +530,52 @@ class VerifikasiBerkasController extends Controller
         );
     }
 
+    /**
+     * Kirim notifikasi ke pemohon sesuai keputusan verifikator.
+     */
+    private function kirimNotifikasiKeputusan(
+        LaporanKematian $laporan,
+        string $tindakan,
+        string $catatan,
+    ): void {
+        $pemohon = $laporan->pemohon;
+
+        if (! $pemohon) {
+            return;
+        }
+
+        [$jenis, $judul, $pesan] = match ($tindakan) {
+            self::TINDAKAN_SETUJUI => [
+                Notifikasi::JENIS_INFO,
+                'Berkas Disetujui',
+                'Berkas Anda telah disetujui verifikator dan menunggu tanda tangan elektronik pejabat.',
+            ],
+            self::TINDAKAN_PERBAIKAN => [
+                Notifikasi::JENIS_PERLU_DIPERBAIKI,
+                'Pengajuan Perlu Diperbaikan',
+                $catatan !== '' ? $catatan : 'Berkas Anda perlu diperbaiki sebelum dapat diproses.',
+            ],
+            self::TINDAKAN_REVISI => [
+                Notifikasi::JENIS_PERLU_DIPERBAIKI,
+                'Pengajuan Ditolak/Butuh Revisi',
+                $catatan !== '' ? $catatan : 'Pengajuan Anda memerlukan revisi dari verifikator.',
+            ],
+            self::TINDAKAN_ANOMALI => [
+                Notifikasi::JENIS_INFO,
+                'Berkas Ditandai Anomali',
+                $catatan !== '' ? $catatan : 'Berkas Anda masuk proses rekonsiliasi anomali data.',
+            ],
+            self::TINDAKAN_FATAL => [
+                Notifikasi::JENIS_INFO,
+                'Pengajuan Ditolak Permanen',
+                $catatan !== '' ? $catatan : 'Pengajuan ditolak karena anomali data fatal.',
+            ],
+            default => [Notifikasi::JENIS_INFO, 'Status Pengajuan Berubah', $catatan],
+        };
+
+        $this->notifikasi->kirim($pemohon, $jenis, $judul, $pesan, $laporan);
+    }
+
     private function namaAksiAudit(string $tindakan): string
     {
         return match ($tindakan) {
@@ -517,122 +588,142 @@ class VerifikasiBerkasController extends Controller
         };
     }
 
+    private function ringkasanTerakhir(LaporanKematian $laporan): ?AnalisisAi
+    {
+        $laporan->loadMissing('analisisAi');
+
+        return $laporan->analisisAi
+            ->where('jenis', AnalisisAi::JENIS_RINGKASAN)
+            ->sortByDesc('id_analisis')
+            ->first();
+    }
+
+    /**
+     * Memastikan berkas milik laporan ini dan benar-benar ada di penyimpanan.
+     */
     private function jalurBerkas(
         LaporanKematian $laporan,
         BerkasPendukung $berkas
     ): string {
-        abort_unless(
-            in_array($laporan->status_pengajuan, [
-                LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
-                LaporanKematian::STATUS_DALAM_REKONSILIASI,
-                LaporanKematian::STATUS_DIKEMBALIKAN,
-            ], true),
-            404
-        );
+        $this->pastikanUntukTampil($laporan);
 
         abort_unless(
-            (int) $berkas->id_laporan ===
-                (int) $laporan->id_laporan,
+            (int) $berkas->id_laporan === (int) $laporan->id_laporan,
             404
         );
-
         abort_unless(
-            $berkas->status_unggahan ===
-                BerkasPendukung::STATUS_BERHASIL,
+            $berkas->status_unggahan === BerkasPendukung::STATUS_BERHASIL,
             404
         );
-
         abort_unless(
-            $berkas->path_file !== ''
-                && Storage::disk('local')->exists(
-                    $berkas->path_file
-                ),
+            $berkas->path_file !== '' &&
+                Storage::disk('local')->exists($berkas->path_file),
             404
         );
 
         return $berkas->path_file;
     }
 
-    private function pastikanMenunggu(
-        ?LaporanKematian $laporan
-    ): void {
-        abort_unless(
-            $laporan
-                && $laporan->status_pengajuan ===
-                    LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
-            409,
-            'Pengajuan ini sudah tidak berada dalam antrean verifikasi.'
-        );
-    }
-
-    /**
-     * Detail dan AI boleh diperiksa pada antrean aktif serta kasus yang dikembalikan.
-     */
     private function pastikanUntukTampil(?LaporanKematian $laporan): void
     {
         abort_unless(
-            $laporan && in_array($laporan->status_pengajuan, [
-                LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
-                LaporanKematian::STATUS_DALAM_REKONSILIASI,
-                LaporanKematian::STATUS_DIKEMBALIKAN,
-            ], true),
+            $laporan && in_array($laporan->status_pengajuan, self::STATUS_BOLEH_DIVERIFIKASI, true),
             404,
         );
     }
 
-    /**
-     * Aksi keputusan tambahan hanya berlaku bagi laporan yang masih bisa diverifikasi.
-     */
     private function pastikanBisaDiverifikasi(?LaporanKematian $laporan): void
     {
         abort_unless(
-            $laporan && in_array($laporan->status_pengajuan, [
-                LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
-                LaporanKematian::STATUS_DALAM_REKONSILIASI,
-            ], true),
+            $laporan && in_array($laporan->status_pengajuan, self::STATUS_BOLEH_DIVERIFIKASI, true),
             409,
             'Pengajuan ini sudah tidak berada dalam antrean verifikasi.'
         );
     }
 
-    private function suratKeterangan(LaporanKematian $laporan): ?BerkasPendukung
+    /**
+     * @return array{
+     *     kurang: list<string>,
+     *     dokumen_tampil: list<string>,
+     *     jenis_wajib_tunggal: list<string>,
+     *     jenis_bukti_kematian: list<string>,
+     *     ada_bukti_kematian: bool,
+     *     jumlah_wajib: int,
+     *     jumlah_tersedia: int
+     * }
+     */
+    private function kelengkapanDokumen(LaporanKematian $laporan): array
     {
-        return $laporan->berkasPendukung()
-            ->where('jenis_dokumen', BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN)
-            ->first();
-    }
+        $terunggah = $this->jenisBerkasBerhasil($laporan);
 
-    /** @return array<string, mixed>|null */
-    private function perbandinganTerakhir(LaporanKematian $laporan): ?array
-    {
-        $laporan->loadMissing('analisisAi');
+        $terlambat = $this->terlambat($laporan);
+        $jenisKasus = $laporan->jenis_kasus ?? LaporanKematian::JENIS_KASUS_NORMAL;
 
-        $analisis = $laporan->analisisAi
-            ->where('jenis', AnalisisAi::JENIS_PERBANDINGAN)
-            ->sortByDesc('id_analisis')
-            ->first();
+        $buktiKematian = array_values((array) config('verifikasi.berkas_wajib.bukti_kematian.jenis', []));
+        $lainnya = array_values((array) config('verifikasi.berkas_wajib.lainnya', []));
+        $keterlambatan = $terlambat
+            ? array_values((array) config('verifikasi.berkas_bersyarat.keterlambatan', []))
+            : [];
+        $kasusKhusus = $jenisKasus !== LaporanKematian::JENIS_KASUS_NORMAL
+            ? array_values((array) config('verifikasi.berkas_bersyarat.jenis_kasus_khusus', []))
+            : [];
+        $opsional = array_values((array) config('verifikasi.berkas_opsional', []));
 
-        return $analisis?->hasil;
+        $kurang = BerkasPendukung::jenisYangKurang($terunggah, $terlambat, $jenisKasus);
+
+        $jenisWajibTunggal = array_values(array_unique(array_merge(
+            $lainnya,
+            $keterlambatan,
+            $kasusKhusus,
+        )));
+
+        $dokumenTampil = array_values(array_unique(array_merge(
+            $buktiKematian,
+            $jenisWajibTunggal,
+            $opsional,
+        )));
+
+        $jumlahWajib = ($buktiKematian === [] ? 0 : 1)
+            + count($lainnya)
+            + count($keterlambatan)
+            + count($kasusKhusus);
+
+        return [
+            'kurang' => $kurang,
+            'dokumen_tampil' => $dokumenTampil,
+            'jenis_wajib_tunggal' => $jenisWajibTunggal,
+            'jenis_bukti_kematian' => $buktiKematian,
+            'ada_bukti_kematian' => array_intersect($buktiKematian, $terunggah) !== [],
+            'jumlah_wajib' => $jumlahWajib,
+            'jumlah_tersedia' => $jumlahWajib - count($kurang),
+        ];
     }
 
     /**
      * @return list<string>
      */
-    private function dokumenKurang(
-        LaporanKematian $laporan
-    ): array {
-        $tersedia = $laporan->berkasPendukung
-            ->where(
-                'status_unggahan',
-                BerkasPendukung::STATUS_BERHASIL
-            )
+    private function jenisBerkasBerhasil(LaporanKematian $laporan): array
+    {
+        return $laporan->berkasPendukung
+            ->where('status_unggahan', BerkasPendukung::STATUS_BERHASIL)
             ->pluck('jenis_dokumen')
             ->unique()
+            ->values()
             ->all();
+    }
 
-        return array_values(array_diff(
-            BerkasPendukung::DAFTAR_JENIS,
-            $tersedia
-        ));
+    private function terlambat(LaporanKematian $laporan): bool
+    {
+        $tanggalKematian = $laporan->tanggal_kematian;
+
+        if ($tanggalKematian === null) {
+            return false;
+        }
+
+        $tanggalAcuan = $laporan->tanggal_pengajuan ?? now();
+
+        return $tanggalKematian->copy()->startOfDay()
+            ->diffInDays($tanggalAcuan->copy()->startOfDay(), false)
+            > (int) config('verifikasi.batas_hari_pelaporan', 30);
     }
 }

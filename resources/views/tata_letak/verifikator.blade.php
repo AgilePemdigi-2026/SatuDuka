@@ -138,6 +138,7 @@
         .alert { border-radius: 16px; padding: 16px 20px; font-size: 14px; margin-bottom: 24px; }
         .alert ul { margin: 8px 0 0; padding-left: 20px; }
         .alert-ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; font-weight: 500; }
+        .alert-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a5f; font-weight: 500; }
         .alert-err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
         .alert-warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-weight: 500; margin: 0; }
         .empty { text-align: center; padding: 64px 20px; }
@@ -189,7 +190,55 @@
 </head>
 <body>
 <div class="skd-app">
-    {{-- Sidebar dinonaktifkan: navigasi pemohon kini melalui dashboard dan tombol aksi. --}}
+
+    @unless (auth()->user()->adalahVerifikator() || auth()->user()->adalahPejabat())
+    <aside class="skd-side">
+        <div>
+            <div class="skd-brand">
+                <h1>SKD</h1>
+                <p>Sistem Kependudukan Digital</p>
+            </div>
+
+            <nav class="skd-nav">
+                @if (auth()->user()->adalahPemohon())
+                    <p class="skd-nav-label">Menu Utama</p>
+                    <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Dashboard
+                    </a>
+                    <a href="{{ route('laporan.baru') }}" class="nav-link {{ request()->routeIs('laporan.baru') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Ajukan Laporan Baru
+                    </a>
+                    <a href="{{ route('pengajuan.status') }}" class="nav-link {{ request()->routeIs('pengajuan.*') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Status Pengajuan
+                    </a>
+                @elseif (auth()->user()->adalahPejabat())
+                    <p class="skd-nav-label">Menu Utama</p>
+                    <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Dashboard
+                    </a>
+                    <a href="{{ route('tanda_tangan.index') }}" class="nav-link {{ request()->routeIs('tanda_tangan.*') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Tanda Tangan Dokumen
+                    </a>
+                @else
+                    <p class="skd-nav-label">Menu Utama</p>
+                    <a href="{{ route('verifikasi.index') }}" class="nav-link {{ request()->routeIs('verifikasi.index') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Dashboard
+                    </a>
+                    <a href="#" class="nav-link {{ request()->routeIs('verifikasi.show') ? 'active' : '' }}">
+                        <span class="nav-dot"></span>Verifikasi &amp; Rekonsiliasi
+                    </a>
+                    <a href="#" class="nav-link"><span class="nav-dot"></span>Approve / Reject Berkas</a>
+
+                    <p class="skd-nav-label" style="margin-top: 22px;">Lainnya</p>
+                    <a href="#" class="nav-link"><span class="nav-dot"></span>Pengaturan</a>
+                @endif
+            </nav>
+        </div>
+
+        <p class="skd-foot">&copy; {{ date('Y') }} SKD Indonesia</p>
+    </aside>
+    @endunless
+
     <div class="skd-main">
         <main class="skd-container">
             @hasSection('aksi_header')
@@ -242,6 +291,11 @@
             @if (session('sukses') || session('success'))
                 <div class="alert alert-ok">{{ session('sukses') ?? session('success') }}</div>
             @endif
+
+            @if (session('info'))
+                <div class="alert alert-info">{{ session('info') }}</div>
+            @endif
+
             @if ($errors->any() && ! trim($__env->yieldContent('tanpa_error_global')))
                 <div role="alert" class="alert alert-err">
                     <strong>Perhatikan kendala berikut:</strong>

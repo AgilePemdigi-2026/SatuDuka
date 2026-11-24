@@ -17,10 +17,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git unzip libpq-dev libzip-dev libicu-dev \
     libonig-dev libpng-dev libjpeg62-turbo-dev \
     libfreetype6-dev libsqlite3-dev \
+    tesseract-ocr tesseract-ocr-ind tesseract-ocr-eng poppler-utils \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
        pdo_pgsql pdo_sqlite mbstring zip intl bcmath gd \
     && rm -rf /var/lib/apt/lists/*
+
+# Batas unggah dan waktu eksekusi untuk OCR/AI (dokumen kematian bisa besar)
+RUN printf 'upload_max_filesize=6M\npost_max_size=40M\nmax_execution_time=180\nmemory_limit=512M\n' \
+    > /usr/local/etc/php/conf.d/satuduka.ini
 
 # Konfigurasi Apache untuk Laravel
 RUN a2enmod rewrite \
@@ -51,7 +56,6 @@ RUN COMPOSER_ALLOW_SUPERUSER=1 composer install \
        storage/framework/views \
               storage/logs bootstrap/cache \
     && php artisan package:discover --ansi \
-    && chown -R www-data:www-data storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && ln -s /var/www/html/storage/app/public \
        /var/www/html/public/storage

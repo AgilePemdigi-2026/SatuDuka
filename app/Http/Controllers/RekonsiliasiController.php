@@ -7,7 +7,9 @@ use App\Models\AnomaliDokumen;
 use App\Models\BerkasPendukung;
 use App\Models\HasilVerifikasi;
 use App\Models\LaporanKematian;
+use App\Models\Notifikasi;
 use App\Services\LayananAudit;
+use App\Services\Notifikasi\NotifikasiService;
 use App\Services\Verifikasi\LayananValidasiNik;
 use App\Support\DataSIAK;
 use App\Support\MaskerNik;
@@ -44,6 +46,7 @@ class RekonsiliasiController extends Controller
 
     public function __construct(
         private readonly LayananValidasiNik $validasiNik,
+        private readonly NotifikasiService $notifikasi,
     ) {}
 
     /**
@@ -168,6 +171,14 @@ class RekonsiliasiController extends Controller
             );
         });
 
+        $this->notifikasi->kirim(
+            $laporan->pemohon,
+            Notifikasi::JENIS_INFO,
+            'Rekonsiliasi Selesai',
+            'Anomali data pengajuan Anda telah diselesaikan dan berkas kembali ke antrean verifikasi.',
+            $laporan,
+        );
+
         return redirect()
             ->route('rekonsiliasi.index')
             ->with('sukses', 'Anomali berhasil diselesaikan dan berkas dikembalikan ke antrean verifikasi.');
@@ -223,6 +234,14 @@ class RekonsiliasiController extends Controller
                 hasil: 'Sukses',
             );
         });
+
+        $this->notifikasi->kirim(
+            $laporan->pemohon,
+            Notifikasi::JENIS_INFO,
+            'Pengajuan Ditolak Permanen',
+            'Pengajuan Anda ditolak permanen karena anomali data fatal. Silakan hubungi petugas untuk informasi lebih lanjut.',
+            $laporan,
+        );
 
         return redirect()
             ->route('rekonsiliasi.index')

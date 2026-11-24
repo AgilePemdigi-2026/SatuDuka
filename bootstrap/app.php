@@ -25,8 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Kenali protokol HTTPS yang diteruskan reverse proxy Coolify.
         $middleware->trustProxies(
             at: '*',
-            headers: Request::HEADER_X_FORWARDED_PROTO
-);
+            headers: Request::HEADER_X_FORWARDED_PROTO,
+        );
+
         // Alias middleware pembatas peran: Route::middleware('peran:pemohon').
         $middleware->alias([
             'peran' => PastikanPeran::class,

@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\BerkasPendukung;
 use App\Models\LaporanKematian;
+use App\Models\Notifikasi;
 use App\Models\Pengguna;
 use App\Services\Ai\LayananAnalisisAi;
 use App\Services\LayananAudit;
 use App\Services\LayananNomorPengajuan;
+use App\Services\Notifikasi\NotifikasiService;
 use App\Services\Verifikasi\LayananAturanBerkas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -28,6 +30,8 @@ use Illuminate\Validation\ValidationException;
  */
 class LaporanController extends Controller
 {
+    public function __construct(private readonly NotifikasiService $notifikasi) {}
+
     /**
      * Pesan galat unggah berkas (user story 6.2.3).
      */
@@ -234,6 +238,16 @@ class LaporanController extends Controller
         $laporan = $hasil['laporan'];
         $kirimUlang = $hasil['aksi'] === 'mengirim_ulang_laporan';
 
+        if (! $kirimUlang) {
+            $this->notifikasi->kirim(
+                $request->user(),
+                Notifikasi::JENIS_VALIDASI_AWAL,
+                'Pengajuan Diterima',
+                'Pengajuan laporan kematian Anda diterima dan sedang menunggu verifikasi berkas.',
+                $laporan,
+            );
+        }
+
         LayananAudit::catat(
             aksi: $hasil['aksi'],
             objek: 'laporan_kematian',
@@ -350,9 +364,12 @@ class LaporanController extends Controller
         $laporan = $this->laporanMilik($request, $laporan);
         $this->pastikanBolehDiubah($laporan);
 
-        $berkas = $laporan->berkasPendukung()
-            ->where('jenis_dokumen', BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN)
-            ->first();
+        $daftarBerkas = $laporan->berkasPendukung()
+            ->where('status_unggahan', BerkasPendukung::STATUS_BERHASIL)
+            ->get();
+
+        $berkas = $daftarBerkas
+            ->firstWhere('jenis_dokumen', BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN);
 
         if ($berkas === null) {
             return redirect()
@@ -367,6 +384,23 @@ class LaporanController extends Controller
                 ->to($this->alamatLangkah($laporan, 4))
                 ->with('galat', $hasil['pesan']);
         }
+
+        $hasilSemuaDokumen = [];
+        foreach ($daftarBerkas as $itemBerkas) {
+            $hasilItem = $itemBerkas->id_berkas === $berkas->id_berkas
+                ? $hasil
+                : $layanan->periksa($itemBerkas, $request->user(), 'pemohon_review');
+
+            $hasilSemuaDokumen[] = [
+                'nama_file' => $itemBerkas->nama_file,
+                'jenis_dokumen' => $itemBerkas->jenis_dokumen,
+                'berhasil' => $hasilItem['berhasil'] ?? false,
+                'skor' => $hasilItem['perbandingan']['skor'] ?? null,
+                'jumlah_beda' => $hasilItem['perbandingan']['jumlah_beda'] ?? 0,
+            ];
+        }
+
+        $hasil['semua_dokumen'] = $hasilSemuaDokumen;
 
         return redirect()
             ->to($this->alamatLangkah($laporan, 4))

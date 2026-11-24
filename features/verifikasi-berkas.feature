@@ -37,12 +37,12 @@ Feature: Memverifikasi Berkas Pengajuan
     Then status pengajuan menjadi "Dalam Rekonsiliasi Anomali"
     And data anomali berhasil disimpan
 
-  Scenario: Mencegah persetujuan ketika dokumen wajib belum lengkap
+  Scenario: Menuntut alasan override ketika dokumen wajib belum lengkap
     Given terdapat pengajuan tanpa seluruh dokumen wajib yang menunggu verifikasi
     And saya masuk sebagai verifikator
     When saya mencoba menyetujui pengajuan tersebut
     Then status pengajuan tetap "Menunggu Verifikasi"
-    And persetujuan ditolak karena dokumen belum lengkap
+    And persetujuan menuntut alasan override
 
   Scenario: Mencegah alasan revisi yang kosong
     Given terdapat pengajuan yang menunggu verifikasi

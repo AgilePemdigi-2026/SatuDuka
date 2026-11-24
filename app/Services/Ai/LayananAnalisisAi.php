@@ -10,6 +10,7 @@ use App\Models\Pengguna;
 use App\Services\LayananAudit;
 use App\Support\NikAnalisis;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 
@@ -68,7 +69,9 @@ class LayananAnalisisAi
                     return is_array($mentah) ? NikAnalisis::samarkanEkstraksi($mentah) : $mentah;
                 },
             );
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            $this->catatKegagalan($e, $model, $pemicu);
+
             return $this->gagal($berkas, $laporan, $model, $pengguna, $pemicu, $hash);
         }
 
@@ -89,7 +92,9 @@ class LayananAnalisisAi
 
         try {
             $banding = $this->perbandingan->bandingkan($laporan, $ekstraksi);
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            $this->catatKegagalan($e, $model, $pemicu);
+
             $this->simpan(
                 laporan: $laporan,
                 berkas: $berkas,
@@ -163,7 +168,9 @@ class LayananAnalisisAi
 
         try {
             $hasil = $this->ai->ringkasKetidaksesuaian($perbandingan);
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            $this->catatKegagalan($e, $model, $pemicu);
+
             return $this->gagalRingkasan($laporan, $model, $pengguna, $pemicu);
         }
 
@@ -240,6 +247,26 @@ class LayananAnalisisAi
             'saran' => [],
             'model' => $model,
         ];
+    }
+
+    /**
+     * Catat penyebab kegagalan layanan AI tanpa membocorkan data rahasia.
+     *
+     * Log hanya memuat kelas pengecualian, status HTTP, penyebab ringkas,
+     * nama model, dan pemicu. Pesan pengecualian mentah, NIK, isi/teks
+     * dokumen, prompt, kunci API, dan header Authorization tidak pernah dicatat.
+     */
+    private function catatKegagalan(\Throwable $e, string $model, string $pemicu): void
+    {
+        $aiTidakTersedia = $e instanceof AiTidakTersedia ? $e : null;
+
+        Log::warning('Layanan AI gagal', [
+            'pengecualian' => $e::class,
+            'status_http' => $aiTidakTersedia?->statusHttp,
+            'penyebab' => $aiTidakTersedia?->penyebab,
+            'model' => $model,
+            'pemicu' => $pemicu,
+        ]);
     }
 
     /**

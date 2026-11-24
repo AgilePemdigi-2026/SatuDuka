@@ -4,14 +4,13 @@ use App\Http\Controllers\AturUlangKataSandiController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\LoginController;
-use App\Http\Controllers\PusatNotifikasiController;
 use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\PusatNotifikasiController;
 use App\Http\Controllers\RegistrasiController;
 use App\Http\Controllers\RekonsiliasiController;
 use App\Http\Controllers\StatusPengajuanController;
 use App\Http\Controllers\TandaTanganController;
 use App\Http\Controllers\VerifikasiBerkasController;
-use App\Models\BerkasPendukung;
 use App\Models\LaporanKematian;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -91,17 +90,10 @@ Route::middleware(['auth', 'peran:pemohon'])->group(function () {
     // Pusat Notifikasi Pengguna/Pemohon
     Route::get('/notifikasi', [PusatNotifikasiController::class, 'indeks'])->name('notifikasi.index');
     Route::post('/notifikasi/tandai-semua', [PusatNotifikasiController::class, 'tandaiSemuaDibaca'])->name('notifikasi.tandai_semua');
+    Route::post('/notifikasi/{notifikasi}/tandai', [PusatNotifikasiController::class, 'tandaiDibaca'])
+        ->name('notifikasi.tandai');
 });
-// Pengalihan URL verifikasi lama ke URL baru.
-Route::middleware(['auth', 'peran:verifikator'])->group(function () {
-    Route::get('/verifikasi', function () {
-        return redirect()->route('verifikasi.index');
-    });
 
-    Route::get('/verifikasi/{laporan}', function (LaporanKematian $laporan) {
-        return redirect()->route('verifikasi.show', $laporan);
-    });
-});
 // Alur utama verifikasi berkas: persetujuan, perbaikan, revisi, dan anomali.
 Route::middleware(['auth', 'peran:verifikator'])
     ->prefix('verifikasi-berkas')
@@ -122,6 +114,14 @@ Route::middleware(['auth', 'peran:verifikator'])
         Route::post('/{laporan}/revisi', [VerifikasiBerkasController::class, 'mintaRevisi'])->name('revisi');
         Route::post('/{laporan}/anomali', [VerifikasiBerkasController::class, 'tandaiAnomali'])->name('anomali');
         Route::post('/{laporan}/tolak-fatal', [VerifikasiBerkasController::class, 'tolakFatal'])->name('tolak_fatal');
+    });
+
+// Rute lama yang masih dibagikan (tautan lama): dialihkan ke alur baru.
+Route::middleware(['auth', 'peran:verifikator'])
+    ->prefix('verifikasi')
+    ->group(function () {
+        Route::get('/', fn () => redirect()->route('verifikasi.index'));
+        Route::get('/{laporan}', fn (LaporanKematian $laporan) => redirect()->route('verifikasi.show', $laporan));
     });
 
 // Rekonsiliasi anomali data kependudukan.

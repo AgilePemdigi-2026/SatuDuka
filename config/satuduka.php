@@ -37,6 +37,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Layanan Notifikasi
+    |--------------------------------------------------------------------------
+    |
+    | Driver `database` menyimpan notifikasi ke tabel `notifikasi` agar
+    | tampil di Pusat Notifikasi; `mock` hanya menulis ke log.
+    |
+    */
+
+    'notifikasi_driver' => env('SATUDUKA_NOTIFIKASI_DRIVER', 'database'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Blind Index NIK
     |--------------------------------------------------------------------------
     |
