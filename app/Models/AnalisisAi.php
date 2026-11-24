@@ -33,6 +33,14 @@ class AnalisisAi extends Model
 
     public const STATUS_GAGAL = 'gagal';
 
+    /**
+     * Analisis belum selesai karena penyedia AI sibuk (429/503).
+     *
+     * Status ini bukan kegagalan permanen: berkas tetap dapat dianalisis ulang
+     * dan verifikator melanjutkan secara manual untuk sementara.
+     */
+    public const STATUS_TERTUNDA = 'tertunda';
+
     protected $table = 'analisis_ai';
 
     protected $primaryKey = 'id_analisis';

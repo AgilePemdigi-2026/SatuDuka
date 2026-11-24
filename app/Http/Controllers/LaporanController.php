@@ -380,6 +380,13 @@ class LaporanController extends Controller
         $hasil = $layanan->periksa($berkas, $request->user(), 'pemohon_review');
 
         if (! $hasil['berhasil']) {
+            // Penyedia AI sibuk bukan kegagalan: beri tahu untuk mencoba lagi.
+            if ($hasil['tertunda'] ?? false) {
+                return redirect()
+                    ->to($this->alamatLangkah($laporan, 4))
+                    ->with('info', $hasil['pesan']);
+            }
+
             return redirect()
                 ->to($this->alamatLangkah($laporan, 4))
                 ->with('galat', $hasil['pesan']);
