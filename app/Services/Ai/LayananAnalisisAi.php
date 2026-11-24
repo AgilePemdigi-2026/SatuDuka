@@ -483,21 +483,48 @@ class LayananAnalisisAi
     }
 
     /**
+     * Apakah kuota pemanggilan AI pengguna masih tersedia?
+     *
+     * Dipakai sebagai pra-cek oleh pemanggil agar permintaan yang tidak punya
+     * berkas layak tidak memanggil AI saat kuota sudah habis. Pra-cek ini
+     * tidak menambah hitungan kuota.
+     */
+    public function kuotaTersedia(Pengguna $pengguna): bool
+    {
+        return ! RateLimiter::tooManyAttempts($this->kunciLaju($pengguna), $this->batasLaju());
+    }
+
+    /**
      * Batasi laju pemanggilan per pengguna agar layanan tidak dibanjiri.
      */
     private function bolehMemanggil(Pengguna $pengguna): bool
     {
-        $maks = max(1, (int) config('ai.rate_limit.max', 10));
         $jendela = max(1, (int) config('ai.rate_limit.window', 60));
-        $kunci = 'analisis-ai:'.$pengguna->id_pengguna;
+        $kunci = $this->kunciLaju($pengguna);
 
-        if (RateLimiter::tooManyAttempts($kunci, $maks)) {
+        if (RateLimiter::tooManyAttempts($kunci, $this->batasLaju())) {
             return false;
         }
 
         RateLimiter::hit($kunci, $jendela);
 
         return true;
+    }
+
+    /**
+     * Kunci pembatas laju per pengguna.
+     */
+    private function kunciLaju(Pengguna $pengguna): string
+    {
+        return 'analisis-ai:'.$pengguna->id_pengguna;
+    }
+
+    /**
+     * Jumlah pemanggilan AI yang diizinkan per jendela waktu.
+     */
+    private function batasLaju(): int
+    {
+        return max(1, (int) config('ai.rate_limit.max', 10));
     }
 
     /**

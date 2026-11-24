@@ -41,6 +41,29 @@
         <p class="mt-3 rounded-xl border border-line bg-surface p-3 text-sm text-ink-soft">{{ $pesan }}</p>
     @endif
 
+    @if (! empty($analisis['berkas']))
+        <div class="mt-4 rounded-xl border border-line bg-surface p-3">
+            <p class="text-xs font-semibold uppercase tracking-wide text-muted">Status Pemeriksaan Berkas</p>
+            <ul class="mt-2 space-y-1 text-xs text-ink-soft">
+                @foreach ($analisis['berkas'] as $statusBerkas)
+                    <li class="flex items-start justify-between gap-2">
+                        <span class="min-w-0 break-words">{{ $statusBerkas['nama_file'] }}</span>
+                        <span class="text-right">
+                            @if (($statusBerkas['status'] ?? '') === 'sudah_diperiksa')
+                                <span class="font-semibold text-ink">sudah diperiksa</span>
+                            @elseif (($statusBerkas['status'] ?? '') === 'belum_diperiksa')
+                                <span class="font-semibold text-ink">belum diperiksa</span>
+                            @else
+                                <span class="font-semibold text-ink">dilewati (tidak relevan)</span>
+                            @endif
+                            <span class="block text-muted">{{ $statusBerkas['keterangan'] ?? '' }}</span>
+                        </span>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     @if ($berhasil && $perbandingan !== null)
         <div class="mt-4 overflow-x-auto rounded-xl border border-line bg-surface">
             <table class="min-w-full divide-y divide-line text-sm">

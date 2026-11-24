@@ -7,6 +7,7 @@ use App\Models\LaporanKematian;
 use App\Models\Notifikasi;
 use App\Models\Pengguna;
 use App\Services\Ai\LayananAnalisisAi;
+use App\Services\Ai\PemilihBerkasAnalisis;
 use App\Services\LayananAudit;
 use App\Services\LayananNomorPengajuan;
 use App\Services\Notifikasi\NotifikasiService;
@@ -351,18 +352,31 @@ class LaporanController extends Controller
     }
 
     /**
-     * Memeriksa surat keterangan kematian dengan bantuan AI.
+     * Memeriksa berkas pendukung dengan bantuan AI.
      *
-     * Hasil hanya disimpan sebagai saran; status pengajuan tidak diubah dan
-     * tombol Kirim tetap dapat dipakai meskipun analisis gagal.
+     * Hanya berkas yang jenisnya dipakai aturan verifikasi dan belum berhasil
+     * dianalisis yang dikirim ke layanan AI, paling banyak tiga berkas per
+     * permintaan (issue #12). Hasil hanya disimpan sebagai saran; status
+     * pengajuan tidak diubah dan tombol Kirim tetap dapat dipakai meskipun
+     * analisis gagal.
      */
     public function periksaAi(
         Request $request,
         LaporanKematian $laporan,
         LayananAnalisisAi $layanan,
+        PemilihBerkasAnalisis $pemilih,
     ) {
         $laporan = $this->laporanMilik($request, $laporan);
         $this->pastikanBolehDiubah($laporan);
+
+        // Kuota internal per pengguna diperiksa lebih dahulu tanpa memanggil AI
+        // dan tanpa menambah hitungan, agar perilaku saat kuota habis tetap
+        // sama seperti sebelumnya.
+        if (! $layanan->kuotaTersedia($request->user())) {
+            return redirect()
+                ->to($this->alamatLangkah($laporan, 4))
+                ->with('galat', 'Analisis AI tidak tersedia, lanjutkan secara manual');
+        }
 
         $daftarBerkas = $laporan->berkasPendukung()
             ->where('status_unggahan', BerkasPendukung::STATUS_BERHASIL)
@@ -377,26 +391,49 @@ class LaporanController extends Controller
                 ->with('galat', 'Unggah Surat Keterangan Kematian terlebih dahulu untuk memeriksa dokumen.');
         }
 
-        $hasil = $layanan->periksa($berkas, $request->user(), 'pemohon_review');
+        $pilihan = $pemilih->pilih($laporan);
 
-        if (! $hasil['berhasil']) {
-            // Penyedia AI sibuk bukan kegagalan: beri tahu untuk mencoba lagi.
-            if ($hasil['tertunda'] ?? false) {
-                return redirect()
-                    ->to($this->alamatLangkah($laporan, 4))
-                    ->with('info', $hasil['pesan']);
-            }
-
+        if ($pilihan['akan_diperiksa'] === []) {
             return redirect()
                 ->to($this->alamatLangkah($laporan, 4))
-                ->with('galat', $hasil['pesan']);
+                ->with('info', 'Semua berkas relevan sudah diperiksa. Tidak ada berkas yang perlu dianalisis.');
         }
 
+        $semuaHasil = [];
         $hasilSemuaDokumen = [];
-        foreach ($daftarBerkas as $itemBerkas) {
-            $hasilItem = $itemBerkas->id_berkas === $berkas->id_berkas
-                ? $hasil
-                : $layanan->periksa($itemBerkas, $request->user(), 'pemohon_review');
+        $hasilSkk = null;
+        $adaBerhasil = false;
+        $pesanTertunda = null;
+
+        foreach ($pilihan['akan_diperiksa'] as $item) {
+            $itemBerkas = $item['berkas'];
+
+            try {
+                $hasilItem = $layanan->periksa($itemBerkas, $request->user(), 'pemohon_review');
+            } catch (\Throwable $e) {
+                // Kegagalan satu berkas tidak menghentikan berkas lain.
+                $hasilItem = [
+                    'berhasil' => false,
+                    'pesan' => 'Analisis AI tidak tersedia, lanjutkan secara manual',
+                    'model' => null,
+                    'ekstraksi' => null,
+                    'perbandingan' => null,
+                ];
+            }
+
+            $semuaHasil[$itemBerkas->id_berkas] = $hasilItem;
+
+            if ($hasilItem['berhasil'] ?? false) {
+                $adaBerhasil = true;
+            }
+
+            if (($hasilItem['tertunda'] ?? false) && $pesanTertunda === null) {
+                $pesanTertunda = $hasilItem['pesan'] ?? null;
+            }
+
+            if ($itemBerkas->jenis_dokumen === BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN) {
+                $hasilSkk = $hasilItem;
+            }
 
             $hasilSemuaDokumen[] = [
                 'nama_file' => $itemBerkas->nama_file,
@@ -407,12 +444,123 @@ class LaporanController extends Controller
             ];
         }
 
+        if (! $adaBerhasil) {
+            // Penyedia AI sibuk bukan kegagalan: beri tahu untuk mencoba lagi.
+            if ($pesanTertunda !== null) {
+                return redirect()
+                    ->to($this->alamatLangkah($laporan, 4))
+                    ->with('info', $pesanTertunda);
+            }
+
+            return redirect()
+                ->to($this->alamatLangkah($laporan, 4))
+                ->with('galat', 'Analisis AI tidak tersedia, lanjutkan secara manual');
+        }
+
+        $hasil = $this->pilihHasilUtama($semuaHasil, $hasilSkk);
         $hasil['semua_dokumen'] = $hasilSemuaDokumen;
+        $hasil['berkas'] = $this->ringkasanStatusBerkas($pilihan, $semuaHasil);
+
+        $pesanSukses = 'Analisis AI selesai. Hasil bantuan AI, hanya saran.';
+
+        if ($pilihan['belum_diperiksa'] !== []) {
+            $pesanSukses .= ' '.count($pilihan['belum_diperiksa'])
+                .' berkas belum diperiksa, klik lagi untuk melanjutkan.';
+        }
 
         return redirect()
             ->to($this->alamatLangkah($laporan, 4))
             ->with('analisis_ai', $hasil)
-            ->with('sukses', 'Analisis AI selesai. Hasil bantuan AI, hanya saran.');
+            ->with('sukses', $pesanSukses);
+    }
+
+    /**
+     * Pilih hasil yang ditampilkan pada panel analisis.
+     *
+     * Surat Keterangan Kematian diutamakan karena menjadi bukti kematian utama;
+     * bila hasilnya gagal, pakai hasil berhasil pertama, lalu hasil pertama.
+     *
+     * @param  array<int, array<string, mixed>>  $semuaHasil
+     * @param  array<string, mixed>|null  $hasilSkk
+     * @return array<string, mixed>
+     */
+    private function pilihHasilUtama(array $semuaHasil, ?array $hasilSkk): array
+    {
+        if ($hasilSkk !== null && ($hasilSkk['berhasil'] ?? false)) {
+            return $hasilSkk;
+        }
+
+        foreach ($semuaHasil as $hasil) {
+            if ($hasil['berhasil'] ?? false) {
+                return $hasil;
+            }
+        }
+
+        return $hasilSkk ?? (reset($semuaHasil) ?: []);
+    }
+
+    /**
+     * Susun status setiap berkas untuk panel langkah empat.
+     *
+     * @param  array{
+     *     akan_diperiksa: list<array{berkas: BerkasPendukung, alasan: string}>,
+     *     belum_diperiksa: list<array{berkas: BerkasPendukung, alasan: string}>,
+     *     dilewati: list<array{berkas: BerkasPendukung, alasan: string}>
+     * }  $pilihan
+     * @param  array<int, array<string, mixed>>  $semuaHasil
+     * @return list<array{nama_file: string, jenis_dokumen: string, status: string, keterangan: string}>
+     */
+    private function ringkasanStatusBerkas(array $pilihan, array $semuaHasil): array
+    {
+        $ringkasan = [];
+
+        foreach ($pilihan['akan_diperiksa'] as $item) {
+            $berkas = $item['berkas'];
+            $hasil = $semuaHasil[$berkas->id_berkas] ?? [];
+
+            if ($hasil['berhasil'] ?? false) {
+                $status = 'sudah_diperiksa';
+                $keterangan = 'Sudah diperiksa pada permintaan ini.';
+            } elseif ($hasil['tertunda'] ?? false) {
+                $status = 'belum_diperiksa';
+                $keterangan = 'Tertunda karena layanan AI sibuk, coba lagi.';
+            } else {
+                $status = 'belum_diperiksa';
+                $keterangan = 'Gagal dianalisis, coba lagi.';
+            }
+
+            $ringkasan[] = [
+                'nama_file' => $berkas->nama_file,
+                'jenis_dokumen' => $berkas->jenis_dokumen,
+                'status' => $status,
+                'keterangan' => $keterangan,
+            ];
+        }
+
+        foreach ($pilihan['belum_diperiksa'] as $item) {
+            $ringkasan[] = [
+                'nama_file' => $item['berkas']->nama_file,
+                'jenis_dokumen' => $item['berkas']->jenis_dokumen,
+                'status' => 'belum_diperiksa',
+                'keterangan' => 'Melebihi batas '.PemilihBerkasAnalisis::BATAS_PER_PERMINTAAN
+                    .' berkas per permintaan.',
+            ];
+        }
+
+        foreach ($pilihan['dilewati'] as $item) {
+            $sudahDiperiksa = $item['alasan'] === PemilihBerkasAnalisis::ALASAN_SUDAH_DIPERIKSA;
+
+            $ringkasan[] = [
+                'nama_file' => $item['berkas']->nama_file,
+                'jenis_dokumen' => $item['berkas']->jenis_dokumen,
+                'status' => $sudahDiperiksa ? 'sudah_diperiksa' : 'dilewati',
+                'keterangan' => $sudahDiperiksa
+                    ? 'Sudah diperiksa pada permintaan sebelumnya.'
+                    : 'Dilewati karena tidak dipakai aturan verifikasi.',
+            ];
+        }
+
+        return $ringkasan;
     }
 
     /**
