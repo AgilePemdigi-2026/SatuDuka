@@ -7,6 +7,7 @@ use App\Support\DataSIAK;
 use App\Support\NikDummy;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
+use InvalidArgumentException;
 
 /**
  * Pembuat isi berkas pendukung dummy (PDF teks via dompdf, gambar via GD).
@@ -32,19 +33,26 @@ class LayananBerkasContoh
      * Pastikan berkas memiliki isi di disk; berkas yang sudah ada dipakai ulang.
      *
      * @return bool True bila berkas tersedia (sudah ada atau baru dibuat).
+     *
+     * @throws InvalidArgumentException Bila jenis dokumen tidak dikenali.
      */
     public function isi(BerkasPendukung $berkas, bool $paksa = false): bool
     {
-        if (! $paksa && $berkas->path_file !== '' && Storage::disk('local')->exists($berkas->path_file)) {
+        if (! $paksa && $this->sudahAdaDiDisk($berkas)) {
             return true;
         }
+
+        // Satu titik normalisasi jenis dokumen: templat dipilih dari nilai baku,
+        // bukan dari nilai mentah, sehingga penulisan huruf besar/kecil bebas.
+        // Nilai tak dikenal ditolak sebelum ada berkas yang ditulis.
+        $jenis = $this->jenisDokumen($berkas);
 
         $ekstensi = strtolower(pathinfo($berkas->path_file, PATHINFO_EXTENSION));
 
         try {
             $isi = $ekstensi === 'pdf'
-                ? $this->pembuatPdf->hasil('dokumen.berkas_contoh_pdf', $this->dataDokumen($berkas))
-                : $this->gambar($berkas, $ekstensi);
+                ? $this->pembuatPdf->hasil('dokumen.berkas_contoh_pdf', $this->dataDokumen($berkas, $jenis))
+                : $this->gambar($berkas, $ekstensi, $jenis);
         } catch (\Throwable $galat) {
             report($galat);
 
@@ -68,7 +76,12 @@ class LayananBerkasContoh
     /**
      * Isi seluruh baris berkas yang berkasnya belum ada di disk.
      *
+     * Seluruh jenis dokumen yang akan ditulis divalidasi lebih dulu agar satu
+     * jenis tak dikenal tidak menyisakan berkas yang terbuat setengah jadi.
+     *
      * @return array{dibuat: int, lewati: int, gagal: int}
+     *
+     * @throws InvalidArgumentException Bila ada jenis dokumen yang tidak dikenali.
      */
     public function isiSemuaYangKurang(?int $idLaporan = null): array
     {
@@ -78,10 +91,16 @@ class LayananBerkasContoh
             $kueri->where('id_laporan', $idLaporan);
         }
 
+        $daftar = $kueri->orderBy('id_berkas')->get();
+
+        $this->pastikanJenisDikenal(
+            $daftar->reject(fn (BerkasPendukung $berkas): bool => $this->sudahAdaDiDisk($berkas)),
+        );
+
         $hasil = ['dibuat' => 0, 'lewati' => 0, 'gagal' => 0];
 
-        foreach ($kueri->orderBy('id_berkas')->get() as $berkas) {
-            if ($berkas->path_file !== '' && Storage::disk('local')->exists($berkas->path_file)) {
+        foreach ($daftar as $berkas) {
+            if ($this->sudahAdaDiDisk($berkas)) {
                 $hasil['lewati']++;
 
                 continue;
@@ -96,18 +115,64 @@ class LayananBerkasContoh
     }
 
     /**
+     * Validasi jenis dokumen sekumpulan berkas sebelum ada yang ditulis.
+     *
+     * @param  iterable<int, BerkasPendukung>  $daftarBerkas
+     *
+     * @throws InvalidArgumentException Bila ada jenis dokumen yang tidak dikenali.
+     */
+    public function pastikanJenisDikenal(iterable $daftarBerkas): void
+    {
+        foreach ($daftarBerkas as $berkas) {
+            $this->jenisDokumen($berkas);
+        }
+    }
+
+    /**
+     * Jenis dokumen dalam bentuk baku (spasi tepi dibuang, huruf besar/kecil
+     * diabaikan).
+     *
+     * @throws InvalidArgumentException Bila jenis dokumen tidak dikenali.
+     */
+    private function jenisDokumen(BerkasPendukung $berkas): string
+    {
+        $ditulis = trim((string) $berkas->jenis_dokumen);
+
+        foreach (BerkasPendukung::DAFTAR_JENIS as $jenis) {
+            if (mb_strtolower($jenis) === mb_strtolower($ditulis)) {
+                return $jenis;
+            }
+        }
+
+        throw new InvalidArgumentException(
+            'Jenis dokumen "'.$ditulis.'"'
+            .($berkas->id_berkas !== null ? ' pada berkas #'.$berkas->id_berkas : '')
+            .' tidak dikenali. Nilai valid: '.implode(', ', BerkasPendukung::DAFTAR_JENIS).'.',
+        );
+    }
+
+    /**
+     * Apakah isi berkas sudah tersedia di disk.
+     */
+    private function sudahAdaDiDisk(BerkasPendukung $berkas): bool
+    {
+        return $berkas->path_file !== '' && Storage::disk('local')->exists($berkas->path_file);
+    }
+
+    /**
      * Data tampilan untuk PDF contoh sesuai jenis dokumen.
      *
      * Kartu identitas (KTP/KK) dirender sebagai fotokopi berbentuk surat agar
      * berkas dengan ekstensi .pdf tetap memiliki konten yang dapat dibaca.
      *
+     * @param  string  $jenis  Jenis dokumen baku hasil normalisasi.
      * @return array{judul: string, instansi: string, alamatInstansi: string, nomor: string, baris: list<array{label: string, nilai: string}>, paragraf: list<string>, ttd: array{kota: string, tanggal: string, jabatan: string, nama: string, nip: string}}
      */
-    private function dataDokumen(BerkasPendukung $berkas): array
+    private function dataDokumen(BerkasPendukung $berkas, string $jenis): array
     {
         $data = $this->dataDasar($berkas);
 
-        return match ($berkas->jenis_dokumen) {
+        return match ($jenis) {
             BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN => [
                 'instansi' => 'RSUD Kota Yogyakarta',
                 'alamatInstansi' => 'Jl. Marhaen No. 4, Kota Yogyakarta (data dummy)',
@@ -189,10 +254,10 @@ class LayananBerkasContoh
                 'judul' => 'FOTOKOPI KARTU TANDA PENDUDUK',
                 'nomor' => 'KTP-'.$data['nomor'],
                 'baris' => [
-                    ['label' => 'NIK', 'nilai' => $berkas->jenis_dokumen === BerkasPendukung::JENIS_KTP_ALMARHUM
+                    ['label' => 'NIK', 'nilai' => $jenis === BerkasPendukung::JENIS_KTP_ALMARHUM
                         ? $data['nik_almarhum']
                         : $data['nik_pelapor']],
-                    ['label' => 'Nama', 'nilai' => $berkas->jenis_dokumen === BerkasPendukung::JENIS_KTP_ALMARHUM
+                    ['label' => 'Nama', 'nilai' => $jenis === BerkasPendukung::JENIS_KTP_ALMARHUM
                         ? $data['nama_almarhum']
                         : $data['nama_pelapor']],
                     ['label' => 'Tempat/Tanggal Lahir', 'nilai' => $data['lahir']],
@@ -208,9 +273,10 @@ class LayananBerkasContoh
     /**
      * Gambar contoh (KTP/KK) yang dapat dibaca tesseract.
      *
+     * @param  string  $jenis  Jenis dokumen baku hasil normalisasi.
      * @return string Isi PNG atau JPG biner.
      */
-    private function gambar(BerkasPendukung $berkas, string $ekstensi): string
+    private function gambar(BerkasPendukung $berkas, string $ekstensi, string $jenis): string
     {
         $data = $this->dataDasar($berkas);
 
@@ -222,7 +288,7 @@ class LayananBerkasContoh
         imagefill($gambar, 0, 0, $putih);
         imagerectangle($gambar, 8, 8, self::GAMBAR_LEBAR - 9, self::GAMBAR_TINGGI - 9, $hitam);
 
-        [$judul, $baris] = match ($berkas->jenis_dokumen) {
+        [$judul, $baris] = match ($jenis) {
             BerkasPendukung::JENIS_KTP_ALMARHUM => [
                 'KARTU TANDA PENDUDUK (DUMMY)',
                 [
