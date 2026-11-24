@@ -1,3 +1,4 @@
+
 @extends('tata_letak.utama')
 
 @section('judul', 'Kelola Profil')
@@ -33,37 +34,52 @@
                             method="POST"
                             action="{{ route('profil.foto') }}"
                             enctype="multipart/form-data"
-                            class="flex flex-wrap items-end gap-3"
+                            class="min-w-0 flex-1"
                         >
                             @csrf
 
-                            <div>
-                                <label for="foto" class="mb-1.5 block text-sm font-semibold text-ink-soft">
-                                    Ganti Foto
-                                </label>
+                            <label for="foto" class="mb-1.5 block text-sm font-semibold text-ink-soft">
+                                Ganti Foto
+                            </label>
 
+                            <div class="flex items-center justify-between gap-3 rounded-xl border border-dashed border-line-strong bg-canvas p-3">
                                 <input
                                     id="foto"
                                     name="foto"
                                     type="file"
                                     accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                                     required
-                                    class="block w-full text-sm text-muted file:mr-3 file:rounded-xl
-                                        file:border-0 file:bg-brand file:px-3 file:py-2
-                                        file:text-sm file:font-semibold file:text-white
-                                        hover:file:bg-brand-hover"
+                                    class="peer sr-only"
+                                    aria-label="Pilih foto profil"
+                                    onchange="
+                                        if (this.files.length > 0) {
+                                            this.form.querySelector('[data-nama-foto]').textContent =
+                                                this.files[0].name + ' — Mengunggah...';
+                                            this.form.requestSubmit();
+                                        }
+                                    "
                                 />
 
-                                <p class="mt-1 text-xs text-muted">
-                                    Format JPG/PNG, ukuran maksimal 2 MB.
-                                </p>
+                                <span
+                                    data-nama-foto
+                                    role="status"
+                                    aria-live="polite"
+                                    class="min-w-0 flex-1 truncate text-sm text-muted"
+                                >No file chosen</span>
 
-                                @error('foto')
-                                    <p class="mt-1 text-xs font-medium text-[#b91c1c]">{{ $message }}</p>
-                                @enderror
+                                <label
+                                    for="foto"
+                                    class="inline-flex min-h-10 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-hover peer-focus-visible:ring-2 peer-focus-visible:ring-brand peer-focus-visible:ring-offset-2"
+                                >Choose File</label>
                             </div>
 
-                            <x-ui.button type="submit">Unggah Foto</x-ui.button>
+                            <p class="mt-2 text-xs text-muted">
+                                Format JPG/PNG, ukuran maksimal 2 MB.
+                            </p>
+
+                            @error('foto')
+                                <p class="mt-1 text-xs font-medium text-[#b91c1c]">{{ $message }}</p>
+                            @enderror
                         </form>
                     </div>
                 </section>

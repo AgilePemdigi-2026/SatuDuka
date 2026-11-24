@@ -72,11 +72,21 @@ class TandaTanganController extends Controller
     ];
 
     public function __construct(
-        private readonly TTEService $tte,
         private readonly LayananDokumenResmi $dokumenResmi,
         private readonly LayananTandaTanganVisual $tandaTanganVisual,
         private readonly NotifikasiService $notifikasi,
     ) {}
+
+    /**
+     * Layanan TTE diselesaikan saat dipakai, bukan lewat konstruktor: pada
+     * APP_ENV=production dengan driver `mock`, PabrikTte menolak pembuatan
+     * layanan. Dengan begitu halaman daftar/detail dokumen tetap dapat dibuka
+     * dan pengguna mendapat pesan yang jelas, bukan galat 500.
+     */
+    private function layananTte(): TTEService
+    {
+        return app(TTEService::class);
+    }
 
     /**
      * Daftar dokumen beserta statistik, pencarian, dan filter status.
@@ -168,6 +178,18 @@ class TandaTanganController extends Controller
      */
     public function tandatangani(Request $request, LaporanKematian $laporan): RedirectResponse
     {
+        // Di produksi driver TTE `mock` ditolak PabrikTte. Beri pesan yang
+        // dipahami pengguna alih-alih membiarkan galat 500.
+        if (
+            app()->environment('production')
+            && config('satuduka.tte_driver', 'mock') === 'mock'
+        ) {
+            return back()->withErrors([
+                'tanda_tangan' => 'Tanda tangan elektronik belum tersedia di server produksi. '
+                    .'Hubungi administrator untuk mengaktifkan penyedia TTE resmi.',
+            ]);
+        }
+
         $pengguna = $request->user();
         $kunci = $this->kunciTte($pengguna);
 
@@ -202,7 +224,7 @@ class TandaTanganController extends Controller
         }
 
         try {
-            $sah = $this->tte->verifikasiKredensial($pengguna, $data['pin']);
+            $sah = $this->layananTte()->verifikasiKredensial($pengguna, $data['pin']);
         } catch (TteTidakTersedia) {
             LayananAudit::catat(
                 aksi: 'memeriksa_layanan_eksternal',
@@ -279,7 +301,7 @@ class TandaTanganController extends Controller
                 idObjek: $dokumen->id_dokumen,
                 detail: [
                     'no_pengajuan' => $laporanTerkunci->no_pengajuan,
-                    'penyedia' => $this->tte->namaPenyedia(),
+                    'penyedia' => $this->layananTte()->namaPenyedia(),
                     'tanda_tangan_visual' => true,
                     'tanda_tangan_hash' => $tandaTangan['hash'],
                 ],

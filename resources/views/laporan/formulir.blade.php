@@ -110,20 +110,50 @@
                                                         </p>
                                                     @endif
 
+                                                    @php
+                                                        // Setiap baris berkas mendapat ID unik untuk label Choose File.
+                                                        $idInputBerkas = 'input-berkas-'.md5($jenis);
+                                                    @endphp
+
                                                     @if ($laporan === null)
-                                                        <div class="mt-3 rounded-xl border border-dashed border-line-strong bg-canvas p-3">
-                                                            <input type="file" disabled
-                                                                class="block w-full text-sm text-faint file:mr-3 file:rounded-xl file:border-0 file:bg-line file:px-3 file:py-2 file:text-sm file:font-semibold file:text-muted">
+                                                        <div class="mt-3 flex items-center justify-between gap-3 rounded-xl border border-dashed border-line-strong bg-canvas p-3">
+                                                            <span class="min-w-0 flex-1 truncate text-sm text-faint">No file chosen</span>
+                                                            <span class="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl bg-line px-4 py-2 text-sm font-semibold text-muted">
+                                                                Choose File
+                                                            </span>
                                                         </div>
                                                     @else
                                                         <form method="POST" action="{{ route('laporan.berkas.unggah', $laporan) }}"
                                                             enctype="multipart/form-data"
-                                                            class="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-line-strong bg-canvas p-3">
+                                                            class="mt-3 flex items-center justify-between gap-3 rounded-xl border border-dashed border-line-strong bg-canvas p-3">
                                                             @csrf
                                                             <input type="hidden" name="jenis_dokumen" value="{{ $jenis }}">
-                                                            <input type="file" name="{{ $inputBerkas[$jenis] }}" accept=".pdf,.jpg,.jpeg,.png"
-                                                                class="block w-full min-w-0 flex-1 text-sm text-muted file:mr-3 file:rounded-xl file:border-0 file:bg-brand file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-hover">
-                                                            <x-ui.button type="submit" size="sm">Unggah</x-ui.button>
+
+                                                            <input type="file"
+                                                                id="{{ $idInputBerkas }}"
+                                                                name="{{ $inputBerkas[$jenis] }}"
+                                                                accept=".pdf,.jpg,.jpeg,.png"
+                                                                aria-label="Choose File untuk {{ $jenis }}"
+                                                                class="peer sr-only"
+                                                                onchange="
+                                                                    if (this.files && this.files.length > 0) {
+                                                                        this.form.querySelector('[data-nama-berkas]').textContent = this.files[0].name;
+                                                                        this.form.querySelector('[data-upload-status]').hidden = false;
+                                                                        this.form.requestSubmit();
+                                                                    }
+                                                                ">
+
+                                                            <div class="min-w-0 flex-1">
+                                                                <p data-nama-berkas class="truncate text-sm text-muted" aria-live="polite">No file chosen</p>
+                                                                <p data-upload-status hidden role="status" class="mt-1 text-xs font-medium text-brand">
+                                                                    Mengunggah berkas...
+                                                                </p>
+                                                            </div>
+
+                                                            <label for="{{ $idInputBerkas }}"
+                                                                class="inline-flex min-h-10 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-hover peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand">
+                                                                Choose File
+                                                            </label>
                                                         </form>
 
                                                         @error($inputBerkas[$jenis])
