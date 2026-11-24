@@ -18,6 +18,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\View as Tampilan;
@@ -78,6 +79,12 @@ class AppServiceProvider extends ServiceProvider
                 .'DINONAKTIFKAN. Nyalakan SATUDUKA_IZINKAN_MOCK_DEMO=true hanya '
                 .'untuk demo terkontrol.'
             );
+        }
+
+        // Paksa skema HTTPS di produksi karena TLS diputus di reverse proxy
+        // (Coolify), agar URL yang dihasilkan Laravel tidak jatuh ke http.
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
         }
 
         View::composer('verifikasi.show', function (Tampilan $view): void {

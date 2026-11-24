@@ -1,0 +1,40 @@
+# Berkas yang tidak ikut ke dalam image Docker.
+.git
+.gitignore
+
+# Rahasia: jangan pernah masuk image. Contoh env tetap disertakan.
+.env
+.env.*
+!.env.example
+
+# Basis data lokal pengembang
+database/*.sqlite*
+database/*.sqlite3*
+
+# Data dan log runtime (dipasang lewat volume)
+storage/app
+storage/logs
+storage/framework/cache
+storage/framework/sessions
+storage/framework/views
+
+# Dependensi dibangun ulang di dalam image
+vendor
+node_modules
+
+# Artefak build dan tautan lokal
+public/build
+public/hot
+public/storage
+
+# Berkas kerja pribadi/dokumentasi besar
+controller-lokal.txt
+controller-teman.txt
+daftar-perubahan.txt
+show-teman.txt
+infra-diff.txt
+repomix-output*.xml
+*.zip
+**/*.backup
+docs/gui
+docs/diagram
