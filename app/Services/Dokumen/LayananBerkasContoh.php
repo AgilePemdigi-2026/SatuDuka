@@ -297,9 +297,10 @@ class LayananBerkasContoh
         $this->tulisTeks($gambar, $judul, 60, 46, 5, $hitam);
         $y = 110;
 
+        // Label dan nilai pada SATU baris: tesseract membaca teks per kolom,
+        // layout dua kolom membuat urutan baris OCR tertukar.
         foreach ($baris as [$label, $nilai]) {
-            $this->tulisTeks($gambar, $label.' :', 60, $y, 4, $abu);
-            $this->tulisTeks($gambar, (string) $nilai, 340, $y, 4, $hitam);
+            $this->tulisTeks($gambar, $label.' : '.$nilai, 60, $y, 4, $hitam);
             $y += 64;
         }
 

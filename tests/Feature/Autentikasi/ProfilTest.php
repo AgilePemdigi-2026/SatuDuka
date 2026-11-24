@@ -346,8 +346,7 @@ it('menampilkan tautan kelola profil pada dashboard pemohon dan pejabat serta me
 
     $this->actingAs($verifikator)
         ->get(route('dashboard'))
-        ->assertOk()
-        ->assertSee('Dashboard Verifikator');
+        ->assertRedirect(route('verifikasi.index'));
 
     expect(Pengguna::count())->toBe(3);
 });

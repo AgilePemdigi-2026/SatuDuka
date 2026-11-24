@@ -99,7 +99,7 @@ it('membatasi jumlah query pada dasbor setiap peran', function () {
         'tanggal_pengajuan' => now(),
     ]);
 
-    foreach ([$pemohon, $verifikator, $pejabat] as $pengguna) {
+    foreach ([$pemohon, $pejabat] as $pengguna) {
         [$jumlah, $respons] = hitungQuery(fn () => $this->actingAs($pengguna)
             ->get(route('dashboard')));
 
@@ -107,6 +107,19 @@ it('membatasi jumlah query pada dasbor setiap peran', function () {
 
         expect($jumlah)->toBeLessThanOrEqual(25, 'Query dasbor '.$pengguna->peran.': '.$jumlah);
     }
+
+    // Verifikator diarahkan ke antrean verifikasi; keduanya hemat query.
+    [$jumlahMasuk, $responsMasuk] = hitungQuery(fn () => $this->actingAs($verifikator)
+        ->get(route('dashboard')));
+
+    $responsMasuk->assertRedirect(route('verifikasi.index'));
+
+    [$jumlahAntrean, $responsAntrean] = hitungQuery(fn () => $this->actingAs($verifikator)
+        ->get(route('verifikasi.index')));
+
+    $responsAntrean->assertOk();
+
+    expect($jumlahAntrean)->toBeLessThanOrEqual(25, 'Query antrean verifikator: '.$jumlahAntrean);
 });
 
 it('menolak unggahan berkas dengan MIME palsu', function () {

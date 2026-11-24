@@ -1612,6 +1612,7 @@ private string $pesanValidasiVerifikasi = '';
     {
         $this->kirimAksiVerifikasi('revisi', [
             'catatan' => $alasan,
+            'alasan_override' => 'Verifikator memilih revisi langsung pada pemeriksaan manual.',
         ]);
     }
 
@@ -1647,6 +1648,7 @@ private string $pesanValidasiVerifikasi = '';
         $this->kirimAksiVerifikasi('anomali', [
             'jenis_anomali' => $jenis,
             'deskripsi' => $catatan,
+            'alasan_override' => 'Verifikator menilai berkas perlu rekonsiliasi.',
         ]);
     }
 
@@ -1702,14 +1704,14 @@ private string $pesanValidasiVerifikasi = '';
         );
     }
 
-    #[Then('persetujuan ditolak karena dokumen belum lengkap')]
-    public function persetujuanDitolakKarenaDokumenBelumLengkapBDD(): void
+    #[Then('persetujuan menuntut alasan override')]
+    public function persetujuanMenuntutAlasanOverrideBDD(): void
     {
         Assert::assertNotNull($this->response);
 
         Assert::assertTrue(
-            $this->bagGalatMemilikiKolom('dokumen'),
-            'Penolakan persetujuan seharusnya menampilkan dokumen yang kurang.'
+            $this->bagGalatMemilikiKolom('alasan_override'),
+            'Persetujuan berkas kurang seharusnya menuntut alasan override.'
         );
 
         Assert::assertSame(

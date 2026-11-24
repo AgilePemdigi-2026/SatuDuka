@@ -137,6 +137,7 @@
         .alert { border-radius: 16px; padding: 16px 20px; font-size: 14px; margin-bottom: 24px; }
         .alert ul { margin: 8px 0 0; padding-left: 20px; }
         .alert-ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; font-weight: 500; }
+        .alert-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a5f; font-weight: 500; }
         .alert-err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
         .alert-warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-weight: 500; margin: 0; }
 
@@ -268,6 +269,10 @@
 
             @if (session('sukses') || session('success'))
                 <div class="alert alert-ok">{{ session('sukses') ?? session('success') }}</div>
+            @endif
+
+            @if (session('info'))
+                <div class="alert alert-info">{{ session('info') }}</div>
             @endif
 
             @if ($errors->any() && ! trim($__env->yieldContent('tanpa_error_global')))

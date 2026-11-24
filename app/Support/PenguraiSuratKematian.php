@@ -70,7 +70,10 @@ final class PenguraiSuratKematian
     private static function uraikanNama(string $teks): array
     {
         // Label ketat: "Nama :", "Nama Lengkap:", "Nama Almarhum:", dst.
-        if (preg_match('/nama(?:\s+(?:lengkap|almarhum(?:ah)?(?:\s*\/\s*almarhum(?:ah)?))?|pelapor)?\s*[:\-]\s*(.+)$/imu', $teks, $m) === 1) {
+        // Sebelum titik dua \s* boleh melintasi baris (pdfparser memisah sel
+        // tabel), tetapi SETELAH titik dua dibatasi [ \t] agar nilai tidak
+        // menyeret isi baris berikutnya pada hasil OCR.
+        if (preg_match('/nama(?:\s+(?:lengkap|almarhum(?:ah)?(?:\s*\/\s*almarhum(?:ah)?))?|pelapor)?\s*[:\-][ \t]*(.+)$/imu', $teks, $m) === 1) {
             $nama = self::bersihkanBaris($m[1]);
 
             if ($nama !== '') {

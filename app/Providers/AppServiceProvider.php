@@ -13,6 +13,9 @@ use App\Services\Ai\OpenAiService;
 use App\Services\Ai\TesseractService;
 use App\Services\Dokumen\PembuatPdf;
 use App\Services\Dokumen\PembuatPdfDompdf;
+use App\Services\Notifikasi\LayananNotifikasiDatabase;
+use App\Services\Notifikasi\MockNotifikasiService;
+use App\Services\Notifikasi\NotifikasiService;
 use App\Services\Tte\PabrikTte;
 use App\Services\Tte\TTEService;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -66,6 +69,12 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->app->bind(PembuatPdf::class, PembuatPdfDompdf::class);
+
+        $this->app->bind(NotifikasiService::class, function (): NotifikasiService {
+            return config('satuduka.notifikasi_driver', 'database') === 'mock'
+                ? new MockNotifikasiService
+                : new LayananNotifikasiDatabase;
+        });
     }
 
     /**

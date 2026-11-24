@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\BerkasPendukung;
 use App\Models\LaporanKematian;
+use App\Models\Notifikasi;
 use App\Models\Pengguna;
 use App\Services\Ai\LayananAnalisisAi;
 use App\Services\LayananAudit;
 use App\Services\LayananNomorPengajuan;
+use App\Services\Notifikasi\NotifikasiService;
 use App\Services\Verifikasi\LayananAturanBerkas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -28,6 +30,8 @@ use Illuminate\Validation\ValidationException;
  */
 class LaporanController extends Controller
 {
+    public function __construct(private readonly NotifikasiService $notifikasi) {}
+
     /**
      * Pesan galat unggah berkas (user story 6.2.3).
      */
@@ -233,6 +237,16 @@ class LaporanController extends Controller
 
         $laporan = $hasil['laporan'];
         $kirimUlang = $hasil['aksi'] === 'mengirim_ulang_laporan';
+
+        if (! $kirimUlang) {
+            $this->notifikasi->kirim(
+                $request->user(),
+                Notifikasi::JENIS_VALIDASI_AWAL,
+                'Pengajuan Diterima',
+                'Pengajuan laporan kematian Anda diterima dan sedang menunggu verifikasi berkas.',
+                $laporan,
+            );
+        }
 
         LayananAudit::catat(
             aksi: $hasil['aksi'],
