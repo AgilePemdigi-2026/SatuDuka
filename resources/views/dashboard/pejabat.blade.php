@@ -3,6 +3,7 @@
 @section('judul', 'Dashboard Pejabat Penanda Tangan')
 
 @section('navigasi')
+    @include('komponen.menu_peran')
     @include('komponen.menu_avatar', ['pengguna' => $pengguna])
 @endsection
 
@@ -12,11 +13,7 @@
     @endphp
 
     <x-ui.page-header title="Dashboard Pejabat Penanda Tangan"
-        subtitle="Selamat datang, {{ $pengguna->nama_lengkap }}. Anda masuk sebagai {{ $pengguna->labelPeran() }}. Antrean dokumen untuk ditandatangani elektronik.">
-        <x-slot:aksi>
-            <x-ui.button :href="route('tanda_tangan.index')" variant="secondary">Buka Semua Dokumen</x-ui.button>
-        </x-slot:aksi>
-    </x-ui.page-header>
+        subtitle="Selamat datang, {{ $pengguna->nama_lengkap }}. Anda masuk sebagai {{ $pengguna->labelPeran() }}. Antrean dokumen untuk ditandatangani elektronik." />
 
     <section class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <x-ui.stat label="Menunggu Tindakan" :value="$statistik['menunggu']" variant="warning" />

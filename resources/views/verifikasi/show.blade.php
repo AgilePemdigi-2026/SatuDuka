@@ -11,6 +11,7 @@
 @endsection
 
 @section('navigasi')
+    @include('komponen.menu_peran')
     @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
 @endsection
 

@@ -3,20 +3,13 @@
 @section('judul', 'Lacak Status Pengajuan')
 
 @section('navigasi')
+    @include('komponen.menu_peran')
     @include('komponen.menu_avatar', ['pengguna' => $pengguna])
-@endsection
-
-@section('sidebar')
-    @include('komponen.sidebar_pemohon')
 @endsection
 
 @section('konten')
     <x-ui.page-header title="Lacak Status Pengajuan"
-        subtitle="Pantau perkembangan pengajuan laporan kematian dan unduh akta setelah diterbitkan.">
-        <x-slot:aksi>
-            <x-ui.button :href="route('dashboard')" variant="secondary">Kembali ke Dashboard</x-ui.button>
-        </x-slot:aksi>
-    </x-ui.page-header>
+        subtitle="Pantau perkembangan pengajuan laporan kematian dan unduh akta setelah diterbitkan." />
 
     <section class="mt-8">
         <x-ui.card>

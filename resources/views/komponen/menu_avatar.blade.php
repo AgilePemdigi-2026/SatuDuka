@@ -14,7 +14,7 @@
                 aria-hidden="true">{{ $pengguna->inisial() }}</span>
         @endif
 
-        <span class="hidden min-w-0 text-left sm:block">
+        <span class="hidden min-w-0 text-left lg:block">
             <span class="block max-w-[10rem] truncate text-sm font-bold leading-tight text-ink">
                 {{ $pengguna->nama_lengkap }}
             </span>
@@ -32,6 +32,8 @@
         </div>
 
         <div class="p-2">
+            @include('komponen.menu_peran', ['tampilan' => 'dropdown'])
+
             <a href="{{ route('profil.tampilkan') }}"
                 class="block rounded-lg px-3 py-2 text-sm font-medium text-ink-soft hover:bg-canvas">Kelola Profil</a>
 

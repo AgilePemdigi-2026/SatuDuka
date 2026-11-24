@@ -412,7 +412,6 @@ it('menggunakan desain dashboard pada halaman lacak status pengajuan', function 
     $this->actingAs($pemohon)->get(route('pengajuan.status'))
         ->assertOk()
         ->assertSee('plus-jakarta-sans', false)
-        ->assertSee('Menu Utama')
-        ->assertSee('Daftar Pengajuan')
-        ->assertSee('Kembali ke Dashboard');
+        ->assertSee('Menu utama')
+        ->assertSee('Daftar Pengajuan');
 });

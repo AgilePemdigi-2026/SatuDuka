@@ -3,6 +3,7 @@
 @section('judul', 'Dashboard Verifikator')
 
 @section('navigasi')
+    @include('komponen.menu_peran')
     @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
 @endsection
 
@@ -17,11 +18,7 @@
         ];
     @endphp
 
-    <x-ui.page-header title="Dashboard Verifikator" subtitle="Ringkasan seluruh proses verifikasi dan rekonsiliasi">
-        <x-slot:aksi>
-            <x-ui.button :href="route('rekonsiliasi.index')" variant="secondary">Rekonsiliasi Anomali</x-ui.button>
-        </x-slot:aksi>
-    </x-ui.page-header>
+    <x-ui.page-header title="Dashboard Verifikator" subtitle="Ringkasan seluruh proses verifikasi dan rekonsiliasi" />
 
     <section class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <x-ui.stat label="Total Permohonan" :value="$ringkasan['total']" variant="brand" />

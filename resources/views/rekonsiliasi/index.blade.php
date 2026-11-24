@@ -3,17 +3,13 @@
 @section('judul', 'Rekonsiliasi Anomali')
 
 @section('navigasi')
+    @include('komponen.menu_peran')
     @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
 @endsection
 
 @section('konten')
     <x-ui.page-header title="Antrean Rekonsiliasi Anomali"
-        subtitle="Berkas berstatus Dalam Rekonsiliasi Anomali. Bandingkan data pemohon, SIAK, dan surat keterangan sebelum memutuskan.">
-        <x-slot:aksi>
-            <x-ui.button :href="route('verifikasi.index')" variant="secondary">Antrean Verifikasi</x-ui.button>
-            <x-ui.button :href="route('dashboard')" variant="secondary">Dashboard</x-ui.button>
-        </x-slot:aksi>
-    </x-ui.page-header>
+        subtitle="Berkas berstatus Dalam Rekonsiliasi Anomali. Bandingkan data pemohon, SIAK, dan surat keterangan sebelum memutuskan." />
 
     <section class="mt-8">
         <x-ui.card>

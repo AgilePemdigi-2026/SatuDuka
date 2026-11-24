@@ -3,12 +3,8 @@
 @section('judul', 'Ringkasan Pengajuan')
 
 @section('navigasi')
-    <a href="{{ route('dashboard') }}" class="text-sm font-semibold text-ink-soft hover:text-brand">Dashboard</a>
+    @include('komponen.menu_peran')
     @include('komponen.menu_avatar', ['pengguna' => $pengguna])
-@endsection
-
-@section('sidebar')
-    @include('komponen.sidebar_pemohon')
 @endsection
 
 @section('konten')
@@ -207,10 +203,6 @@
                     <x-ui.button type="button" variant="secondary" onclick="window.print()" class="w-full">
                         <x-icon.printer class="h-4 w-4" />
                         Cetak Dokumen
-                    </x-ui.button>
-
-                    <x-ui.button :href="route('dashboard')" variant="secondary" class="w-full">
-                        Kembali ke Dashboard
                     </x-ui.button>
                 </div>
 

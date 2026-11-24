@@ -3,16 +3,13 @@
 @section('judul', 'Tanda Tangan Dokumen')
 
 @section('navigasi')
+    @include('komponen.menu_peran')
     @include('komponen.menu_avatar', ['pengguna' => auth()->user()])
 @endsection
 
 @section('konten')
     <x-ui.page-header title="Tanda Tangan Dokumen"
-        subtitle="Dokumen yang telah disetujui verifikator dan menunggu tanda tangan elektronik.">
-        <x-slot:aksi>
-            <x-ui.button :href="route('dashboard')" variant="secondary">Dashboard</x-ui.button>
-        </x-slot:aksi>
-    </x-ui.page-header>
+        subtitle="Dokumen yang telah disetujui verifikator dan menunggu tanda tangan elektronik." />
 
     <section class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <x-ui.stat label="Menunggu Tindakan" :value="$statistik['menunggu']" variant="warning" />

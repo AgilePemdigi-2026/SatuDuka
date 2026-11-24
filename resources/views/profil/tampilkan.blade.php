@@ -4,12 +4,8 @@
 @section('judul', 'Kelola Profil')
 
 @section('navigasi')
-    <a href="{{ route('dashboard') }}" class="text-sm font-semibold text-ink-soft hover:text-brand">Dashboard</a>
+    @include('komponen.menu_peran')
     @include('komponen.menu_avatar', ['pengguna' => $pengguna])
-@endsection
-
-@section('sidebar')
-    @include('komponen.sidebar_pemohon')
 @endsection
 
 @section('konten')

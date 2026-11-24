@@ -3,11 +3,8 @@
 @section('judul', 'Dashboard Pemohon')
 
 @section('navigasi')
+    @include('komponen.menu_peran')
     @include('komponen.menu_avatar', ['pengguna' => $pengguna])
-@endsection
-
-@section('sidebar')
-    @include('komponen.sidebar_pemohon')
 @endsection
 
 @section('konten')

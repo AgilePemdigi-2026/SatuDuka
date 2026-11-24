@@ -121,6 +121,13 @@ Ikon: SVG sebaris gaya Heroicons outline (stroke 1.5, `h-5 w-5`, `currentColor`)
   kiri: tombol kembali (bila `@yield('kembali')`) atau nama aplikasi; kanan: `@yield('navigasi')`.
   `main` pakai `bg-canvas`. Footer teks 12px `faint`, rata tengah. Tambahkan `<link>` font §2 di `<head>`.
   Flash message diganti `<x-ui.alert>`.
+- **Tanpa bilah menu samping (sidebar/taskbar).** Navigasi utama memakai header:
+  `komponen/menu_peran` merender tautan sesuai peran (pemohon: Dashboard, Status Pengajuan;
+  verifikator: Verifikasi, Rekonsiliasi; pejabat: Dashboard, Tanda Tangan). Tautan tampil mendatar
+  mulai lebar `md`; di bawah itu tautan yang sama muncul di dalam dropdown `komponen/menu_avatar`
+  agar tetap terjangkau tanpa sidebar.
+- Tombol aksi halaman hanya untuk tindakan yang tidak ada di navigasi header. Jangan mengulang
+  tautan navigasi sebagai tombol (mis. tombol "Dashboard" di header halaman).
 - **`tata_letak/tamu.blade.php`** (baru, untuk masuk/daftar/lupa/atur ulang sandi): latar `canvas`, blok merek di atas
   (nama aplikasi besar + tagline), satu kartu auth terpusat, footer hak cipta di bawah. Tanpa header navigasi.
 - Responsif: desktop-first, tetapi semua halaman wajib terbaca di lebar 360px. Grid statistik

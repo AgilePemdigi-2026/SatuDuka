@@ -44,7 +44,7 @@ it('menampilkan dashboard sesuai peran pengguna', function () {
         ->assertDontSee('Dokumen yang telah disetujui verifikator dan menunggu tanda tangan elektronik.')
         ->assertDontSee('Dokumen yang perlu ditandatangani akan muncul di sini.')
         ->assertSee(route('tanda_tangan.index'))
-        ->assertSee('Buka Semua Dokumen')
+        ->assertSee('Menu utama')
         ->assertSee('Kelola Profil')
         ->assertDontSee('Profil Saya');
 });
