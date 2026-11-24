@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\BerkasPendukung;
 use App\Services\Dokumen\LayananBerkasContoh;
 use Illuminate\Console\Command;
+use InvalidArgumentException;
 
 /**
  * Mengisi berkas pendukung yang belum punya isi di disk dengan dokumen dummy
@@ -34,6 +35,20 @@ class BuatkanBerkasContoh extends Command
      */
     public function handle(LayananBerkasContoh $layanan): int
     {
+        try {
+            return $this->jalankan($layanan);
+        } catch (InvalidArgumentException $galat) {
+            $this->error($galat->getMessage());
+
+            return self::FAILURE;
+        }
+    }
+
+    /**
+     * Alur utama perintah; kegagalan validasi ditangani oleh handle().
+     */
+    private function jalankan(LayananBerkasContoh $layanan): int
+    {
         if ($this->option('dry-run')) {
             $rencana = $layanan->isiSemuaYangKurang(
                 $this->pilihLaporan(),
@@ -55,7 +70,12 @@ class BuatkanBerkasContoh extends Command
                 $kueri->where('id_laporan', $idLaporan);
             }
 
-            foreach ($kueri->orderBy('id_berkas')->get() as $berkas) {
+            // Validasi seluruh jenis dokumen lebih dulu agar satu jenis tak
+            // dikenal tidak menyisakan berkas yang terbuat setengah jadi.
+            $daftar = $kueri->orderBy('id_berkas')->get();
+            $layanan->pastikanJenisDikenal($daftar);
+
+            foreach ($daftar as $berkas) {
                 if ($layanan->isi($berkas, paksa: true)) {
                     $jumlah++;
                 }
