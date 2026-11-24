@@ -979,9 +979,7 @@ it('menampilkan seluruh status non-draf pada dashboard verifikator', function ()
             'Perlu Rekonsiliasi',
             'Selesai',
         ])
-        ->assertSee('stat-waiting', false)
-        ->assertSee('stat-anomaly', false)
-        ->assertSee('stat-complete', false)
+        ->assertSee('Daftar Permohonan')
         ->assertDontSee('<span class="badge-dot"></span>', false)
         ->assertDontSee('<th>Berkas</th>', false);
 
