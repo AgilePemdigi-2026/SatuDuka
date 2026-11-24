@@ -50,7 +50,7 @@
                     Pengajuan yang sudah dikirim akan muncul di sini.
                 </x-ui.empty>
             @else
-                <x-ui.table class="mt-4 hidden md:block">
+                <x-ui.table class="mt-4 hidden lg:block">
                     <x-slot:head>
                         <th>Nomor</th>
                         <th>Nama Almarhum</th>
@@ -75,7 +75,7 @@
                     @endforeach
                 </x-ui.table>
 
-                <div class="mt-4 space-y-3 md:hidden">
+                <div class="mt-4 space-y-3 lg:hidden">
                     @foreach ($daftar as $laporan)
                         <x-ui.card padding="p-4">
                             <div class="flex flex-wrap items-center justify-between gap-2">

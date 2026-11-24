@@ -833,8 +833,8 @@ it('menampilkan label anomali Indonesia dan penanda anomali lain pada antrean', 
         ->assertSee('NIK tidak valid')
         ->assertDontSee('NIK_TIDAK_VALID')
         ->assertSee('lainnya')
-        ->assertSee('md:hidden')
-        ->assertSee('hidden md:block');
+        ->assertSee('lg:hidden')
+        ->assertSee('hidden lg:block');
 });
 
 it('memiliki label Indonesia untuk setiap kode taksonomi anomali', function () {

@@ -37,7 +37,7 @@
                     Belum ada dokumen yang menunggu tanda tangan.
                 </x-ui.empty>
             @else
-                <x-ui.table class="mt-4 hidden md:block">
+                <x-ui.table class="mt-4 hidden lg:block">
                     <x-slot:head>
                         <th>No.</th>
                         <th>Nomor Pengajuan</th>
@@ -66,7 +66,7 @@
                     @endforeach
                 </x-ui.table>
 
-                <div class="mt-4 space-y-3 md:hidden">
+                <div class="mt-4 space-y-3 lg:hidden">
                     @foreach ($dokumenMenunggu as $dokumen)
                         @php($laporan = $dokumen->laporanKematian)
                         <x-ui.card padding="p-4">

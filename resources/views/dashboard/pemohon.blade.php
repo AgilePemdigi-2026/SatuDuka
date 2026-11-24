@@ -12,7 +12,7 @@
 
 @section('konten')
     <x-ui.page-header title="Dashboard Pemohon"
-        subtitle="Selamat datang, {{ $pengguna->nama_lengkap }}. Anda masuk sebagai {{ $pengguna->labelPeran() }}. Layanan Pencatatan &amp; Administrasi Kematian Kota Yogyakarta.">
+        subtitle="Selamat datang, {{ $pengguna->nama_lengkap }}. Anda masuk sebagai {{ $pengguna->labelPeran() }}. Layanan Pencatatan & Administrasi Kematian Kota Yogyakarta.">
         <x-slot:aksi>
             <x-ui.button :href="route('laporan.baru')">Ajukan Laporan Baru</x-ui.button>
         </x-slot:aksi>

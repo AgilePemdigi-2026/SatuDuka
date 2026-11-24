@@ -69,14 +69,13 @@
                     <p class="mt-1">Coba ubah status atau kata kunci pencarian.</p>
                 </x-ui.notice>
             @else
-                <x-ui.table class="mt-4 hidden md:block">
+                <x-ui.table class="mt-4 hidden lg:block">
                     <x-slot:head>
                         <th>No.</th>
-                        <th>No. Pengajuan</th>
+                        <th>No. Pengajuan &amp; Tanggal</th>
                         <th>NIK</th>
                         <th>Nama</th>
                         <th>Anomali</th>
-                        <th>Tanggal Masuk</th>
                         <th>Status</th>
                         <th class="text-center">Aksi</th>
                     </x-slot:head>
@@ -85,8 +84,11 @@
                         @php($anom = $item->getAttribute('ringkasan_anomali'))
                         <tr>
                             <td class="text-faint">{{ $pengajuan->firstItem() + $index }}.</td>
-                            <td class="whitespace-nowrap font-mono text-xs font-semibold text-ink">
-                                {{ $item->no_pengajuan }}
+                            <td class="whitespace-nowrap">
+                                <span class="block font-mono text-xs font-semibold text-ink">{{ $item->no_pengajuan }}</span>
+                                <span class="text-xs text-faint">
+                                    {{ $item->tanggal_pengajuan ? \Carbon\Carbon::parse($item->tanggal_pengajuan)->format('d/m/Y') : '-' }}
+                                </span>
                             </td>
                             <td class="whitespace-nowrap font-mono text-xs text-ink-soft">
                                 {{ \App\Support\MaskerNik::masker($item->nik_almarhum) ?? '-' }}
@@ -94,7 +96,7 @@
                             <td class="font-semibold text-ink">{{ $item->nama_almarhum }}</td>
                             <td>
                                 @if (filled($anom['label'] ?? null))
-                                    <x-ui.badge :variant="$varianAnomali[$anom['varian']] ?? 'neutral'">
+                                    <x-ui.badge class="whitespace-nowrap" :variant="$varianAnomali[$anom['varian']] ?? 'neutral'">
                                         {{ $anom['label'] }}
                                     </x-ui.badge>
                                     @if ($anom['lainnya'] > 0)
@@ -103,9 +105,6 @@
                                 @else
                                     <x-ui.badge variant="success">Bersih</x-ui.badge>
                                 @endif
-                            </td>
-                            <td class="whitespace-nowrap text-muted">
-                                {{ $item->tanggal_pengajuan ? \Carbon\Carbon::parse($item->tanggal_pengajuan)->format('d/m/Y') : '-' }}
                             </td>
                             <td>@include('komponen.badge_status', ['status' => $item->status_pengajuan])</td>
                             <td class="text-center">
@@ -119,7 +118,7 @@
                     @endforeach
                 </x-ui.table>
 
-                <div class="mt-4 space-y-3 md:hidden">
+                <div class="mt-4 space-y-3 lg:hidden">
                     @foreach ($pengajuan as $item)
                         @php($anom = $item->getAttribute('ringkasan_anomali'))
                         <x-ui.card padding="p-4">

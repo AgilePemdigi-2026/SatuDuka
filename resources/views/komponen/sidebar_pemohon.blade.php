@@ -22,11 +22,11 @@
 
         <p class="hidden px-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-faint lg:block">Menu Utama</p>
 
-        <nav class="flex gap-2 overflow-x-auto lg:mt-3 lg:flex-col lg:overflow-visible" aria-label="Menu utama">
+        <nav class="flex flex-wrap gap-2 lg:mt-3 lg:flex-col" aria-label="Menu utama">
             @foreach ($menuPemohon as $menu)
                 @php($aktif = request()->routeIs($menu['pola']))
                 <a href="{{ route($menu['rute']) }}"
-                    class="flex shrink-0 items-center gap-3 whitespace-nowrap rounded-xl border px-4 py-2.5 text-[13px] font-medium transition-colors lg:py-3
+                    class="flex shrink-0 items-center gap-3 whitespace-nowrap rounded-xl border px-3.5 py-2.5 text-[13px] font-medium transition-colors lg:px-4 lg:py-3
                         {{ $aktif
                             ? 'border-brand bg-brand font-semibold text-white shadow-[0_8px_16px_-8px_rgb(30_58_95_/_0.6)]'
                             : 'border-line bg-surface text-ink-soft hover:border-brand hover:bg-brand-soft hover:text-brand' }}"

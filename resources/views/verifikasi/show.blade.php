@@ -67,7 +67,7 @@
             </x-ui.alert>
         @endif
 
-        <x-ui.card title="Informasi Pemohon &amp; Almarhum">
+        <x-ui.card title="Informasi Pemohon & Almarhum">
             <dl class="grid gap-4 sm:grid-cols-2">
                 <div class="rounded-xl border border-line bg-canvas p-4">
                     <dt class="text-xs text-muted">Nama Almarhum</dt>

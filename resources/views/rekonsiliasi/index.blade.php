@@ -42,7 +42,7 @@
                     <p class="mt-1">Tidak ada pengajuan yang sedang berada dalam rekonsiliasi.</p>
                 </x-ui.notice>
             @else
-                <x-ui.table class="mt-4 hidden md:block">
+                <x-ui.table class="mt-4 hidden lg:block">
                     <x-slot:head>
                         <th>No. Pengajuan &amp; Waktu</th>
                         <th>NIK</th>
@@ -89,7 +89,7 @@
                     @endforeach
                 </x-ui.table>
 
-                <div class="mt-4 space-y-3 md:hidden">
+                <div class="mt-4 space-y-3 lg:hidden">
                     @foreach ($pengajuan as $item)
                         @php
                             $terbuka = $item->hasilVerifikasi

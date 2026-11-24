@@ -16,19 +16,19 @@
             subtitle="Pantau perubahan status, permintaan perbaikan, dan penerbitan dokumen resmi." />
 
         <!-- Pencarian & Aksi -->
-        <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <form method="GET" action="{{ route('notifikasi.index') }}" class="flex flex-1 flex-wrap items-end gap-2">
                 <input type="hidden" name="tab" value="{{ $tab }}">
-                <div class="min-w-0 w-full max-w-md">
+                <div class="min-w-0 flex-1 sm:max-w-md">
                     <x-ui.input name="cari" type="search" :value="$cari"
                         placeholder="Cari nomor pengajuan atau isi notifikasi" />
                 </div>
                 <x-ui.button type="submit" variant="secondary">Cari</x-ui.button>
             </form>
 
-            <form method="POST" action="{{ route('notifikasi.tandai_semua') }}">
+            <form method="POST" action="{{ route('notifikasi.tandai_semua') }}" class="sm:shrink-0">
                 @csrf
-                <x-ui.button type="submit" variant="secondary">Tandai Semua Dibaca</x-ui.button>
+                <x-ui.button type="submit" variant="secondary" class="w-full sm:w-auto">Tandai Semua Dibaca</x-ui.button>
             </form>
         </div>
 

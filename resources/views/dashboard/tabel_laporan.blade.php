@@ -4,7 +4,7 @@
     </x-ui.empty>
 @else
     {{-- Tampilan Desktop (Tabel) --}}
-    <x-ui.table class="hidden md:block">
+    <x-ui.table class="hidden lg:block">
         <x-slot:head>
             <th>Nomor Pengajuan</th>
             <th>Almarhum/Almarhumah</th>
@@ -44,7 +44,7 @@
     </x-ui.table>
 
     {{-- Tampilan Mobile (Card List) --}}
-    <div class="space-y-3 md:hidden">
+    <div class="space-y-3 lg:hidden">
         @foreach ($daftar as $laporan)
             @php
                 $perluAlasan = in_array($laporan->status_pengajuan, [

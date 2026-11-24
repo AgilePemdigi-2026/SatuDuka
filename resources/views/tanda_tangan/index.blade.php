@@ -57,7 +57,7 @@
                     <p class="mt-1">Belum ada dokumen yang sesuai dengan pencarian.</p>
                 </x-ui.notice>
             @else
-                <x-ui.table class="mt-4 hidden md:block">
+                <x-ui.table class="mt-4 hidden lg:block">
                     <x-slot:head>
                         <th>No. Pengajuan &amp; Waktu</th>
                         <th>NIK</th>
@@ -99,7 +99,7 @@
                     @endforeach
                 </x-ui.table>
 
-                <div class="mt-4 space-y-3 md:hidden">
+                <div class="mt-4 space-y-3 lg:hidden">
                     @foreach ($daftar as $dokumen)
                         @php($laporan = $dokumen->laporanKematian)
                         <x-ui.card padding="p-4">
