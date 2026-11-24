@@ -27,17 +27,17 @@ class GeminiService implements AIService
     public function ekstrakSuratKematian(BerkasPendukung $berkas): array
     {
         if (trim($this->apiKey) === '') {
-            throw new AiTidakTersedia('Kunci layanan AI belum dikonfigurasi.');
+            throw new AiTidakTersedia('Kunci layanan AI belum dikonfigurasi.', penyebab: 'kunci_kosong');
         }
 
         if (! Storage::disk('local')->exists($berkas->path_file)) {
-            throw new AiTidakTersedia('Berkas tidak ditemukan.');
+            throw new AiTidakTersedia('Berkas tidak ditemukan.', penyebab: 'berkas_tidak_ditemukan');
         }
 
         $isi = Storage::disk('local')->get($berkas->path_file);
 
         if ($isi === null || $isi === '') {
-            throw new AiTidakTersedia('Berkas kosong.');
+            throw new AiTidakTersedia('Berkas kosong.', penyebab: 'berkas_kosong');
         }
 
         $bagianDokumen = $this->bagianDokumen($berkas, $isi);
@@ -62,7 +62,7 @@ class GeminiService implements AIService
     public function ringkasKetidaksesuaian(array $perbandingan): array
     {
         if (trim($this->apiKey) === '') {
-            throw new AiTidakTersedia('Kunci layanan AI belum dikonfigurasi.');
+            throw new AiTidakTersedia('Kunci layanan AI belum dikonfigurasi.', penyebab: 'kunci_kosong');
         }
 
         $konteks = json_encode($perbandingan, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -92,7 +92,7 @@ class GeminiService implements AIService
         }
 
         if ($ringkasan === '') {
-            throw new AiTidakTersedia('Hasil ringkasan AI tidak dapat dibaca.');
+            throw new AiTidakTersedia('Hasil ringkasan AI tidak dapat dibaca.', penyebab: 'respons_kosong');
         }
 
         return [
@@ -135,23 +135,27 @@ class GeminiService implements AIService
                     ],
                 ]);
         } catch (ConnectionException) {
-            throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.');
+            throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.', penyebab: 'timeout');
         }
 
         if ($respon->failed()) {
-            throw new AiTidakTersedia('Layanan AI tidak dapat dihubungi.');
+            throw new AiTidakTersedia(
+                'Layanan AI tidak dapat dihubungi.',
+                statusHttp: $respon->status(),
+                penyebab: 'http',
+            );
         }
 
         $teks = data_get($respon->json(), 'candidates.0.content.parts.0.text');
 
         if (! is_string($teks) || trim($teks) === '') {
-            throw new AiTidakTersedia('Hasil layanan AI tidak dapat dibaca.');
+            throw new AiTidakTersedia('Hasil layanan AI tidak dapat dibaca.', penyebab: 'respons_kosong');
         }
 
         $data = json_decode($teks, true);
 
         if (! is_array($data)) {
-            throw new AiTidakTersedia('Hasil layanan AI tidak dapat dibaca.');
+            throw new AiTidakTersedia('Hasil layanan AI tidak dapat dibaca.', penyebab: 'respons_tidak_terbaca');
         }
 
         return $data;
@@ -170,7 +174,10 @@ class GeminiService implements AIService
             'pdf' => 'application/pdf',
             'jpg', 'jpeg' => 'image/jpeg',
             'png' => 'image/png',
-            default => throw new AiTidakTersedia('Format dokumen tidak didukung layanan AI.'),
+            default => throw new AiTidakTersedia(
+                'Format dokumen tidak didukung layanan AI.',
+                penyebab: 'format_tidak_didukung',
+            ),
         };
 
         return [

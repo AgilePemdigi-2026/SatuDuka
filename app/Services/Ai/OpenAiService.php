@@ -29,17 +29,17 @@ class OpenAiService implements AIService
     public function ekstrakSuratKematian(BerkasPendukung $berkas): array
     {
         if (trim($this->apiKey) === '') {
-            throw new AiTidakTersedia('Kunci layanan AI belum dikonfigurasi.');
+            throw new AiTidakTersedia('Kunci layanan AI belum dikonfigurasi.', penyebab: 'kunci_kosong');
         }
 
         if (! Storage::disk('local')->exists($berkas->path_file)) {
-            throw new AiTidakTersedia('Berkas tidak ditemukan.');
+            throw new AiTidakTersedia('Berkas tidak ditemukan.', penyebab: 'berkas_tidak_ditemukan');
         }
 
         $isi = Storage::disk('local')->get($berkas->path_file);
 
         if ($isi === null || $isi === '') {
-            throw new AiTidakTersedia('Berkas kosong.');
+            throw new AiTidakTersedia('Berkas kosong.', penyebab: 'berkas_kosong');
         }
 
         $bagianDokumen = $this->bagianDokumen($berkas, $isi);
@@ -53,7 +53,7 @@ class OpenAiService implements AIService
         try {
             $respon = $this->kirimEkstraksi($prompt, $bagianDokumen);
         } catch (ConnectionException) {
-            throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.');
+            throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.', penyebab: 'timeout');
         }
 
         if ($respon->failed()) {
@@ -66,13 +66,17 @@ class OpenAiService implements AIService
                         'text' => "Isi dokumen:\n".$teksDokumen,
                     ]);
                 } catch (ConnectionException) {
-                    throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.');
+                    throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.', penyebab: 'timeout');
                 }
             }
         }
 
         if ($respon->failed()) {
-            throw new AiTidakTersedia('Layanan AI tidak dapat dihubungi.');
+            throw new AiTidakTersedia(
+                'Layanan AI tidak dapat dihubungi.',
+                statusHttp: $respon->status(),
+                penyebab: 'http',
+            );
         }
 
         $teks = $this->teksKeluaran($respon->json());
@@ -80,7 +84,7 @@ class OpenAiService implements AIService
         $data = json_decode(trim($teks), true);
 
         if (! is_array($data)) {
-            throw new AiTidakTersedia('Hasil layanan AI tidak dapat dibaca.');
+            throw new AiTidakTersedia('Hasil layanan AI tidak dapat dibaca.', penyebab: 'respons_tidak_terbaca');
         }
 
         return $this->susunHasil($data);
@@ -89,7 +93,7 @@ class OpenAiService implements AIService
     public function ringkasKetidaksesuaian(array $perbandingan): array
     {
         if (trim($this->apiKey) === '') {
-            throw new AiTidakTersedia('Kunci layanan AI belum dikonfigurasi.');
+            throw new AiTidakTersedia('Kunci layanan AI belum dikonfigurasi.', penyebab: 'kunci_kosong');
         }
 
         $konteks = json_encode($perbandingan, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -125,7 +129,7 @@ class OpenAiService implements AIService
                     ],
                 ]);
         } catch (ConnectionException) {
-            throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.');
+            throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.', penyebab: 'timeout');
         }
 
         if ($respon->failed()) {
@@ -139,12 +143,16 @@ class OpenAiService implements AIService
                         'input' => $prompt."\n\nBalas HANYA dengan JSON valid berformat: {\"ringkasan\": \"...\", \"saran\": [\"...\"]}",
                     ]);
             } catch (ConnectionException) {
-                throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.');
+                throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.', penyebab: 'timeout');
             }
         }
 
         if ($respon->failed()) {
-            throw new AiTidakTersedia('Layanan AI tidak dapat dihubungi.');
+            throw new AiTidakTersedia(
+                'Layanan AI tidak dapat dihubungi.',
+                statusHttp: $respon->status(),
+                penyebab: 'http',
+            );
         }
 
         $teks = $this->teksKeluaran($respon->json());
@@ -152,7 +160,7 @@ class OpenAiService implements AIService
         $data = json_decode(trim($teks), true);
 
         if (! is_array($data)) {
-            throw new AiTidakTersedia('Hasil ringkasan AI tidak dapat dibaca.');
+            throw new AiTidakTersedia('Hasil ringkasan AI tidak dapat dibaca.', penyebab: 'respons_tidak_terbaca');
         }
 
         $ringkasan = is_string($data['ringkasan'] ?? null) ? trim($data['ringkasan']) : '';
@@ -167,7 +175,7 @@ class OpenAiService implements AIService
         }
 
         if ($ringkasan === '') {
-            throw new AiTidakTersedia('Hasil ringkasan AI tidak dapat dibaca.');
+            throw new AiTidakTersedia('Hasil ringkasan AI tidak dapat dibaca.', penyebab: 'respons_kosong');
         }
 
         return [
@@ -273,7 +281,10 @@ class OpenAiService implements AIService
                 'image_url' => 'data:image/png;base64,'.$base64,
                 'detail' => 'high',
             ],
-            default => throw new AiTidakTersedia('Format dokumen tidak didukung layanan AI.'),
+            default => throw new AiTidakTersedia(
+                'Format dokumen tidak didukung layanan AI.',
+                penyebab: 'format_tidak_didukung',
+            ),
         };
     }
 
@@ -300,7 +311,7 @@ class OpenAiService implements AIService
             }
         }
 
-        throw new AiTidakTersedia('Hasil layanan AI tidak dapat dibaca.');
+        throw new AiTidakTersedia('Hasil layanan AI tidak dapat dibaca.', penyebab: 'respons_kosong');
     }
 
     /**

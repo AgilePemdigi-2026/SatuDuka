@@ -6,6 +6,7 @@ use App\Services\Ai\AiTidakTersedia;
 use App\Services\Ai\DeepSeekService;
 use App\Services\Dokumen\LayananBerkasContoh;
 use App\Services\Dokumen\PembuatPdf;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -151,3 +152,109 @@ it('melempar AiTidakTersedia saat dokumen gagal diubah ke teks', function () {
 
     $layanan->ekstrakSuratKematian($berkas);
 })->throws(AiTidakTersedia::class);
+
+/**
+ * Menyiapkan surat keterangan kematian bertext-layer untuk pengujian DeepSeek.
+ */
+function berkasDeepSeekBertext(): BerkasPendukung
+{
+    Storage::fake('local');
+
+    $laporan = LaporanKematian::factory()->terkirim()->create([
+        'nama_almarhum' => 'Suharto Wiryo',
+        'nik_almarhum' => '3471031203559001',
+        'tanggal_kematian' => '2026-09-01',
+        'tempat_kematian' => 'RSUD Kota Yogyakarta',
+    ]);
+
+    $berkas = BerkasPendukung::factory()->create([
+        'id_laporan' => $laporan->id_laporan,
+        'jenis_dokumen' => BerkasPendukung::JENIS_SURAT_KETERANGAN_KEMATIAN,
+        'path_file' => 'berkas/laporan/uji/surat-ulang.pdf',
+    ]);
+
+    (new LayananBerkasContoh(app(PembuatPdf::class)))->isi($berkas, true);
+
+    return $berkas;
+}
+
+/**
+ * Jawaban model yang berisi JSON hasil ekstraksi.
+ */
+function jawabanDeepSeek(): array
+{
+    return [
+        'choices' => [[
+            'message' => [
+                'content' => '{"nama_almarhum": "Suharto Wiryo", "nik": "3471031203559001", '
+                    .'"tanggal_kematian": "2026-09-01", "tempat_kematian": "RSUD Kota Yogyakarta", '
+                    .'"keyakinan": {"nama_almarhum": 0.98, "nik": 0.99, "tanggal_kematian": 0.97, "tempat_kematian": 0.95}}',
+            ],
+        ]],
+    ];
+}
+
+it('tidak mengulang permintaan saat penyedia menolak dengan status selain 400 dan 422', function (int $status) {
+    $berkas = berkasDeepSeekBertext();
+
+    Http::fake([
+        'api.deepseek.com/chat/completions' => Http::response(['error' => ['message' => 'ditolak']], $status),
+    ]);
+
+    $layanan = new DeepSeekService('kunci-uji', 'https://api.deepseek.com', 'deepseek-chat', 10);
+    $galat = null;
+
+    try {
+        $layanan->ekstrakSuratKematian($berkas);
+    } catch (AiTidakTersedia $e) {
+        $galat = $e;
+    }
+
+    Http::assertSentCount(1);
+
+    expect($galat)->toBeInstanceOf(AiTidakTersedia::class)
+        ->and($galat->statusHttp)->toBe($status)
+        ->and($galat->penyebab)->toBe('http');
+})->with([401, 429, 500]);
+
+it('mengulang permintaan tanpa response_format saat penyedia menolak dengan 422', function () {
+    $berkas = berkasDeepSeekBertext();
+
+    Http::fakeSequence('api.deepseek.com/chat/completions')
+        ->push(['error' => ['message' => 'response_format tidak didukung']], 422)
+        ->push(jawabanDeepSeek(), 200);
+
+    $layanan = new DeepSeekService('kunci-uji', 'https://api.deepseek.com', 'deepseek-chat', 10);
+
+    $hasil = $layanan->ekstrakSuratKematian($berkas);
+
+    expect($hasil['berhasil'])->toBeTrue()
+        ->and($hasil['kolom']['nik']['nilai'])->toBe('3471031203559001');
+
+    Http::assertSentCount(2);
+
+    $tercatat = Http::recorded();
+
+    expect($tercatat)->toHaveCount(2)
+        ->and($tercatat[0][0]->data())->toHaveKey('response_format')
+        ->and($tercatat[1][0]->data())->not->toHaveKey('response_format');
+});
+
+it('menyimpan status dan penyebab pada kegagalan waktu tunggu', function () {
+    $berkas = berkasDeepSeekBertext();
+
+    Http::fake(fn () => throw new ConnectionException('Waktu habis'));
+
+    $layanan = new DeepSeekService('kunci-uji', 'https://api.deepseek.com', 'deepseek-chat', 10);
+    $galat = null;
+
+    try {
+        $layanan->ekstrakSuratKematian($berkas);
+    } catch (AiTidakTersedia $e) {
+        $galat = $e;
+    }
+
+    expect($galat)->toBeInstanceOf(AiTidakTersedia::class)
+        ->and($galat->statusHttp)->toBeNull()
+        ->and($galat->penyebab)->toBe('timeout');
+});

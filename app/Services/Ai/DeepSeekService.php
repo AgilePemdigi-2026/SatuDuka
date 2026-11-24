@@ -6,6 +6,7 @@ use App\Models\BerkasPendukung;
 use App\Support\MaskerNik;
 use App\Support\PenyaringTeksDokumen;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
@@ -29,11 +30,11 @@ class DeepSeekService implements AIService
     public function ekstrakSuratKematian(BerkasPendukung $berkas): array
     {
         if (trim($this->apiKey) === '') {
-            throw new AiTidakTersedia('Kunci layanan AI belum dikonfigurasi.');
+            throw new AiTidakTersedia('Kunci layanan AI belum dikonfigurasi.', penyebab: 'kunci_kosong');
         }
 
         if (! Storage::disk('local')->exists($berkas->path_file)) {
-            throw new AiTidakTersedia('Berkas tidak ditemukan.');
+            throw new AiTidakTersedia('Berkas tidak ditemukan.', penyebab: 'berkas_tidak_ditemukan');
         }
 
         $isi = (string) Storage::disk('local')->get($berkas->path_file);
@@ -41,7 +42,10 @@ class DeepSeekService implements AIService
         $teks = PenyaringTeksDokumen::teks($berkas->path_file, $isi);
 
         if ($teks === null) {
-            throw new AiTidakTersedia('Dokumen tidak dapat dibaca menjadi teks; gunakan salinan yang lebih jelas.');
+            throw new AiTidakTersedia(
+                'Dokumen tidak dapat dibaca menjadi teks; gunakan salinan yang lebih jelas.',
+                penyebab: 'dokumen_tidak_terbaca',
+            );
         }
 
         // Hanya instruksi yang dimasker; teks dokumen dikirim apa adanya
@@ -62,7 +66,7 @@ class DeepSeekService implements AIService
     public function ringkasKetidaksesuaian(array $perbandingan): array
     {
         if (trim($this->apiKey) === '') {
-            throw new AiTidakTersedia('Kunci layanan AI belum dikonfigurasi.');
+            throw new AiTidakTersedia('Kunci layanan AI belum dikonfigurasi.', penyebab: 'kunci_kosong');
         }
 
         $konteks = json_encode($perbandingan, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -85,7 +89,7 @@ class DeepSeekService implements AIService
         $saran = $this->saranValid($data['saran'] ?? null);
 
         if ($ringkasan === '') {
-            throw new AiTidakTersedia('Hasil ringkasan AI tidak dapat dibaca.');
+            throw new AiTidakTersedia('Hasil ringkasan AI tidak dapat dibaca.', penyebab: 'respons_kosong');
         }
 
         return [
@@ -117,37 +121,40 @@ class DeepSeekService implements AIService
             'stream' => false,
         ];
 
-        try {
-            $respon = Http::withToken($this->apiKey)
-                ->acceptJson()
-                ->timeout(max(1, $this->timeout))
-                ->connectTimeout(max(5, (int) config('ai.connect_timeout', 30)))
-                ->post(rtrim($this->baseUrl, '/').'/chat/completions', $badan);
+        $kirim = fn (array $isi): Response => Http::withToken($this->apiKey)
+            ->acceptJson()
+            ->timeout(max(1, $this->timeout))
+            ->connectTimeout(max(5, (int) config('ai.connect_timeout', 30)))
+            ->post(rtrim($this->baseUrl, '/').'/chat/completions', $isi);
 
-            if ($respon->failed()) {
-                // Sebagian gateway OpenAI-kompatibel tidak mendukung response_format;
-                // ulangi sekali tanpa mode JSON dan andalkan pembersihan pagar markdown.
+        try {
+            $respon = $kirim($badan);
+
+            // Sebagian gateway OpenAI-kompatibel menolak `response_format` dengan
+            // 400/422. Hanya status itu yang diulang tanpa mode JSON; 401/429/5xx
+            // tidak diulang agar tidak menggandakan biaya dan waktu tunggu.
+            if (in_array($respon->status(), [400, 422], true)) {
                 $badanTanpaJson = $badan;
                 unset($badanTanpaJson['response_format']);
 
-                $respon = Http::withToken($this->apiKey)
-                    ->acceptJson()
-                    ->timeout(max(1, $this->timeout))
-                    ->connectTimeout(max(5, (int) config('ai.connect_timeout', 30)))
-                    ->post(rtrim($this->baseUrl, '/').'/chat/completions', $badanTanpaJson);
+                $respon = $kirim($badanTanpaJson);
             }
         } catch (ConnectionException) {
-            throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.');
+            throw new AiTidakTersedia('Layanan AI tidak merespons tepat waktu.', penyebab: 'timeout');
         }
 
         if ($respon->failed()) {
-            throw new AiTidakTersedia('Layanan AI tidak dapat dihubungi.');
+            throw new AiTidakTersedia(
+                'Layanan AI tidak dapat dihubungi.',
+                statusHttp: $respon->status(),
+                penyebab: 'http',
+            );
         }
 
         $teks = data_get($respon->json(), 'choices.0.message.content');
 
         if (! is_string($teks) || trim($teks) === '') {
-            throw new AiTidakTersedia('Hasil layanan AI tidak dapat dibaca.');
+            throw new AiTidakTersedia('Hasil layanan AI tidak dapat dibaca.', penyebab: 'respons_kosong');
         }
 
         // Sebagian model membungkus JSON dengan pagar markdown; buang pagar itu.
@@ -155,7 +162,7 @@ class DeepSeekService implements AIService
         $data = json_decode(trim($teks), true);
 
         if (! is_array($data)) {
-            throw new AiTidakTersedia('Hasil layanan AI tidak dapat dibaca.');
+            throw new AiTidakTersedia('Hasil layanan AI tidak dapat dibaca.', penyebab: 'respons_tidak_terbaca');
         }
 
         return $data;
