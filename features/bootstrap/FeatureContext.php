@@ -152,11 +152,11 @@ class FeatureContext implements Context
 
     private ?Pengguna $akunVerifikator = null;
 
-private ?Pengguna $akunPemohonBDD = null;
+    private ?Pengguna $akunPemohonBDD = null;
 
-private string $statusPengajuanAwal = '';
+    private string $statusPengajuanAwal = '';
 
-private string $pesanValidasiVerifikasi = '';
+    private string $pesanValidasiVerifikasi = '';
 
     public function __construct()
     {
@@ -1385,7 +1385,7 @@ private string $pesanValidasiVerifikasi = '';
         Assert::assertSame('pemohon-lain@example.test', $this->penggunaLain->fresh()->email);
     }
 
-        /*
+    /*
     |--------------------------------------------------------------------------
     | Verifikasi berkas pengajuan
     |--------------------------------------------------------------------------
