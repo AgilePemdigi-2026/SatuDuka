@@ -158,6 +158,8 @@ class FeatureContext implements Context
 
     private string $pesanValidasiVerifikasi = '';
 
+    private ?string $nikRegistrasiTerakhir = null;
+
     public function __construct()
     {
         // Pagar keselamatan: tolak lingkungan yang menunjuk berkas database
@@ -278,6 +280,7 @@ class FeatureContext implements Context
         $this->akunPemohonBDD = null;
         $this->statusPengajuanAwal = '';
         $this->pesanValidasiVerifikasi = '';
+        $this->nikRegistrasiTerakhir = null;
     }
 
     /*
@@ -486,6 +489,7 @@ class FeatureContext implements Context
         }
 
         if ($this->halaman === 'registrasi' || $tombol === 'daftar') {
+            $this->nikRegistrasiTerakhir = (string) ($this->isianForm['nik'] ?? '');
             $this->kirimRequest('POST', route('registrasi.simpan'), $this->isianForm);
 
             return;
@@ -1068,6 +1072,23 @@ class FeatureContext implements Context
             'email' => $email,
             'kata_sandi' => 'password123',
         ]);
+    }
+
+    #[Then('/^nama lengkap akun baru tersimpan sebagai "([^"]+)"$/')]
+    public function namaLengkapAkunBaruTersimpan(string $namaLengkap): void
+    {
+        Assert::assertNotNull(
+            $this->nikRegistrasiTerakhir,
+            'NIK registrasi belum tercatat; skenario harus mengirim formulir Daftar.'
+        );
+
+        $akun = Pengguna::cariDenganNik($this->nikRegistrasiTerakhir);
+
+        Assert::assertNotNull(
+            $akun,
+            'Akun dengan NIK registrasi tidak ditemukan di database pengujian.'
+        );
+        Assert::assertSame($namaLengkap, $akun->nama_lengkap);
     }
 
     #[Then('/^saya diarahkan ke dashboard (Pemohon|Verifikator|Pejabat)$/')]

@@ -2,8 +2,8 @@
 # Penyesuaian dari naskah SRS:
 #   - Kolom "Alamat Surel" WAJIB diisi (pengguna.email NOT NULL UNIQUE dan
 #     dipakai untuk pengaturan ulang kata sandi).
-#   - Nama lengkap tidak diminta; diambil dari SIAK bila tersedia dan memakai
-#     nama bawaan bila NIK belum ada pada data kependudukan.
+#   - Nama lengkap kini diisi sendiri oleh pemohon karena SATUDUKA tidak lagi
+#     membaca data kependudukan (SIAK).
 # Skenario ini dijalankan oleh Behat melalui features/bootstrap/FeatureContext.php.
 # Tes Pest terkait tersedia sebagai cakupan regresi tambahan.
 
@@ -12,9 +12,10 @@ Feature: Register
   As a calon pemohon (masyarakat)
   I want to register and create a new account
 
-  Scenario: Berhasil registrasi dengan NIK yang terdapat pada data kependudukan
+  Scenario: Berhasil registrasi dengan NIK yang valid
     Given saya melihat halaman "Registrasi"
-    When saya mengisi "9999990101900115" pada kolom "NIK"
+    When saya mengisi "Pemohon Baru BDD" pada kolom "Nama Lengkap"
+    And saya mengisi "9999990101900115" pada kolom "NIK"
     And saya mengisi "pemohon.baru@demo.satuduka.id" pada kolom "Alamat Surel"
     And saya mengisi "Baru12345" pada kolom "Kata Sandi"
     And saya mengisi "Baru12345" pada kolom "Konfirmasi Kata Sandi"
@@ -29,7 +30,8 @@ Feature: Register
 
   Scenario: Registrasi gagal karena kata sandi lemah
     Given saya melihat halaman "Registrasi"
-    When saya mengisi "9999990101900114" pada kolom "NIK"
+    When saya mengisi "Pemohon Baru BDD" pada kolom "Nama Lengkap"
+    And saya mengisi "9999990101900114" pada kolom "NIK"
     And saya mengisi "pemohon.baru@demo.satuduka.id" pada kolom "Alamat Surel"
     And saya mengisi "abc123" pada kolom "Kata Sandi"
     And saya mengisi "abc123" pada kolom "Konfirmasi Kata Sandi"
@@ -38,7 +40,8 @@ Feature: Register
 
   Scenario: Registrasi gagal karena konfirmasi kata sandi tidak cocok
     Given saya melihat halaman "Registrasi"
-    When saya mengisi "9999990101900114" pada kolom "NIK"
+    When saya mengisi "Pemohon Baru BDD" pada kolom "Nama Lengkap"
+    And saya mengisi "9999990101900114" pada kolom "NIK"
     And saya mengisi "pemohon.baru@demo.satuduka.id" pada kolom "Alamat Surel"
     And saya mengisi "Baru12345" pada kolom "Kata Sandi"
     And saya mengisi "Baru12346" pada kolom "Konfirmasi Kata Sandi"
@@ -47,7 +50,8 @@ Feature: Register
 
   Scenario: Registrasi gagal karena format NIK tidak valid
     Given saya melihat halaman "Registrasi"
-    When saya mengisi "123456789012" pada kolom "NIK"
+    When saya mengisi "Pemohon Baru BDD" pada kolom "Nama Lengkap"
+    And saya mengisi "123456789012" pada kolom "NIK"
     And saya mengisi "pemohon.baru@demo.satuduka.id" pada kolom "Alamat Surel"
     And saya mengisi "Baru12345" pada kolom "Kata Sandi"
     And saya mengisi "Baru12345" pada kolom "Konfirmasi Kata Sandi"
@@ -57,27 +61,30 @@ Feature: Register
   Scenario: Registrasi gagal karena NIK sudah terdaftar
     Given akun dengan NIK "9999990101900001" sudah ada
     And saya melihat halaman "Registrasi"
-    When saya mengisi "9999990101900001" pada kolom "NIK"
+    When saya mengisi "Pemohon Baru BDD" pada kolom "Nama Lengkap"
+    And saya mengisi "9999990101900001" pada kolom "NIK"
     And saya mengisi "pemohon.baru@demo.satuduka.id" pada kolom "Alamat Surel"
     And saya mengisi "Baru12345" pada kolom "Kata Sandi"
     And saya mengisi "Baru12345" pada kolom "Konfirmasi Kata Sandi"
     And saya menekan tombol "Daftar"
     Then saya melihat pesan galat "NIK sudah terdaftar"
 
-  Scenario: Berhasil registrasi dengan NIK 16 digit yang tidak ditemukan pada data kependudukan
+  Scenario: Registrasi gagal karena Nama Lengkap kosong
     Given saya melihat halaman "Registrasi"
-    When saya mengisi "9999990101900099" pada kolom "NIK"
+    When saya membiarkan kolom "Nama Lengkap" kosong
+    And saya mengisi "9999990101900099" pada kolom "NIK"
     And saya mengisi "pemohon.baru@demo.satuduka.id" pada kolom "Alamat Surel"
     And saya mengisi "Baru12345" pada kolom "Kata Sandi"
     And saya mengisi "Baru12345" pada kolom "Konfirmasi Kata Sandi"
     And saya menekan tombol "Daftar"
-    Then saya melihat notifikasi "Registrasi berhasil!"
-    And saya melihat halaman "Masuk"
+    Then saya melihat pesan galat "Harap isi semua field yang diperlukan"
+    And kolom yang kosong ditandai
 
   Scenario: Registrasi gagal karena surel sudah terdaftar
     Given akun dengan surel "pemohon@demo.satuduka.id" sudah ada
     And saya melihat halaman "Registrasi"
-    When saya mengisi "9999990101900114" pada kolom "NIK"
+    When saya mengisi "Pemohon Baru BDD" pada kolom "Nama Lengkap"
+    And saya mengisi "9999990101900114" pada kolom "NIK"
     And saya mengisi "pemohon@demo.satuduka.id" pada kolom "Alamat Surel"
     And saya mengisi "Baru12345" pada kolom "Kata Sandi"
     And saya mengisi "Baru12345" pada kolom "Konfirmasi Kata Sandi"
@@ -86,9 +93,20 @@ Feature: Register
 
   Scenario: Registrasi gagal karena kolom kosong
     Given saya melihat halaman "Registrasi"
-    When saya mengisi "9999990101900114" pada kolom "NIK"
+    When saya mengisi "Pemohon Baru BDD" pada kolom "Nama Lengkap"
+    And saya mengisi "9999990101900114" pada kolom "NIK"
     And saya membiarkan kolom "Kata Sandi" kosong
     And saya membiarkan kolom "Konfirmasi Kata Sandi" kosong
     And saya menekan tombol "Daftar"
     Then saya melihat pesan galat "Harap isi semua field yang diperlukan"
     And kolom yang kosong ditandai
+
+  Scenario: Nama lengkap akun tersimpan sesuai isian pemohon
+    Given saya melihat halaman "Registrasi"
+    When saya mengisi "Pemohon Baru BDD" pada kolom "Nama Lengkap"
+    And saya mengisi "9999990101900116" pada kolom "NIK"
+    And saya mengisi "pemohon.namalengkap@demo.satuduka.id" pada kolom "Alamat Surel"
+    And saya mengisi "Baru12345" pada kolom "Kata Sandi"
+    And saya mengisi "Baru12345" pada kolom "Konfirmasi Kata Sandi"
+    And saya menekan tombol "Daftar"
+    Then nama lengkap akun baru tersimpan sebagai "Pemohon Baru BDD"
