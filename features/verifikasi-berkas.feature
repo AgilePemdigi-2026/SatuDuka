@@ -77,3 +77,42 @@ Feature: Memverifikasi Berkas Pengajuan
     When saya mencoba menyetujui pengajuan tersebut
     Then akses ke aksi persetujuan ditolak
     And status pengajuan tetap "Menunggu Verifikasi"
+
+  Scenario: Detail verifikasi tidak memuat rujukan data kependudukan SIAK
+    Given terdapat pengajuan dengan berkas lengkap yang menunggu verifikasi
+    And saya masuk sebagai verifikator
+    When saya membuka detail pengajuan tersebut
+    Then halaman detail pengajuan berhasil ditampilkan
+    And halaman detail tidak memuat rujukan SIAK
+
+  Scenario: Pemeriksaan aturan membandingkan isian pemohon dengan hasil ekstraksi dokumen
+    Given terdapat pengajuan dengan berkas lengkap yang menunggu verifikasi
+    And terdapat hasil ekstraksi dokumen dengan nama almarhum "Bambang Sutrisno"
+    And saya masuk sebagai verifikator
+    When saya membuka detail pengajuan tersebut
+    Then pemeriksaan aturan menampilkan anomali "Nama tidak cocok"
+    And pemeriksaan aturan menampilkan pesan "Nama pada pengajuan tidak cocok dengan nama pada dokumen yang diunggah."
+
+  Scenario: Keputusan verifikasi memakai satu dropdown tindakan
+    Given terdapat pengajuan dengan berkas lengkap yang menunggu verifikasi
+    And saya masuk sebagai verifikator
+    When saya membuka detail pengajuan tersebut
+    Then halaman menampilkan dropdown tindakan verifikasi dengan pilihan awal "setujui"
+
+  Scenario Outline: Nilai awal dropdown mengikuti rekomendasi mesin
+    Given <kondisi>
+    And saya masuk sebagai verifikator
+    When saya membuka detail pengajuan tersebut
+    Then halaman menampilkan dropdown tindakan verifikasi dengan pilihan awal "<tindakan>"
+
+    Examples:
+      | kondisi                                                                 | tindakan        |
+      | terdapat pengajuan dengan berkas lengkap yang menunggu verifikasi       | setujui         |
+      | terdapat pengajuan tanpa seluruh dokumen wajib yang menunggu verifikasi | minta_perbaikan |
+
+  Scenario: Panel keputusan tetap tersedia tanpa JavaScript
+    Given terdapat pengajuan dengan berkas lengkap yang menunggu verifikasi
+    And saya masuk sebagai verifikator
+    When saya membuka detail pengajuan tersebut
+    Then halaman menampilkan kelima panel keputusan verifikasi
+    And kelima formulir keputusan verifikasi memiliki tujuan aksi

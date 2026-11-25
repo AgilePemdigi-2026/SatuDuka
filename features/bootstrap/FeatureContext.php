@@ -1,10 +1,12 @@
 
 <?php
 
+use App\Models\AnalisisAi;
 use App\Models\AnomaliDokumen;
 use App\Models\BerkasPendukung;
 use App\Models\HasilVerifikasi;
 use App\Models\LaporanKematian;
+use App\Models\Notifikasi;
 use App\Models\Pengguna;
 use App\Notifications\TautanAturUlangKataSandi;
 use App\Services\LayananPenguncian;
@@ -160,6 +162,10 @@ class FeatureContext implements Context
 
     private ?string $nikRegistrasiTerakhir = null;
 
+    private ?AnomaliDokumen $anomaliRekonsiliasi = null;
+
+    private ?Notifikasi $notifikasiBDD = null;
+
     public function __construct()
     {
         // Pagar keselamatan: tolak lingkungan yang menunjuk berkas database
@@ -281,6 +287,8 @@ class FeatureContext implements Context
         $this->statusPengajuanAwal = '';
         $this->pesanValidasiVerifikasi = '';
         $this->nikRegistrasiTerakhir = null;
+        $this->anomaliRekonsiliasi = null;
+        $this->notifikasiBDD = null;
     }
 
     /*
@@ -1825,6 +1833,591 @@ class FeatureContext implements Context
             $this->response->getStatusCode(),
             [302, 401, 403],
             'Pemohon seharusnya tidak dapat menyetujui pengajuan.'
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Perubahan tampilan verifikasi (tanpa SIAK, dropdown keputusan)
+    |--------------------------------------------------------------------------
+    */
+
+    #[Given('/^terdapat hasil ekstraksi dokumen dengan nama almarhum "([^"]+)"$/')]
+    public function terdapatHasilEkstraksiDokumenBDD(string $namaEkstraksi): void
+    {
+        $this->simpanPerbandinganNama($namaEkstraksi);
+    }
+
+    #[Then('halaman detail tidak memuat rujukan SIAK')]
+    public function halamanDetailTidakMemuatRujukanSiakBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+
+        $isi = (string) $this->response->getContent();
+
+        foreach ([
+            'Data SIAK',
+            'SIAK_SUDAH_MENINGGAL',
+            'NIK_TIDAK_DITEMUKAN',
+            'ALAMAT_DI_LUAR_WILAYAH',
+        ] as $larangan) {
+            Assert::assertStringNotContainsString(
+                $larangan,
+                $isi,
+                'Detail verifikasi tidak boleh lagi memuat rujukan SIAK: '.$larangan
+            );
+        }
+    }
+
+    #[Then('/^pemeriksaan aturan menampilkan anomali "([^"]+)"$/')]
+    public function pemeriksaanAturanMenampilkanAnomaliBDD(string $label): void
+    {
+        Assert::assertNotNull($this->response);
+
+        Assert::assertStringContainsString(
+            $label,
+            (string) $this->response->getContent()
+        );
+    }
+
+    #[Then('/^pemeriksaan aturan menampilkan pesan "([^"]+)"$/')]
+    public function pemeriksaanAturanMenampilkanPesanBDD(string $pesan): void
+    {
+        Assert::assertNotNull($this->response);
+
+        Assert::assertStringContainsString($pesan, (string) $this->response->getContent());
+    }
+
+    #[Then('/^halaman menampilkan dropdown tindakan verifikasi dengan pilihan awal "([^"]+)"$/')]
+    public function halamanMenampilkanDropdownTindakanVerifikasiBDD(string $pilihanAwal): void
+    {
+        Assert::assertNotNull($this->response);
+
+        $isi = (string) $this->response->getContent();
+
+        Assert::assertStringContainsString('data-pilih-tindakan="verifikasi"', $isi);
+        Assert::assertStringContainsString('name="tindakan"', $isi);
+        Assert::assertStringContainsString(
+            '<option value="'.$pilihanAwal.'" selected>',
+            $isi,
+            'Nilai awal dropdown harus mengikuti rekomendasi mesin: '.$pilihanAwal
+        );
+
+        foreach (['setujui', 'minta_perbaikan', 'tolak_revisi', 'tandai_anomali', 'tolak_fatal'] as $opsi) {
+            Assert::assertStringContainsString('<option value="'.$opsi.'"', $isi);
+        }
+    }
+
+    #[Then('halaman menampilkan kelima panel keputusan verifikasi')]
+    public function halamanMenampilkanKelimaPanelKeputusanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+
+        $isi = (string) $this->response->getContent();
+
+        Assert::assertStringContainsString('data-wadah-tindakan="verifikasi"', $isi);
+
+        foreach (['setujui', 'minta_perbaikan', 'tolak_revisi', 'tandai_anomali', 'tolak_fatal'] as $panel) {
+            Assert::assertStringContainsString(
+                'data-panel-tindakan="'.$panel.'"',
+                $isi,
+                'Panel keputusan '.$panel.' harus tetap dirender tanpa JavaScript.'
+            );
+        }
+    }
+
+    #[Then('kelima formulir keputusan verifikasi memiliki tujuan aksi')]
+    public function kelimaFormulirKeputusanMemilikiTujuanAksiBDD(): void
+    {
+        Assert::assertNotNull($this->laporan);
+        Assert::assertNotNull($this->response);
+
+        $isi = (string) $this->response->getContent();
+        $id = $this->laporan->getKey();
+
+        foreach (['setujui', 'perbaikan', 'revisi', 'anomali', 'tolak-fatal'] as $aksi) {
+            Assert::assertStringContainsString(
+                'action="'.route('verifikasi.'.str_replace('-', '_', $aksi), $id).'"',
+                $isi,
+                'Formulir keputusan '.$aksi.' harus tersedia di HTML.'
+            );
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rekonsiliasi anomali
+    |--------------------------------------------------------------------------
+    */
+
+    private function siapkanDataRekonsiliasi(bool $denganEkstraksi = false): void
+    {
+        if ($this->akunVerifikator === null || $this->akunPemohonBDD === null) {
+            [$pemohon, $verifikator] = $this->buatAkunDemo();
+
+            $this->akunPemohonBDD = $pemohon;
+            $this->akunVerifikator = $verifikator;
+        }
+
+        if ($this->laporan === null) {
+            $this->pemohon = $this->akunPemohonBDD;
+
+            $this->laporan = $this->buatLaporan([
+                'status_pengajuan' => LaporanKematian::STATUS_DALAM_REKONSILIASI,
+            ]);
+
+            $hasil = HasilVerifikasi::create([
+                'id_laporan' => $this->laporan->getKey(),
+                'id_pengguna' => $this->akunVerifikator->getKey(),
+                'status_verifikasi' => HasilVerifikasi::STATUS_ANOMALI,
+                'catatan' => 'Berkas dialihkan ke rekonsiliasi anomali.',
+                'tanggal_verifikasi' => now(),
+            ]);
+
+            $this->anomaliRekonsiliasi = AnomaliDokumen::create([
+                'id_verifikasi' => $hasil->getKey(),
+                'jenis_anomali' => AnomaliDokumen::JENIS_PERBEDAAN_IDENTITAS,
+                'deskripsi' => 'Nama pada dokumen berbeda dengan isian pemohon.',
+                'status_rekonsiliasi' => AnomaliDokumen::STATUS_TERBUKA,
+            ]);
+        }
+
+        if ($denganEkstraksi) {
+            $this->simpanEkstraksiDokumen([
+                'nama_almarhum' => [
+                    'nilai' => (string) $this->laporan->nama_almarhum,
+                    'keyakinan' => 0.94,
+                ],
+                'nik' => [
+                    'nilai' => (string) $this->laporan->nik_almarhum,
+                    'keyakinan' => 0.9,
+                ],
+                'tanggal_kematian' => [
+                    'nilai' => (string) $this->laporan->tanggal_kematian?->toDateString(),
+                    'keyakinan' => 0.88,
+                ],
+                'tempat_kematian' => [
+                    'nilai' => (string) $this->laporan->tempat_kematian,
+                    'keyakinan' => 0.86,
+                ],
+            ]);
+        }
+    }
+
+    /**
+     * @param  array<string, array{nilai: string|null, keyakinan: float}>  $kolom
+     */
+    private function simpanEkstraksiDokumen(array $kolom): void
+    {
+        Assert::assertNotNull($this->laporan);
+
+        AnalisisAi::create([
+            'id_laporan' => $this->laporan->getKey(),
+            'jenis' => AnalisisAi::JENIS_EKSTRAKSI,
+            'hasil' => ['kolom' => $kolom],
+            'skor' => 0.9,
+            'status' => AnalisisAi::STATUS_BERHASIL,
+            'dibuat_pada' => now(),
+        ]);
+    }
+
+    private function simpanPerbandinganNama(string $namaEkstraksi): void
+    {
+        Assert::assertNotNull($this->laporan);
+
+        // Bentuk `hasil` harus sama dengan keluaran LayananPerbandinganData
+        // karena panel analisis AI membaca `label`, `nilai_pemohon`,
+        // `nilai_ekstraksi`, `status`, `keyakinan`, `catatan`, dan `ada_beda`.
+        AnalisisAi::create([
+            'id_laporan' => $this->laporan->getKey(),
+            'jenis' => AnalisisAi::JENIS_PERBANDINGAN,
+            'hasil' => [
+                'kolom' => [[
+                    'kunci' => 'nama_almarhum',
+                    'label' => 'Nama Almarhum',
+                    'status' => 'beda',
+                    'nilai_pemohon' => (string) $this->laporan->nama_almarhum,
+                    'nilai_ekstraksi' => $namaEkstraksi,
+                    'keyakinan' => 0.94,
+                    'catatan' => ['Hasil ekstraksi berbeda dengan isian pemohon.'],
+                ]],
+                'jumlah_beda' => 1,
+                'ada_beda' => true,
+                'skor' => 0.94,
+            ],
+            'skor' => 0.94,
+            'model' => 'mock-bdd',
+            'status' => AnalisisAi::STATUS_BERHASIL,
+            'dibuat_pada' => now(),
+        ]);
+    }
+
+    #[Given('terdapat pengajuan dalam rekonsiliasi anomali')]
+    public function terdapatPengajuanDalamRekonsiliasiBDD(): void
+    {
+        $this->siapkanDataRekonsiliasi();
+
+        Assert::assertSame(
+            LaporanKematian::STATUS_DALAM_REKONSILIASI,
+            $this->statusPengajuanSaatIni()
+        );
+    }
+
+    #[Given('terdapat pengajuan dalam rekonsiliasi anomali dengan hasil ekstraksi dokumen')]
+    public function terdapatPengajuanRekonsiliasiDenganEkstraksiBDD(): void
+    {
+        $this->siapkanDataRekonsiliasi(true);
+
+        Assert::assertSame(
+            LaporanKematian::STATUS_DALAM_REKONSILIASI,
+            $this->statusPengajuanSaatIni()
+        );
+    }
+
+    #[When('saya membuka halaman rekonsiliasi')]
+    public function sayaMembukaHalamanRekonsiliasiBDD(): void
+    {
+        $this->kirimRequest('GET', route('rekonsiliasi.index'));
+    }
+
+    #[When('saya membuka detail rekonsiliasi tersebut')]
+    public function sayaMembukaDetailRekonsiliasiBDD(): void
+    {
+        Assert::assertNotNull($this->laporan);
+
+        $this->kirimRequest(
+            'GET',
+            route('rekonsiliasi.show', $this->laporan->getKey())
+        );
+    }
+
+    #[When('/^saya menyelesaikan rekonsiliasi dengan catatan "([^"]+)"$/')]
+    public function sayaMenyelesaikanRekonsiliasiBDD(string $catatan): void
+    {
+        Assert::assertNotNull($this->laporan);
+
+        $this->kirimRequest(
+            'POST',
+            route('rekonsiliasi.selesaikan', $this->laporan->getKey()),
+            [
+                'nama_almarhum' => (string) $this->laporan->nama_almarhum,
+                'tanggal_kematian' => (string) $this->laporan->tanggal_kematian?->toDateString(),
+                'catatan_rekonsiliasi' => $catatan,
+            ]
+        );
+    }
+
+    #[When('/^saya menolak permanen rekonsiliasi dengan alasan eskalasi "([^"]+)" dan catatan resmi "([^"]+)"$/')]
+    public function sayaMenolakPermanenRekonsiliasiBDD(string $alasanEskalasi, string $catatanResmi): void
+    {
+        Assert::assertNotNull($this->laporan);
+
+        $this->kirimRequest(
+            'POST',
+            route('rekonsiliasi.tolak_fatal', $this->laporan->getKey()),
+            [
+                'alasan_eskalasi' => $alasanEskalasi,
+                'catatan_resmi' => $catatanResmi,
+            ]
+        );
+    }
+
+    #[Then('halaman antrean rekonsiliasi berhasil ditampilkan')]
+    public function halamanAntreanRekonsiliasiBerhasilDitampilkanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+
+        Assert::assertSame(
+            200,
+            $this->response->getStatusCode(),
+            'Halaman antrean rekonsiliasi seharusnya dapat dibuka verifikator.'
+        );
+    }
+
+    #[Then('saya melihat pengajuan yang berada dalam rekonsiliasi')]
+    public function sayaMelihatPengajuanDalamRekonsiliasiBDD(): void
+    {
+        Assert::assertNotNull($this->laporan);
+        Assert::assertNotNull($this->response);
+
+        Assert::assertStringContainsString(
+            (string) $this->laporan->nama_almarhum,
+            (string) $this->response->getContent()
+        );
+    }
+
+    #[Then('halaman detail rekonsiliasi berhasil ditampilkan')]
+    public function halamanDetailRekonsiliasiBerhasilDitampilkanBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+
+        Assert::assertSame(
+            200,
+            $this->response->getStatusCode(),
+            'Halaman detail rekonsiliasi seharusnya dapat dibuka.'
+        );
+    }
+
+    #[Then('/^komparasi data menampilkan kolom "([^"]+)"$/')]
+    public function komparasiDataMenampilkanKolomBDD(string $kolom): void
+    {
+        Assert::assertNotNull($this->response);
+
+        Assert::assertStringContainsString(
+            '>'.$kolom.'<',
+            (string) $this->response->getContent()
+        );
+    }
+
+    #[Then('/^komparasi data tidak memiliki kolom "([^"]+)"$/')]
+    public function komparasiDataTidakMemilikiKolomBDD(string $kolom): void
+    {
+        Assert::assertNotNull($this->response);
+
+        Assert::assertStringNotContainsString(
+            $kolom,
+            (string) $this->response->getContent(),
+            'Komparasi data tidak boleh lagi memuat kolom '.$kolom
+        );
+    }
+
+    #[Then('/^halaman menampilkan dropdown aksi rekonsiliasi dengan pilihan awal "([^"]+)"$/')]
+    public function halamanMenampilkanDropdownAksiRekonsiliasiBDD(string $pilihanAwal): void
+    {
+        Assert::assertNotNull($this->response);
+
+        $isi = (string) $this->response->getContent();
+
+        Assert::assertStringContainsString('data-pilih-tindakan="rekonsiliasi"', $isi);
+        Assert::assertStringContainsString(
+            '<option value="'.$pilihanAwal.'" selected>',
+            $isi,
+            'Nilai awal dropdown aksi rekonsiliasi harus '.$pilihanAwal
+        );
+
+        foreach (['selesaikan', 'kembalikan', 'tolak_fatal'] as $opsi) {
+            Assert::assertStringContainsString('<option value="'.$opsi.'"', $isi);
+        }
+    }
+
+    #[Then('halaman menampilkan ketiga panel aksi rekonsiliasi')]
+    public function halamanMenampilkanKetigaPanelAksiRekonsiliasiBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+
+        $isi = (string) $this->response->getContent();
+
+        Assert::assertStringContainsString('data-wadah-tindakan="rekonsiliasi"', $isi);
+
+        foreach (['selesaikan', 'kembalikan', 'tolak_fatal'] as $panel) {
+            Assert::assertStringContainsString(
+                'data-panel-tindakan="'.$panel.'"',
+                $isi,
+                'Panel aksi rekonsiliasi '.$panel.' harus tetap dirender tanpa JavaScript.'
+            );
+        }
+    }
+
+    #[Then('/^anomali rekonsiliasi berstatus "([^"]+)"$/')]
+    public function anomaliRekonsiliasiBerstatusBDD(string $status): void
+    {
+        Assert::assertNotNull($this->anomaliRekonsiliasi);
+
+        Assert::assertSame(
+            $status,
+            (string) $this->anomaliRekonsiliasi->fresh()->status_rekonsiliasi
+        );
+    }
+
+    #[Then('/^catatan revisi pengajuan tersimpan sebagai "([^"]+)"$/')]
+    public function catatanRevisiPengajuanTersimpanSebagaiBDD(string $catatan): void
+    {
+        Assert::assertNotNull($this->laporan);
+
+        Assert::assertSame(
+            $catatan,
+            (string) $this->laporan->fresh()->catatan_revisi
+        );
+    }
+
+    #[Then('/^alasan eskalasi tersimpan pada hasil verifikasi sebagai "([^"]+)"$/')]
+    public function alasanEskalasiTersimpanPadaHasilVerifikasiBDD(string $alasan): void
+    {
+        Assert::assertNotNull($this->laporan);
+
+        $hasil = HasilVerifikasi::query()
+            ->where('id_laporan', $this->laporan->getKey())
+            ->orderByDesc('id_verifikasi')
+            ->first();
+
+        Assert::assertNotNull(
+            $hasil,
+            'Hasil verifikasi penolakan fatal seharusnya tersimpan.'
+        );
+
+        Assert::assertSame($alasan, (string) $hasil->alasan_override);
+        Assert::assertSame(
+            HasilVerifikasi::STATUS_DITOLAK,
+            (string) $hasil->status_verifikasi
+        );
+    }
+
+    #[Then('akses ke halaman rekonsiliasi ditolak')]
+    public function aksesKeHalamanRekonsiliasiDitolakBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+
+        Assert::assertContains(
+            $this->response->getStatusCode(),
+            [302, 401, 403],
+            'Pemohon seharusnya tidak dapat membuka halaman rekonsiliasi.'
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pusat notifikasi
+    |--------------------------------------------------------------------------
+    */
+
+    private function siapkanNotifikasi(bool $sudahDibaca, ?Pengguna $pemilik = null): Notifikasi
+    {
+        $pemilik ??= $this->akunPemohonBDD;
+
+        Assert::assertNotNull($pemilik, 'Akun pemilik notifikasi belum tersedia.');
+
+        return Notifikasi::factory()->create([
+            'id_pengguna' => $pemilik->getKey(),
+            'judul' => 'Pengajuan Perlu Diperbaikan',
+            'pesan' => 'Mohon unggah ulang surat keterangan kematian.',
+            'sudah_dibaca' => $sudahDibaca,
+        ]);
+    }
+
+    private function pastikanPusatNotifikasiTerbuka(): void
+    {
+        if ($this->response === null || $this->response->getStatusCode() !== 200) {
+            $this->kirimRequest('GET', route('notifikasi.index'));
+        }
+
+        Assert::assertNotNull($this->response);
+        Assert::assertSame(
+            200,
+            $this->response->getStatusCode(),
+            'Pusat notifikasi seharusnya dapat dibuka oleh pemohon.'
+        );
+    }
+
+    #[Given('terdapat notifikasi belum dibaca milik pemohon')]
+    public function terdapatNotifikasiBelumDibacaBDD(): void
+    {
+        $this->siapkanDataVerifikasi();
+        $this->notifikasiBDD = $this->siapkanNotifikasi(false);
+    }
+
+    #[Given('terdapat notifikasi yang sudah dibaca milik pemohon')]
+    public function terdapatNotifikasiSudahDibacaBDD(): void
+    {
+        $this->siapkanDataVerifikasi();
+        $this->notifikasiBDD = $this->siapkanNotifikasi(true);
+    }
+
+    #[Given('terdapat notifikasi belum dibaca milik pengguna lain')]
+    public function terdapatNotifikasiMilikPenggunaLainBDD(): void
+    {
+        $this->siapkanDataVerifikasi();
+
+        $this->penggunaLain = Pengguna::factory()->pemohon()->create([
+            'nama_lengkap' => 'Pemohon Lain Notifikasi',
+            'email' => 'notifikasi.lain@example.test',
+            'kata_sandi' => 'password123',
+        ]);
+
+        $this->notifikasiBDD = $this->siapkanNotifikasi(false, $this->penggunaLain);
+    }
+
+    #[When('saya membuka pusat notifikasi')]
+    public function sayaMembukaPusatNotifikasiBDD(): void
+    {
+        $this->kirimRequest('GET', route('notifikasi.index'));
+    }
+
+    #[When('saya menandai notifikasi tersebut sebagai dibaca')]
+    public function sayaMenandaiNotifikasiDibacaBDD(): void
+    {
+        Assert::assertNotNull($this->notifikasiBDD);
+
+        $this->kirimRequest(
+            'POST',
+            route('notifikasi.tandai', $this->notifikasiBDD->getKey())
+        );
+    }
+
+    #[When('saya mencoba menandai notifikasi milik pengguna lain')]
+    public function sayaMencobaMenandaiNotifikasiPenggunaLainBDD(): void
+    {
+        Assert::assertNotNull($this->notifikasiBDD);
+
+        $this->kirimRequest(
+            'POST',
+            route('notifikasi.tandai', $this->notifikasiBDD->getKey())
+        );
+    }
+
+    #[Then('/^notifikasi tersebut berstatus (sudah|belum) dibaca$/')]
+    public function notifikasiTersebutBerstatusBDD(string $status): void
+    {
+        Assert::assertNotNull($this->notifikasiBDD);
+
+        Assert::assertSame(
+            $status === 'sudah',
+            (bool) $this->notifikasiBDD->fresh()->sudah_dibaca
+        );
+    }
+
+    #[Then('/^halaman pusat notifikasi menampilkan tombol "([^"]+)"$/')]
+    public function halamanPusatNotifikasiMenampilkanTombolBDD(string $tombol): void
+    {
+        $this->pastikanPusatNotifikasiTerbuka();
+
+        Assert::assertStringContainsString(
+            $tombol,
+            (string) $this->response->getContent()
+        );
+    }
+
+    #[Then('/^halaman pusat notifikasi tidak menampilkan tombol "([^"]+)"$/')]
+    public function halamanPusatNotifikasiTidakMenampilkanTombolBDD(string $tombol): void
+    {
+        $this->pastikanPusatNotifikasiTerbuka();
+
+        Assert::assertStringNotContainsString(
+            $tombol,
+            (string) $this->response->getContent(),
+            'Tombol '.$tombol.' seharusnya tidak dirender pada kondisi ini.'
+        );
+    }
+
+    #[Then('/^halaman pusat notifikasi menampilkan label "([^"]+)"$/')]
+    public function halamanPusatNotifikasiMenampilkanLabelBDD(string $label): void
+    {
+        $this->pastikanPusatNotifikasiTerbuka();
+
+        Assert::assertStringContainsString(
+            $label,
+            (string) $this->response->getContent()
+        );
+    }
+
+    #[Then('akses ke notifikasi milik pengguna lain ditolak')]
+    public function aksesKeNotifikasiPenggunaLainDitolakBDD(): void
+    {
+        Assert::assertNotNull($this->response);
+
+        Assert::assertSame(
+            404,
+            $this->response->getStatusCode(),
+            'Pemohon seharusnya tidak dapat menandai notifikasi milik pengguna lain.'
         );
     }
 }
