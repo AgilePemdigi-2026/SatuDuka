@@ -160,9 +160,30 @@ class FeatureContext implements Context
 
     public function __construct()
     {
+        // Pagar keselamatan: tolak lingkungan yang menunjuk berkas database
+        // pengembang. Diperiksa SEBELUM .env dimuat dan SEBELUM apa pun
+        // menyentuh Cache, sesi, atau migrasi.
+        $databaseDariLingkungan = $_SERVER['DB_DATABASE']
+            ?? $_ENV['DB_DATABASE']
+            ?? getenv('DB_DATABASE');
+
+        if (is_string($databaseDariLingkungan)
+            && $databaseDariLingkungan !== ''
+            && $databaseDariLingkungan !== ':memory:') {
+            throw new RuntimeException(
+                'Behat dihentikan: variabel lingkungan DB_DATABASE bernilai "'
+                .$databaseDariLingkungan.'". Pengujian BDD wajib memakai SQLite '
+                .'in-memory (:memory:) supaya database pengembang tidak tersentuh. '
+                .'Hapus DB_DATABASE dari lingkungan lalu jalankan ulang.'
+            );
+        }
+
         putenv('APP_ENV=testing');
         putenv('DB_CONNECTION=sqlite');
         putenv('DB_DATABASE=:memory:');
+        putenv('CACHE_STORE=array');
+        putenv('SESSION_DRIVER=array');
+        putenv('QUEUE_CONNECTION=sync');
 
         $_ENV['APP_ENV'] = 'testing';
         $_SERVER['APP_ENV'] = 'testing';
@@ -170,6 +191,12 @@ class FeatureContext implements Context
         $_SERVER['DB_CONNECTION'] = 'sqlite';
         $_ENV['DB_DATABASE'] = ':memory:';
         $_SERVER['DB_DATABASE'] = ':memory:';
+        $_ENV['CACHE_STORE'] = 'array';
+        $_SERVER['CACHE_STORE'] = 'array';
+        $_ENV['SESSION_DRIVER'] = 'array';
+        $_SERVER['SESSION_DRIVER'] = 'array';
+        $_ENV['QUEUE_CONNECTION'] = 'sync';
+        $_SERVER['QUEUE_CONNECTION'] = 'sync';
 
         $this->app = require dirname(__DIR__, 2)
             .'/bootstrap/app.php';
@@ -177,12 +204,25 @@ class FeatureContext implements Context
         $this->app->make(ConsoleKernel::class)->bootstrap();
 
         config([
+            'cache.default' => 'array',
+            'session.driver' => 'array',
+            'queue.default' => 'sync',
             'database.default' => 'sqlite',
             'database.connections.sqlite.database' => ':memory:',
         ]);
 
         DB::purge('sqlite');
-        DB::connection('sqlite')->getPdo();
+        Cache::purge();
+
+        $namaDatabase = DB::connection('sqlite')->getDatabaseName();
+
+        if ($namaDatabase !== ':memory:') {
+            throw new RuntimeException(
+                'Behat dihentikan: koneksi sqlite menunjuk "'.$namaDatabase
+                .'", bukan ":memory:". Database pengembang tidak boleh dipakai '
+                .'oleh pengujian BDD.'
+            );
+        }
 
         $this->app->make(ConsoleKernel::class)->call('migrate', [
             '--database' => 'sqlite',
@@ -203,8 +243,13 @@ class FeatureContext implements Context
     {
         Auth::logout();
         Auth::forgetGuards();
-        Cache::flush();
+        Cache::purge();
         $this->app['session.store']->flush();
+
+        // Buang koneksi sqlite lama supaya setiap skenario mulai dari
+        // database in-memory yang benar-benar baru.
+        DB::purge('sqlite');
+
         $this->app->make(ConsoleKernel::class)->call('migrate:fresh', [
             '--database' => 'sqlite',
             '--force' => true,
