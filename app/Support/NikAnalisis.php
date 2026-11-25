@@ -49,7 +49,7 @@ final class NikAnalisis
 
     /**
      * Samarkan hasil perbandingan: setiap baris NIK mendapat nilai termasker
-     * dan tiga hash blind index (pemohon, SIAK, ekstraksi).
+     * dan dua hash blind index (pemohon dan ekstraksi).
      *
      * @param  array<string, mixed>  $hasil
      * @return array<string, mixed>
@@ -67,7 +67,7 @@ final class NikAnalisis
                 continue;
             }
 
-            foreach (['pemohon', 'ekstraksi', 'siak'] as $sumber) {
+            foreach (['pemohon', 'ekstraksi'] as $sumber) {
                 $kunciNilai = 'nilai_'.$sumber;
                 $nilai = $baris[$kunciNilai] ?? null;
                 $teks = is_string($nilai) ? $nilai : null;

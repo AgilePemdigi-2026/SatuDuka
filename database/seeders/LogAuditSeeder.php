@@ -34,9 +34,9 @@ class LogAuditSeeder extends Seeder
         );
 
         LayananAudit::catatLayanan(
-            layanan: LogAudit::LAYANAN_SIAK,
+            layanan: LogAudit::LAYANAN_AI,
             hasil: LogAudit::HASIL_SUKSES,
-            detail: ['parameter' => 'nik_almarhum'],
+            detail: ['jenis' => 'ekstraksi'],
         );
     }
 }

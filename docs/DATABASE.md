@@ -61,4 +61,6 @@ id_log (PK), id_pengguna (FK nullable), aksi varchar(100), objek varchar(50), id
 - Akun demo (kata sandi `password123`): 1 pemohon (email demo), 1 verifikator (NIP demo), 1 pejabat (NIP demo). Tampilkan kredensial demo di `PROGRESS.md`.
 - 10 laporan kematian tersebar di semua status, masing-masing 3 sampai 4 berkas.
 - 3 hasil verifikasi, 2 anomali (1 Terbuka, 1 Selesai), 2 dokumen resmi (1 Menunggu, 1 Selesai).
-- Data SIAK dummy (NIK → nama, tanggal lahir) untuk SIAKService mock: simpan di file `database/data/siak_dummy.json`, bukan di tabel aplikasi.
+- Data penduduk dummy (NIK → nama, tanggal lahir) tetap disimpan di `database/data/siak_dummy.json`
+  dan dibaca `App\Support\DataSIAK`. Sejak SIAK dihapus dari alur verifikasi, berkas ini HANYA dipakai
+  seeder dan factory untuk mengisi data almarhum; tidak dipakai membandingkan data saat verifikasi.

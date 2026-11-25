@@ -75,7 +75,7 @@ it('mengirim notifikasi anomali info saat berkas ditandai anomali', function () 
     $this->actingAs($verifikator)
         ->post(route('verifikasi.anomali', $laporan), [
             'jenis_anomali' => AnomaliDokumen::JENIS_PERBEDAAN_IDENTITAS,
-            'deskripsi' => 'NIK pada dokumen berbeda dengan data SIAK.',
+            'deskripsi' => 'NIK pada dokumen berbeda dengan isian pemohon.',
             'alasan_override' => 'Verifikator menilai perlu rekonsiliasi.',
         ])
         ->assertRedirect(route('verifikasi.index'));

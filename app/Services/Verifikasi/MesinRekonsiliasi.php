@@ -6,31 +6,27 @@ use App\Models\AnalisisAi;
 use App\Models\HasilVerifikasi;
 use App\Models\LaporanKematian;
 use App\Models\LogAudit;
-use App\Models\ReferensiWilayah;
 use App\Services\LayananAudit;
-use App\Support\DataSIAK;
-use Illuminate\Support\Carbon;
+use App\Support\NikTanggalLahir;
 use Illuminate\Support\Str;
 
 /**
- * Mesin rekonsiliasi: menyatukan NIK, berkas, nama, SIAK, dan temuan AI.
+ * Mesin rekonsiliasi: menyatukan NIK, berkas, dan temuan AI.
  *
  * Mesin hanya mendeteksi anomali dan merekomendasikan tindakan. Mesin tidak
  * mengubah status pengajuan dan tidak menulis ke `laporan_kematian`.
- * Kegagalan layanan eksternal menghasilkan anomali `LAYANAN_TIDAK_TERSEDIA`
- * (info) agar verifikasi tetap dapat dilanjutkan secara manual.
+ * Pembanding data kependudukan (SIAK) tidak lagi dipakai: yang dibandingkan
+ * hanyalah isian pemohon dengan hasil ekstraksi berkas yang diunggah.
+ * Kegagalan layanan AI menghasilkan anomali `LAYANAN_TIDAK_TERSEDIA` (info)
+ * agar verifikasi tetap dapat dilanjutkan secara manual.
  */
 class MesinRekonsiliasi
 {
     public const KODE_PENGAJUAN_GANDA = 'PENGAJUAN_GANDA';
 
-    public const KODE_SIAK_SUDAH_MENINGGAL = 'SIAK_SUDAH_MENINGGAL';
-
     public const KODE_KASUS_KHUSUS = 'KASUS_KHUSUS';
 
     public const KODE_NIK_TIDAK_VALID = 'NIK_TIDAK_VALID';
-
-    public const KODE_NIK_TIDAK_DITEMUKAN = 'NIK_TIDAK_DITEMUKAN';
 
     public const KODE_JENIS_KELAMIN_TIDAK_COCOK = 'JENIS_KELAMIN_TIDAK_COCOK';
 
@@ -46,49 +42,21 @@ class MesinRekonsiliasi
 
     public const KODE_NAMA_BEDA_TIPIS = 'NAMA_BEDA_TIPIS';
 
-    public const KODE_ALAMAT_DI_LUAR_WILAYAH = 'ALAMAT_DI_LUAR_WILAYAH';
-
     public const KODE_LAYANAN_TIDAK_TERSEDIA = 'LAYANAN_TIDAK_TERSEDIA';
-
-    /**
-     * Pemanggil data SIAK; null berarti memakai DataSIAK::cariNik.
-     *
-     * @var callable(string): array<string, string>|null
-     */
-    private $pencariSiak;
 
     public function __construct(
         private readonly LayananValidasiNik $validasiNik,
         private readonly LayananAturanBerkas $aturanBerkas,
         private readonly LayananPencocokNama $pencocokNama,
-        ?callable $pencariSiak = null,
-    ) {
-        $this->pencariSiak = $pencariSiak;
-    }
+    ) {}
 
     public function analisis(LaporanKematian $laporan, bool $catatAudit = true): HasilAnalisis
     {
         $anomali = $this->dariAturanBerkas($laporan);
-        $layananTidakTersedia = false;
 
-        [$siak, $siakGagal] = $this->ambilSiak($laporan, $catatAudit);
-
-        if ($siakGagal) {
-            $layananTidakTersedia = true;
-            $anomali[] = $this->buatAnomali(
-                self::KODE_LAYANAN_TIDAK_TERSEDIA,
-                'Data SIAK tidak dapat diakses; verifikasi dilanjutkan secara manual.',
-            );
-        }
-
-        $anomali = array_merge($anomali, $this->dariValidasiNik($laporan, $siak));
-        $anomali = array_merge($anomali, $this->dariDataSiak($laporan, $siak, $siakGagal));
+        $anomali = array_merge($anomali, $this->dariValidasiNik($laporan));
 
         [$anomaliAi, $aiGagal] = $this->dariAnalisisAi($laporan, $catatAudit);
-
-        if ($aiGagal) {
-            $layananTidakTersedia = true;
-        }
 
         $anomali = array_merge($anomali, $anomaliAi);
         $anomali = $this->urutkanDanUnikkan($anomali);
@@ -100,7 +68,7 @@ class MesinRekonsiliasi
         return new HasilAnalisis(
             anomali: $anomali,
             rekomendasiUtama: $utama,
-            layananTidakTersedia: $layananTidakTersedia,
+            layananTidakTersedia: $aiGagal,
         );
     }
 
@@ -149,41 +117,20 @@ class MesinRekonsiliasi
     }
 
     /**
-     * @return array{0: array<string, string>|null, 1: bool}
-     */
-    private function ambilSiak(LaporanKematian $laporan, bool $catatAudit = true): array
-    {
-        $nik = trim((string) $laporan->nik_almarhum);
-
-        if ($nik === '') {
-            return [null, false];
-        }
-
-        try {
-            $siak = $this->pencariSiak !== null
-                ? ($this->pencariSiak)($nik)
-                : DataSIAK::cariNik($nik);
-        } catch (\Throwable $kesalahan) {
-            if ($catatAudit) {
-                $this->catatLayananGagal(LogAudit::LAYANAN_SIAK, $laporan, $kesalahan->getMessage());
-            }
-
-            return [null, true];
-        }
-
-        return [is_array($siak) ? $siak : null, false];
-    }
-
-    /**
-     * @param  array<string, string>|null  $siak
+     * Memeriksa struktur NIK dan konsistensinya dengan isian pemohon.
+     *
+     * Tanggal lahir diturunkan dari segmen NIK (DDMMYY dengan kode jenis
+     * kelamin), bukan dari data kependudukan, sehingga pemeriksaan usia tetap
+     * berjalan tanpa layanan eksternal.
+     *
      * @return list<AnomaliVerifikasi>
      */
-    private function dariValidasiNik(LaporanKematian $laporan, ?array $siak): array
+    private function dariValidasiNik(LaporanKematian $laporan): array
     {
         $hasil = $this->validasiNik->periksa(
             nik: trim((string) $laporan->nik_almarhum),
-            jenisKelamin: $siak['jenis_kelamin'] ?? null,
-            tanggalLahir: $this->tanggalLahirSiak($siak),
+            jenisKelamin: $laporan->jenis_kelamin,
+            tanggalLahir: NikTanggalLahir::dariNik((string) $laporan->nik_almarhum),
             tanggalKematian: $laporan->tanggal_kematian,
         );
 
@@ -205,72 +152,6 @@ class MesinRekonsiliasi
                 self::KODE_NIK_TIDAK_VALID,
                 implode(' ', array_unique($pesanNik)),
             );
-        }
-
-        return $anomali;
-    }
-
-    /**
-     * @param  array<string, string>|null  $siak
-     * @return list<AnomaliVerifikasi>
-     */
-    private function dariDataSiak(LaporanKematian $laporan, ?array $siak, bool $siakGagal): array
-    {
-        if ($siak === null) {
-            if ($siakGagal) {
-                return [];
-            }
-
-            return [$this->buatAnomali(
-                self::KODE_NIK_TIDAK_DITEMUKAN,
-                'NIK almarhum tidak ditemukan pada data SIAK.',
-            )];
-        }
-
-        $anomali = [];
-
-        if (DataSIAK::sudahMeninggal($siak)) {
-            $anomali[] = $this->buatAnomali(
-                self::KODE_SIAK_SUDAH_MENINGGAL,
-                'Status kependudukan pada SIAK sudah menandai penduduk sebagai meninggal.',
-            );
-        }
-
-        $jenisKelaminLaporan = $this->normalisasiJenisKelamin($laporan->jenis_kelamin);
-        $jenisKelaminSiak = $this->normalisasiJenisKelamin($siak['jenis_kelamin'] ?? null);
-
-        if ($jenisKelaminLaporan !== null
-            && $jenisKelaminSiak !== null
-            && $jenisKelaminLaporan !== $jenisKelaminSiak) {
-            $anomali[] = $this->buatAnomali(
-                self::KODE_JENIS_KELAMIN_TIDAK_COCOK,
-                'Jenis kelamin pada pengajuan tidak cocok dengan data SIAK.',
-            );
-        }
-
-        if ($this->alamatDiLuarWilayah($siak)) {
-            $anomali[] = $this->buatAnomali(
-                self::KODE_ALAMAT_DI_LUAR_WILAYAH,
-                'Alamat SIAK tidak memuat nama kecamatan Kota Yogyakarta.',
-            );
-        }
-
-        $namaSiak = $siak['nama_lengkap'] ?? null;
-
-        if (! blank($namaSiak)) {
-            $cocok = $this->pencocokNama->cocokkan((string) $laporan->nama_almarhum, $namaSiak);
-
-            if ($cocok->kategori === HasilPencocokanNama::KATEGORI_TIDAK_COCOK) {
-                $anomali[] = $this->buatAnomali(
-                    self::KODE_NAMA_TIDAK_COCOK,
-                    'Nama pada pengajuan tidak cocok dengan nama pada SIAK.',
-                );
-            } elseif ($cocok->kategori === HasilPencocokanNama::KATEGORI_BEDA_TIPIS) {
-                $anomali[] = $this->buatAnomali(
-                    self::KODE_NAMA_BEDA_TIPIS,
-                    'Nama pada pengajuan sedikit berbeda dengan nama pada SIAK.',
-                );
-            }
         }
 
         return $anomali;
@@ -346,8 +227,20 @@ class MesinRekonsiliasi
                     continue;
                 }
 
-                $kode = match ($temuan['kunci'] ?? null) {
-                    'nama_almarhum' => self::KODE_NAMA_TIDAK_COCOK,
+                $kunci = $temuan['kunci'] ?? null;
+
+                // Nama dibandingkan dengan hasil ekstraksi dokumen, bukan data
+                // kependudukan. Kemiripan menentukan beda tipis atau tidak cocok.
+                if ($kunci === 'nama_almarhum') {
+                    $anomali[] = $this->anomaliNama(
+                        (string) ($temuan['nilai_pemohon'] ?? ''),
+                        (string) ($temuan['nilai_ekstraksi'] ?? ''),
+                    );
+
+                    continue;
+                }
+
+                $kode = match ($kunci) {
                     'nik' => self::KODE_NIK_TIDAK_VALID,
                     'tanggal_kematian' => self::KODE_TANGGAL_TIDAK_KONSISTEN,
                     default => null,
@@ -389,57 +282,30 @@ class MesinRekonsiliasi
     }
 
     /**
-     * @param  array<string, string>|null  $siak
+     * Menilai nama isian pemohon terhadap nama hasil ekstraksi dokumen.
      */
-    private function tanggalLahirSiak(?array $siak): ?Carbon
+    private function anomaliNama(string $namaPemohon, string $namaEkstraksi): AnomaliVerifikasi
     {
-        $tanggal = $siak['tanggal_lahir'] ?? null;
-
-        if (blank($tanggal)) {
-            return null;
+        if (trim($namaPemohon) === '' || trim($namaEkstraksi) === '') {
+            return $this->buatAnomali(
+                self::KODE_NAMA_TIDAK_COCOK,
+                'Nama pada pengajuan tidak cocok dengan nama pada dokumen yang diunggah.',
+            );
         }
 
-        try {
-            return Carbon::parse($tanggal);
-        } catch (\Throwable) {
-            return null;
-        }
-    }
+        $cocok = $this->pencocokNama->cocokkan($namaPemohon, $namaEkstraksi);
 
-    /**
-     * @param  array<string, string>  $siak
-     */
-    private function alamatDiLuarWilayah(array $siak): bool
-    {
-        $alamat = Str::lower((string) ($siak['alamat'] ?? ''));
-
-        $daftar = ReferensiWilayah::query()->pluck('nama_kecamatan')
-            ->filter(static fn (string $nama): bool => trim($nama) !== '');
-
-        if ($daftar->isEmpty()) {
-            return false;
+        if ($cocok->kategori === HasilPencocokanNama::KATEGORI_BEDA_TIPIS) {
+            return $this->buatAnomali(
+                self::KODE_NAMA_BEDA_TIPIS,
+                'Nama pada pengajuan sedikit berbeda dengan nama pada dokumen yang diunggah.',
+            );
         }
 
-        foreach ($daftar as $namaKecamatan) {
-            if (str_contains($alamat, Str::lower((string) $namaKecamatan))) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private function normalisasiJenisKelamin(?string $jenisKelamin): ?string
-    {
-        if ($jenisKelamin === null) {
-            return null;
-        }
-
-        return match (strtoupper(trim($jenisKelamin))) {
-            'L', 'LAKI-LAKI', 'LAKI LAKI', 'PRIA', 'MALE' => 'L',
-            'P', 'PEREMPUAN', 'WANITA', 'FEMALE' => 'P',
-            default => null,
-        };
+        return $this->buatAnomali(
+            self::KODE_NAMA_TIDAK_COCOK,
+            'Nama pada pengajuan tidak cocok dengan nama pada dokumen yang diunggah.',
+        );
     }
 
     /**

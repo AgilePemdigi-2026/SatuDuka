@@ -116,7 +116,7 @@ class LayananValidasiNik
                 $pelanggaran[] = new PelanggaranNik(
                     self::KODE_NIK_JENIS_KELAMIN_TIDAK_COCOK,
                     PelanggaranNik::KEPARAHAN_PERINGATAN,
-                    'Jenis kelamin pada NIK tidak cocok dengan data kependudukan atau dokumen.',
+                    'Jenis kelamin pada NIK tidak cocok dengan isian pemohon atau dokumen.',
                 );
             }
         }

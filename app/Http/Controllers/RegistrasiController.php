@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Pengguna;
 use App\Rules\NikBelumTerdaftar;
 use App\Services\LayananAudit;
-use App\Support\DataSIAK;
 use Illuminate\Http\Request;
 
 /**
@@ -16,8 +15,8 @@ use Illuminate\Http\Request;
  *
  * Penyimpangan dari use case 5.2.1: kolom alamat
  * surel WAJIB diisi karena `pengguna.email` NOT NULL UNIQUE dan dipakai untuk
- * pengaturan ulang kata sandi. Nama lengkap diambil dari data kependudukan
- * bila tersedia; NIK yang belum ada di data tersebut tetap dapat mendaftar.
+ * pengaturan ulang kata sandi. Nama lengkap kini diisi sendiri oleh pemohon
+ * karena SATUDUKA tidak lagi membaca data kependudukan (SIAK).
  */
 class RegistrasiController extends Controller
 {
@@ -45,11 +44,14 @@ class RegistrasiController extends Controller
     public function daftar(Request $request)
     {
         $valid = $request->validate([
+            'nama_lengkap' => ['required', 'string', 'max:100'],
             'nik' => ['required', 'digits:16', new NikBelumTerdaftar],
             'email' => ['required', 'email:filter', 'max:100', 'unique:pengguna,email'],
             'kata_sandi' => ['required', 'string', 'min:8', 'regex:/[a-zA-Z]/', 'regex:/[0-9]/'],
             'konfirmasi_kata_sandi' => ['required', 'string', 'same:kata_sandi'],
         ], [
+            'nama_lengkap.required' => self::PESAN_KOSONG,
+            'nama_lengkap.max' => 'Nama lengkap terlalu panjang (maksimal 100 karakter)',
             'nik.required' => self::PESAN_KOSONG,
             'nik.digits' => 'NIK tidak valid',
             'nik.unique' => 'NIK sudah terdaftar',
@@ -64,12 +66,8 @@ class RegistrasiController extends Controller
             'konfirmasi_kata_sandi.same' => 'Kata sandi tidak cocok',
         ]);
 
-        // Gunakan nama dari data dummy bila tersedia tanpa mensyaratkan NIK
-        // terdaftar di SIAK untuk membuat akun.
-        $dataSiak = DataSIAK::cariNik($valid['nik']);
-
         $pengguna = Pengguna::create([
-            'nama_lengkap' => $dataSiak['nama_lengkap'] ?? 'Pemohon',
+            'nama_lengkap' => trim($valid['nama_lengkap']),
             'nik' => $valid['nik'],
             'email' => $valid['email'],
             'kata_sandi' => $valid['kata_sandi'],
@@ -80,7 +78,7 @@ class RegistrasiController extends Controller
             aksi: 'registrasi',
             objek: 'pengguna',
             idObjek: $pengguna->id_pengguna,
-            detail: ['peran' => $pengguna->peran, 'nama_dari_siak' => $dataSiak !== null],
+            detail: ['peran' => $pengguna->peran],
             pengguna: $pengguna,
         );
 

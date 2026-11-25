@@ -9,7 +9,7 @@
 
 @section('konten')
     <x-ui.page-header title="Antrean Rekonsiliasi Anomali"
-        subtitle="Berkas berstatus Dalam Rekonsiliasi Anomali. Bandingkan data pemohon, SIAK, dan surat keterangan sebelum memutuskan." />
+        subtitle="Berkas berstatus Dalam Rekonsiliasi Anomali. Bandingkan data pemohon dengan surat keterangan sebelum memutuskan." />
 
     <section class="mt-8">
         <x-ui.card>

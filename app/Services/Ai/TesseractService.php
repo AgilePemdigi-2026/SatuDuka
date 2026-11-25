@@ -82,7 +82,7 @@ class TesseractService implements AIService
 
         foreach ($beda as $baris) {
             $saran[] = match ($baris['kunci'] ?? '') {
-                'nik' => 'Cocokkan NIK pada dokumen asli dengan data SIAK sebelum melanjutkan.',
+                'nik' => 'Cocokkan NIK pada dokumen asli dengan isian pemohon sebelum melanjutkan.',
                 'nama_almarhum' => 'Periksa kembali ejaan nama pada dokumen dan isian pemohon.',
                 'tanggal_kematian' => 'Pastikan tanggal kematian pada dokumen sesuai dengan isian pemohon.',
                 'tempat_kematian' => 'Konfirmasi tempat kematian pada dokumen asli.',

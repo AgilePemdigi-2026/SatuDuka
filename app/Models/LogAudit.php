@@ -21,8 +21,6 @@ class LogAudit extends Model
     use HasFactory;
 
     /* Nama layanan eksternal yang dapat dicatat pada log. */
-    public const LAYANAN_SIAK = 'SIAK';
-
     public const LAYANAN_FASKES = 'Faskes';
 
     public const LAYANAN_TTE = 'TTE';

@@ -114,7 +114,7 @@ class OpenAiService implements AIService
         $konteks = MaskerNik::terapkan($konteks === false ? '{}' : $konteks);
 
         $prompt = 'Anda membantu verifikator dokumen kematian. '
-            .'Berikut data perbandingan isian pemohon, hasil ekstraksi dokumen, dan data SIAK. '
+            .'Berikut data perbandingan isian pemohon dengan hasil ekstraksi dokumen yang diunggah. '
             .'NIK pada data sudah dimasker. '
             .'Buat ringkasan singkat dalam bahasa Indonesia dan saran tindakan pemeriksaan. '
             .'Jangan menyetujui, menolak, atau mengubah status pengajuan. '

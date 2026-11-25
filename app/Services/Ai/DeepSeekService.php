@@ -76,7 +76,7 @@ class DeepSeekService implements AIService
         $konteks = MaskerNik::terapkan($konteks === false ? '{}' : $konteks);
 
         $prompt = 'Anda membantu verifikator dokumen kematian. '
-            .'Berikut data perbandingan isian pemohon, hasil ekstraksi dokumen, dan data SIAK dalam JSON. '
+            .'Berikut data perbandingan isian pemohon dengan hasil ekstraksi dokumen yang diunggah dalam JSON. '
             .'NIK pada data sudah dimasker. '
             .'Buat ringkasan singkat dalam bahasa Indonesia dan saran tindakan pemeriksaan. '
             .'Jangan menyetujui, menolak, atau mengubah status pengajuan. '

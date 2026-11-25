@@ -11,7 +11,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Fondasi verifikasi: konfigurasi, referensi wilayah, dan data SIAK.
+ * Fondasi verifikasi: konfigurasi, referensi wilayah, dan data penduduk dummy.
  */
 it('menyediakan ambang dan daftar berkas pada konfigurasi verifikasi', function () {
     expect(config('verifikasi.batas_hari_pelaporan'))->toBe(30)
@@ -154,7 +154,7 @@ it('menampilkan bukti kematian sebagai kelompok dan menandai berkas bersyarat', 
         ->assertDontSee(BerkasPendukung::JENIS_SURAT_KETERANGAN_KEPOLISIAN);
 });
 
-it('menjaga data SIAK dummy tetap konsisten dan bervariasi', function () {
+it('menjaga data penduduk dummy tetap konsisten dan bervariasi', function () {
     $data = DataSIAK::semua();
     $provinsi = array_column(
         json_decode((string) file_get_contents(base_path('database/data/kode_provinsi.json')), true),

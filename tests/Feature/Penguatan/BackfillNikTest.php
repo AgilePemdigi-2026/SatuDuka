@@ -90,7 +90,6 @@ it('mengubah data NIK lama menjadi terenkripsi dan idempoten', function () {
                     'label' => 'NIK',
                     'nilai_pemohon' => $nikC,
                     'nilai_ekstraksi' => $nikC,
-                    'nilai_siak' => $nikC,
                     'status' => 'cocok',
                     'keyakinan' => 0.99,
                     'catatan' => [],

@@ -4,10 +4,8 @@
  * Pengujian evaluasi mesin aturan Fase 6.8.
  *
  * Dataset kasus uji bersifat fiktif dan labelnya berasal dari rancangan aturan.
- * Pengujian memakai SQLite in-memory tanpa memanggil SIAK atau AI nyata.
- */
-
-use App\Console\Commands\EvaluasiAturan;
+ * Pengujian memakai SQLite in-memory tanpa memanggil layanan AI nyata.
+ */ use App\Console\Commands\EvaluasiAturan;
 use App\Models\BerkasPendukung;
 use Database\Seeders\ReferensiWilayahSeeder;
 use Illuminate\Support\Facades\Artisan;
@@ -57,8 +55,6 @@ it('menyediakan minimal enam puluh kasus uji berlabel yang lengkap', function ()
             'kategori',
             'deskripsi',
             'pengajuan',
-            'siak',
-            'siak_tersedia',
             'berkas',
             'analisis_ai',
             'pengajuan_ganda',

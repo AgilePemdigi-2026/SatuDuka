@@ -5,17 +5,18 @@
 
 @php
     $dokumen = $dokumen ?? $laporan->dokumenResmi;
-    $dataSiak = \App\Support\DataSIAK::cariNik($laporan->nik_almarhum) ?? [];
+
+    // Tanggal lahir diturunkan dari NIK (tanpa data kependudukan); alamat
+    // diambil dari profil pemohon.
+    $lahir = \App\Support\NikTanggalLahir::dariNik((string) $laporan->nik_almarhum, $laporan->tanggal_kematian);
 
     $nomorDokumen = $dokumen?->no_dokumen ?: ($laporan->no_pengajuan ?: '-');
-    $tanggalLahir = $dataSiak['tanggal_lahir'] ?? null;
-    $umur = null;
+    $tanggalLahir = $lahir?->translatedFormat('j F Y');
+    $umur = $lahir !== null && $laporan->tanggal_kematian !== null
+        ? (int) $lahir->diffInYears($laporan->tanggal_kematian)
+        : null;
 
-    if ($tanggalLahir !== null && $laporan->tanggal_kematian !== null) {
-        $umur = (int) \Illuminate\Support\Carbon::parse($tanggalLahir)->diffInYears($laporan->tanggal_kematian);
-    }
-
-    $alamat = $dataSiak['alamat'] ?? ($laporan->pemohon?->alamat ?: '-');
+    $alamat = $laporan->pemohon?->alamat ?: '-';
     $status = $laporan->status_pengajuan;
     $selesai = $status === \App\Models\LaporanKematian::STATUS_SELESAI;
     $dikembalikan = $status === \App\Models\LaporanKematian::STATUS_DIKEMBALIKAN;
@@ -66,7 +67,7 @@
                 <div>
                     <p class="text-xs text-muted">Tanggal Lahir</p>
                     <p class="mt-0.5 font-semibold text-ink">
-                        {{ $tanggalLahir ? \Illuminate\Support\Carbon::parse($tanggalLahir)->translatedFormat('j F Y') : '-' }}
+                        {{ $tanggalLahir ?: '-' }}
                     </p>
                 </div>
                 <div>

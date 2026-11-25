@@ -1,15 +1,15 @@
 # Evaluasi Aturan Verifikasi
 
-Dokumen ini dihasilkan oleh `php artisan aturan:evaluasi` pada 2 November 2026 21:04 WIB.
+Dokumen ini dihasilkan oleh `php artisan aturan:evaluasi` pada 25 November 2026 07:26 WIB.
 
 Label berasal dari rancangan kasus uji, sehingga evaluasi ini menguji kebenaran implementasi aturan, BUKAN akurasi terhadap data kependudukan nyata.
 
 ## Ringkasan
 
 - Total kasus: 62
-- Kasus bersih: 15
+- Kasus bersih: 24
 - Kasus ambigu: 5
-- Kasus anomali: 42
+- Kasus anomali: 33
 - Kecocokan himpunan kode persis: 62 / 62 (100,00%).
 
 ## Metrik per Kode Anomali
@@ -17,10 +17,8 @@ Label berasal dari rancangan kasus uji, sehingga evaluasi ini menguji kebenaran 
 | Kode | Dukungan | Benar Positif | Positif Palsu | Negatif Palsu | Presisi | Recall |
 |---|---:|---:|---:|---:|---:|---:|
 | `PENGAJUAN_GANDA` | 3 | 3 | 0 | 0 | 1,0000 | 1,0000 |
-| `SIAK_SUDAH_MENINGGAL` | 3 | 3 | 0 | 0 | 1,0000 | 1,0000 |
 | `KASUS_KHUSUS` | 3 | 3 | 0 | 0 | 1,0000 | 1,0000 |
 | `NIK_TIDAK_VALID` | 3 | 3 | 0 | 0 | 1,0000 | 1,0000 |
-| `NIK_TIDAK_DITEMUKAN` | 3 | 3 | 0 | 0 | 1,0000 | 1,0000 |
 | `JENIS_KELAMIN_TIDAK_COCOK` | 3 | 3 | 0 | 0 | 1,0000 | 1,0000 |
 | `TANGGAL_TIDAK_KONSISTEN` | 3 | 3 | 0 | 0 | 1,0000 | 1,0000 |
 | `NAMA_TIDAK_COCOK` | 3 | 3 | 0 | 0 | 1,0000 | 1,0000 |
@@ -28,17 +26,16 @@ Label berasal dari rancangan kasus uji, sehingga evaluasi ini menguji kebenaran 
 | `BERKAS_TIDAK_LENGKAP` | 3 | 3 | 0 | 0 | 1,0000 | 1,0000 |
 | `DOKUMEN_TIDAK_TERBACA` | 3 | 3 | 0 | 0 | 1,0000 | 1,0000 |
 | `NAMA_BEDA_TIPIS` | 6 | 6 | 0 | 0 | 1,0000 | 1,0000 |
-| `ALAMAT_DI_LUAR_WILAYAH` | 4 | 4 | 0 | 0 | 1,0000 | 1,0000 |
 | `LAYANAN_TIDAK_TERSEDIA` | 3 | 3 | 0 | 0 | 1,0000 | 1,0000 |
 
 ## Matriks Kebingungan Kategori Nama
 
 | Harapan \ Aktual | PERSIS | BEDA_TIPIS | TIDAK_COCOK | NA |
 |---|---:|---:|---:|---:|
-| PERSIS | 47 | 0 | 0 | 0 |
+| PERSIS | 2 | 0 | 0 | 0 |
 | BEDA_TIPIS | 0 | 6 | 0 | 0 |
 | TIDAK_COCOK | 0 | 0 | 3 | 0 |
-| NA | 0 | 0 | 0 | 6 |
+| NA | 0 | 0 | 0 | 51 |
 
 ## Kalibrasi Ambang Nama (39 Pasangan)
 
@@ -136,10 +133,10 @@ Tidak ada kasus yang berbeda dari label pada dataset ini.
 ## Keterbatasan dan Catatan Jujur
 
 - Label dibuat dari rancangan kasus uji, bukan dari keputusan petugas Dukcapil. Karena itu angka presisi dan recall mengukur kesesuaian implementasi dengan rancangan aturan, bukan akurasi di lapangan.
-- Sebagian kasus memakai data SIAK fiktif yang ditempelkan langsung; pengujian tidak memanggil API SIAK atau AI nyata.
+- Dataset tidak lagi memakai data SIAK; yang dibandingkan hanyalah isian pemohon dengan hasil ekstraksi dokumen yang diunggah. Pengujian tidak memanggil API AI nyata.
 - Evaluasi berjalan dalam transaksi yang di-rollback sehingga tidak mengubah data aplikasi.
 - Ambang nama belum diuji pada variasi ejaan, gelar, dan nama tunggal yang luas. Hasil 39 pasangan hanya menjadi batas awal, bukan bukti statistik.
-- Kasus dengan layanan SIAK/AI gagal hanya menguji jalur fallback manual, bukan perilaku penyedia eksternal yang sebenarnya.
+- Kasus dengan layanan AI gagal hanya menguji jalur fallback manual, bukan perilaku penyedia eksternal yang sebenarnya.
 
 ## Hal yang Perlu Dikonfirmasi ke Dukcapil
 

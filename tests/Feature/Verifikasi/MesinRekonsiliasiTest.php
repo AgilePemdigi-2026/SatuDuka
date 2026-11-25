@@ -11,25 +11,14 @@ use App\Services\Verifikasi\LayananAturanBerkas;
 use App\Services\Verifikasi\LayananPencocokNama;
 use App\Services\Verifikasi\LayananValidasiNik;
 use App\Services\Verifikasi\MesinRekonsiliasi;
-use Database\Seeders\ReferensiWilayahSeeder;
 
 /**
- * Menyiapkan referensi kecamatan Kota Yogyakarta untuk pemeriksaan alamat.
- */
-function siapkanReferensiRekonsiliasi(): void
-{
-    (new ReferensiWilayahSeeder)->run();
-}
-
-/**
- * Laporan bersih dengan data almarhum yang cocok dengan data dummy SIAK.
+ * Laporan bersih dengan data almarhum yang lengkap dan konsisten.
  *
  * @param  array<string, mixed>  $timpa
  */
 function buatLaporanRekonsiliasi(array $timpa = []): LaporanKematian
 {
-    siapkanReferensiRekonsiliasi();
-
     return LaporanKematian::factory()->create(array_merge([
         'status_pengajuan' => LaporanKematian::STATUS_MENUNGGU_VERIFIKASI,
         'tanggal_pengajuan' => now(),
@@ -68,13 +57,12 @@ function kodeRekonsiliasi(HasilAnalisis $hasil): array
     return $hasil->kodeAnomali();
 }
 
-function mesinRekonsiliasi(?callable $pencariSiak = null): MesinRekonsiliasi
+function mesinRekonsiliasi(): MesinRekonsiliasi
 {
     return new MesinRekonsiliasi(
         validasiNik: app(LayananValidasiNik::class),
         aturanBerkas: app(LayananAturanBerkas::class),
         pencocokNama: app(LayananPencocokNama::class),
-        pencariSiak: $pencariSiak,
     );
 }
 
@@ -119,18 +107,6 @@ it('mendeteksi setiap kode anomali pada taksonomi', function (string $kode, Clos
             return null;
         },
     ],
-    'siak sudah meninggal' => [
-        MesinRekonsiliasi::KODE_SIAK_SUDAH_MENINGGAL,
-        function (LaporanKematian $laporan): ?MesinRekonsiliasi {
-            $laporan->update([
-                'nik_almarhum' => '3471136204709016',
-                'nama_almarhum' => 'dr. Retno Wulandari',
-                'jenis_kelamin' => 'P',
-            ]);
-
-            return null;
-        },
-    ],
     'kasus khusus' => [
         MesinRekonsiliasi::KODE_KASUS_KHUSUS,
         function (LaporanKematian $laporan): ?MesinRekonsiliasi {
@@ -149,14 +125,6 @@ it('mendeteksi setiap kode anomali pada taksonomi', function (string $kode, Clos
         MesinRekonsiliasi::KODE_NIK_TIDAK_VALID,
         function (LaporanKematian $laporan): ?MesinRekonsiliasi {
             $laporan->update(['nik_almarhum' => '123']);
-
-            return null;
-        },
-    ],
-    'nik tidak ditemukan' => [
-        MesinRekonsiliasi::KODE_NIK_TIDAK_DITEMUKAN,
-        function (LaporanKematian $laporan): ?MesinRekonsiliasi {
-            $laporan->update(['nik_almarhum' => '3471031203559999']);
 
             return null;
         },
@@ -180,7 +148,19 @@ it('mendeteksi setiap kode anomali pada taksonomi', function (string $kode, Clos
     'nama tidak cocok' => [
         MesinRekonsiliasi::KODE_NAMA_TIDAK_COCOK,
         function (LaporanKematian $laporan): ?MesinRekonsiliasi {
-            $laporan->update(['nama_almarhum' => 'Orang Lain Sekali']);
+            // Nama pada dokumen berbeda jauh dari isian pemohon.
+            AnalisisAi::factory()->create([
+                'id_laporan' => $laporan->id_laporan,
+                'jenis' => AnalisisAi::JENIS_PERBANDINGAN,
+                'status' => AnalisisAi::STATUS_BERHASIL,
+                'hasil' => ['kolom' => [[
+                    'kunci' => 'nama_almarhum',
+                    'label' => 'Nama Almarhum',
+                    'nilai_pemohon' => 'Suharto Wiryo',
+                    'nilai_ekstraksi' => 'Budi Santoso',
+                    'status' => 'beda',
+                ]]],
+            ]);
 
             return null;
         },
@@ -216,18 +196,18 @@ it('mendeteksi setiap kode anomali pada taksonomi', function (string $kode, Clos
     'nama beda tipis' => [
         MesinRekonsiliasi::KODE_NAMA_BEDA_TIPIS,
         function (LaporanKematian $laporan): ?MesinRekonsiliasi {
-            $laporan->update(['nama_almarhum' => 'Suharto Wiro']);
-
-            return null;
-        },
-    ],
-    'alamat di luar wilayah' => [
-        MesinRekonsiliasi::KODE_ALAMAT_DI_LUAR_WILAYAH,
-        function (LaporanKematian $laporan): ?MesinRekonsiliasi {
-            $laporan->update([
-                'nik_almarhum' => '3404010511489003',
-                'nama_almarhum' => 'Budi Santoso',
-                'jenis_kelamin' => 'L',
+            // Nama pada dokumen sedikit berbeda dari isian pemohon.
+            AnalisisAi::factory()->create([
+                'id_laporan' => $laporan->id_laporan,
+                'jenis' => AnalisisAi::JENIS_PERBANDINGAN,
+                'status' => AnalisisAi::STATUS_BERHASIL,
+                'hasil' => ['kolom' => [[
+                    'kunci' => 'nama_almarhum',
+                    'label' => 'Nama Almarhum',
+                    'nilai_pemohon' => 'Suharto Wiryo',
+                    'nilai_ekstraksi' => 'Suharto Wiro',
+                    'status' => 'beda',
+                ]]],
             ]);
 
             return null;
@@ -236,16 +216,19 @@ it('mendeteksi setiap kode anomali pada taksonomi', function (string $kode, Clos
     'layanan tidak tersedia' => [
         MesinRekonsiliasi::KODE_LAYANAN_TIDAK_TERSEDIA,
         function (LaporanKematian $laporan): ?MesinRekonsiliasi {
-            return mesinRekonsiliasi(function (): void {
-                throw new RuntimeException('SIAK tidak dapat diakses.');
-            });
+            AnalisisAi::factory()->create([
+                'id_laporan' => $laporan->id_laporan,
+                'jenis' => AnalisisAi::JENIS_RINGKASAN,
+                'status' => AnalisisAi::STATUS_GAGAL,
+            ]);
+
+            return null;
         },
     ],
 ]);
 
 it('mengurutkan banyak anomali dari keparahan tertinggi dan memakai rekomendasi tertinggi', function () {
     $laporan = buatLaporanRekonsiliasi([
-        'nama_almarhum' => 'Orang Lain Sekali',
         'tanggal_kematian' => now()->subDays(40)->toDateString(),
     ]);
     lengkapiBerkasRekonsiliasi($laporan);
@@ -260,6 +243,19 @@ it('mengurutkan banyak anomali dari keparahan tertinggi dan memakai rekomendasi 
         'id_laporan' => $laporan->id_laporan,
         'jenis' => AnalisisAi::JENIS_EKSTRAKSI,
         'status' => AnalisisAi::STATUS_GAGAL,
+    ]);
+
+    AnalisisAi::factory()->create([
+        'id_laporan' => $laporan->id_laporan,
+        'jenis' => AnalisisAi::JENIS_PERBANDINGAN,
+        'status' => AnalisisAi::STATUS_BERHASIL,
+        'hasil' => ['kolom' => [[
+            'kunci' => 'nama_almarhum',
+            'label' => 'Nama Almarhum',
+            'nilai_pemohon' => 'Suharto Wiryo',
+            'nilai_ekstraksi' => 'Budi Santoso',
+            'status' => 'beda',
+        ]]],
     ]);
 
     $hasil = mesinRekonsiliasi()->analisis($laporan->fresh());
@@ -282,21 +278,24 @@ it('mengurutkan banyak anomali dari keparahan tertinggi dan memakai rekomendasi 
         ->toBe(config('verifikasi.taksonomi_anomali.PENGAJUAN_GANDA.rekomendasi'));
 });
 
-it('tidak menolak dan mencatat audit saat SIAK tidak tersedia', function () {
+it('tidak menolak dan mencatat audit saat analisis AI tidak tersedia', function () {
     $laporan = buatLaporanRekonsiliasi();
     lengkapiBerkasRekonsiliasi($laporan);
 
-    $hasil = mesinRekonsiliasi(function (): void {
-        throw new RuntimeException('Koneksi SIAK terputus.');
-    })->analisis($laporan->fresh());
+    AnalisisAi::factory()->create([
+        'id_laporan' => $laporan->id_laporan,
+        'jenis' => AnalisisAi::JENIS_RINGKASAN,
+        'status' => AnalisisAi::STATUS_GAGAL,
+    ]);
+
+    $hasil = mesinRekonsiliasi()->analisis($laporan->fresh());
 
     expect($hasil->layananTidakTersedia)->toBeTrue()
         ->and($hasil->punyaKode(MesinRekonsiliasi::KODE_LAYANAN_TIDAK_TERSEDIA))->toBeTrue()
-        ->and($hasil->punyaKode(MesinRekonsiliasi::KODE_NIK_TIDAK_DITEMUKAN))->toBeFalse()
         ->and($hasil->anomali[0]->keparahan)->toBe(AnomaliVerifikasi::KEPARAHAN_INFO)
         ->and($laporan->fresh()->status_pengajuan)->toBe(LaporanKematian::STATUS_MENUNGGU_VERIFIKASI)
         ->and(LogAudit::query()
-            ->where('layanan_eksternal', LogAudit::LAYANAN_SIAK)
+            ->where('layanan_eksternal', LogAudit::LAYANAN_AI)
             ->where('hasil', LogAudit::HASIL_GAGAL)
             ->count())->toBe(1);
 });

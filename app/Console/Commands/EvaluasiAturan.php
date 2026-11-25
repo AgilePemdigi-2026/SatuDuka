@@ -6,12 +6,10 @@ use App\Models\AnalisisAi;
 use App\Models\BerkasPendukung;
 use App\Models\LaporanKematian;
 use App\Models\Pengguna;
-use App\Models\ReferensiWilayah;
 use App\Services\Verifikasi\LayananAturanBerkas;
 use App\Services\Verifikasi\LayananPencocokNama;
 use App\Services\Verifikasi\LayananValidasiNik;
 use App\Services\Verifikasi\MesinRekonsiliasi;
-use Database\Seeders\ReferensiWilayahSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -45,7 +43,6 @@ class EvaluasiAturan extends Command
     public function handle(): int
     {
         $kasus = $this->muatKasus();
-        $this->pastikanReferensiWilayah();
 
         $evaluasi = $this->evaluasi($kasus);
         $kalibrasi = $this->kalibrasiNama();
@@ -345,22 +342,10 @@ class EvaluasiAturan extends Command
                 ]);
             }
 
-            $siak = $kasusUji['siak'] ?? null;
-            $siakTersedia = (bool) ($kasusUji['siak_tersedia'] ?? true);
-
-            $pencariSiak = function (string $nik) use ($siak, $siakTersedia) {
-                if (! $siakTersedia) {
-                    throw new RuntimeException('SIAK tidak tersedia pada kasus uji.');
-                }
-
-                return $siak;
-            };
-
             $mesin = new MesinRekonsiliasi(
                 new LayananValidasiNik,
                 new LayananAturanBerkas,
                 new LayananPencocokNama,
-                $pencariSiak,
             );
 
             $hasil = $mesin->analisis($laporan, false);
@@ -375,6 +360,11 @@ class EvaluasiAturan extends Command
     }
 
     /**
+     * Kategori nama aktual menurut temuan mesin atas hasil ekstraksi dokumen.
+     *
+     * PERSIS berarti nama benar-benar dibandingkan dan cocok; NA berarti tidak
+     * ada perbandingan nama yang tersedia (mis. dokumen tidak terbaca).
+     *
      * @param  array<string, mixed>  $kasusUji
      * @param  list<string>  $deteksi
      */
@@ -388,12 +378,18 @@ class EvaluasiAturan extends Command
             return 'BEDA_TIPIS';
         }
 
-        $siak = $kasusUji['siak'] ?? null;
+        $kolom = $kasusUji['analisis_ai']['kolom'] ?? null;
 
-        if ((bool) ($kasusUji['siak_tersedia'] ?? true)
-            && is_array($siak)
-            && trim((string) ($siak['nama_lengkap'] ?? '')) !== '') {
-            return 'PERSIS';
+        if (is_array($kolom)) {
+            foreach ($kolom as $temuan) {
+                if (! is_array($temuan) || ($temuan['kunci'] ?? null) !== 'nama_almarhum') {
+                    continue;
+                }
+
+                if (($temuan['status'] ?? null) === 'cocok') {
+                    return 'PERSIS';
+                }
+            }
         }
 
         return 'NA';
@@ -425,21 +421,6 @@ class EvaluasiAturan extends Command
                     .'menggeser kategori tanpa bukti.',
             'skor_positif_terendah' => $positifTerendah,
         ];
-    }
-
-    /**
-     * Pastikan referensi wilayah tersedia agar aturan alamat dapat diuji.
-     */
-    private function pastikanReferensiWilayah(): void
-    {
-        if (ReferensiWilayah::query()->exists()) {
-            return;
-        }
-
-        $this->call('db:seed', [
-            '--class' => ReferensiWilayahSeeder::class,
-            '--force' => true,
-        ]);
     }
 
     /**
@@ -576,12 +557,12 @@ class EvaluasiAturan extends Command
         $teks .= '- Label dibuat dari rancangan kasus uji, bukan dari keputusan petugas Dukcapil. '
             .'Karena itu angka presisi dan recall mengukur kesesuaian implementasi dengan rancangan aturan, '
             ."bukan akurasi di lapangan.\n";
-        $teks .= '- Sebagian kasus memakai data SIAK fiktif yang ditempelkan langsung; pengujian tidak '
-            ."memanggil API SIAK atau AI nyata.\n";
+        $teks .= '- Dataset tidak lagi memakai data SIAK; yang dibandingkan hanyalah isian pemohon dengan '
+            ."hasil ekstraksi dokumen yang diunggah. Pengujian tidak memanggil API AI nyata.\n";
         $teks .= "- Evaluasi berjalan dalam transaksi yang di-rollback sehingga tidak mengubah data aplikasi.\n";
         $teks .= '- Ambang nama belum diuji pada variasi ejaan, gelar, dan nama tunggal yang luas. '
             ."Hasil 39 pasangan hanya menjadi batas awal, bukan bukti statistik.\n";
-        $teks .= '- Kasus dengan layanan SIAK/AI gagal hanya menguji jalur fallback manual, bukan perilaku '
+        $teks .= '- Kasus dengan layanan AI gagal hanya menguji jalur fallback manual, bukan perilaku '
             ."penyedia eksternal yang sebenarnya.\n\n";
 
         $teks .= "## Hal yang Perlu Dikonfirmasi ke Dukcapil\n\n";

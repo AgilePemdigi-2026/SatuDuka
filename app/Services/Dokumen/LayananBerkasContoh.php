@@ -3,8 +3,8 @@
 namespace App\Services\Dokumen;
 
 use App\Models\BerkasPendukung;
-use App\Support\DataSIAK;
 use App\Support\NikDummy;
+use App\Support\NikTanggalLahir;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
@@ -402,20 +402,24 @@ class LayananBerkasContoh
     }
 
     /**
-     * Data dasar konten contoh: utamakan laporan pemohon, fallback data SIAK acak.
+     * Data dasar konten contoh: diambil dari isian laporan pemohon.
      *
      * @return array<string, string>
      */
     private function dataDasar(BerkasPendukung $berkas): array
     {
         $laporan = $berkas->laporanKematian;
-        $siak = $laporan !== null ? DataSIAK::cariNik((string) $laporan->nik_almarhum) : null;
 
-        $namaAlmarhum = $laporan?->nama_almarhum ?: ($siak['nama_lengkap'] ?? 'Suharto Wiryo');
-        $nikAlmarhum = $laporan?->nik_almarhum ?: ($siak['nik'] ?? NikDummy::denganUrutan(9000 + (int) $berkas->id_berkas));
+        $namaAlmarhum = $laporan?->nama_almarhum ?: 'Suharto Wiryo';
+        $nikAlmarhum = $laporan?->nik_almarhum ?: NikDummy::denganUrutan(9000 + (int) $berkas->id_berkas);
         $namaPelapor = $laporan?->nama_pelapor ?: 'Pemohon Contoh';
         $tanggalKematian = $laporan?->tanggal_kematian
             ?? Carbon::parse('2026-09-01');
+
+        // Tanggal lahir dan jenis kelamin diturunkan dari NIK almarhum karena
+        // SATUDUKA tidak lagi membaca data kependudukan.
+        $lahir = NikTanggalLahir::dariNik((string) $nikAlmarhum, $tanggalKematian);
+        $jenisKelamin = NikTanggalLahir::jenisKelamin((string) $nikAlmarhum);
 
         return [
             'nomor' => '2026-'.str_pad((string) $berkas->id_berkas, 4, '0', STR_PAD_LEFT),
@@ -428,11 +432,9 @@ class LayananBerkasContoh
             'tempat_kematian' => $laporan?->tempat_kematian ?: 'RSUD Kota Yogyakarta',
             'sebab_kematian' => $laporan?->sebab_kematian ?: 'Gagal jantung akut (data dummy)',
             'jenis_kasus' => $laporan?->jenis_kasus ?? 'Jenazah Tidak Dikenal',
-            'jenis_kelamin' => strtoupper(($siak['jenis_kelamin'] ?? 'L') === 'P' ? 'PEREMPUAN' : 'LAKI-LAKI'),
-            'lahir' => isset($siak['tempat_lahir'], $siak['tanggal_lahir'])
-                ? $siak['tempat_lahir'].', '.Carbon::parse($siak['tanggal_lahir'])->format('d-m-Y')
-                : 'Yogyakarta, 12-03-1955',
-            'alamat' => $siak['alamat'] ?? 'Jl. Malioboro No. 12, Kota Yogyakarta',
+            'jenis_kelamin' => $jenisKelamin === 'P' ? 'PEREMPUAN' : 'LAKI-LAKI',
+            'lahir' => $lahir !== null ? 'Yogyakarta, '.$lahir->format('d-m-Y') : 'Yogyakarta, 12-03-1955',
+            'alamat' => $laporan?->pemohon?->alamat ?: 'Jl. Malioboro No. 12, Kota Yogyakarta',
             'tanggal_sekarang' => now()->translatedFormat('j F Y'),
         ];
     }

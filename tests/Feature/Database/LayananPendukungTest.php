@@ -34,12 +34,12 @@ it('mencatat jejak audit melalui layanan audit', function () {
 
 it('mencatat hasil pemanggilan layanan eksternal', function () {
     $log = LayananAudit::catatLayanan(
-        layanan: LogAudit::LAYANAN_SIAK,
+        layanan: LogAudit::LAYANAN_AI,
         hasil: LogAudit::HASIL_GAGAL,
-        detail: ['nik' => '3471031203559001'],
+        detail: ['jenis' => 'ekstraksi'],
     );
 
-    expect($log->layanan_eksternal)->toBe('SIAK')
+    expect($log->layanan_eksternal)->toBe('AI')
         ->and($log->hasil)->toBe('Gagal')
         ->and($log->aksi)->toBe('memeriksa_layanan_eksternal');
 });

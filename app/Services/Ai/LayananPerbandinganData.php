@@ -3,14 +3,13 @@
 namespace App\Services\Ai;
 
 use App\Models\LaporanKematian;
-use App\Support\DataSIAK;
 use App\Support\MaskerNik;
 use App\Support\PengindeksNik;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 /**
- * Membandingkan isian pemohon dengan hasil ekstraksi AI dan data SIAK.
+ * Membandingkan isian pemohon dengan hasil ekstraksi berkas yang diunggah.
  *
  * Perbandingan hanya menghasilkan saran. Status pengajuan tidak diubah.
  */
@@ -39,7 +38,6 @@ class LayananPerbandinganData
      */
     public function bandingkan(LaporanKematian $laporan, array $ekstraksi): array
     {
-        $siak = $laporan->nik_almarhum !== null ? DataSIAK::cariNik($laporan->nik_almarhum) : null;
         $hasilEkstraksi = $ekstraksi['kolom'] ?? [];
 
         $baris = [];
@@ -51,7 +49,6 @@ class LayananPerbandinganData
             $nilaiPemohon = $this->nilaiPemohon($laporan, $kunci);
             $nilaiEkstraksi = $hasilEkstraksi[$kunci]['nilai'] ?? null;
             $keyakinan = (float) ($hasilEkstraksi[$kunci]['keyakinan'] ?? 0);
-            $nilaiSiak = $this->nilaiSiak($siak, $kunci);
 
             // NIK tidak pernah disimpan utuh: perbandingan memakai blind index,
             // sedangkan nilai yang ditampilkan sudah termasker.
@@ -64,16 +61,9 @@ class LayananPerbandinganData
 
             if ($nilaiEkstraksi === null || trim((string) $nilaiEkstraksi) === '') {
                 $status = 'tidak terbaca';
-            } else {
-                if (! $this->sama($kunci, $nilaiPemohon, $nilaiEkstraksi, $hashEkstraksi)) {
-                    $status = 'beda';
-                    $catatan[] = 'Hasil ekstraksi berbeda dengan isian pemohon.';
-                }
-
-                if ($nilaiSiak !== null && ! $this->sama($kunci, $nilaiPemohon, $nilaiSiak)) {
-                    $status = 'beda';
-                    $catatan[] = 'Data SIAK berbeda dengan isian pemohon.';
-                }
+            } elseif (! $this->sama($kunci, $nilaiPemohon, $nilaiEkstraksi, $hashEkstraksi)) {
+                $status = 'beda';
+                $catatan[] = 'Hasil ekstraksi berbeda dengan isian pemohon.';
             }
 
             if ($status === 'beda') {
@@ -90,10 +80,8 @@ class LayananPerbandinganData
                 'label' => $label,
                 'nilai_pemohon' => $this->tampilkan($kunci, $nilaiPemohon),
                 'nilai_ekstraksi' => $this->tampilkan($kunci, $nilaiEkstraksi),
-                'nilai_siak' => $this->tampilkan($kunci, $nilaiSiak),
                 'hash_pemohon' => $kunci === 'nik' ? PengindeksNik::hash($nilaiPemohon) : null,
                 'hash_ekstraksi' => $hashEkstraksi,
-                'hash_siak' => $kunci === 'nik' ? PengindeksNik::hash($nilaiSiak) : null,
                 'status' => $status,
                 'keyakinan' => round(max(0.0, min(1.0, $keyakinan)), 4),
                 'catatan' => $catatan,
@@ -120,23 +108,8 @@ class LayananPerbandinganData
     }
 
     /**
-     * SIAK hanya memuat nama dan NIK pada data dummy ini.
-     *
-     * @param  array<string, string>|null  $siak
+     * Menilai kemiripan nama isian pemohon dengan hasil ekstraksi dokumen.
      */
-    private function nilaiSiak(?array $siak, string $kunci): ?string
-    {
-        if ($siak === null) {
-            return null;
-        }
-
-        return match ($kunci) {
-            'nama_almarhum' => $siak['nama_lengkap'] ?? null,
-            'nik' => $siak['nik'] ?? null,
-            default => null,
-        };
-    }
-
     private function sama(string $kunci, ?string $kiri, ?string $kanan, ?string $hashKanan = null): bool
     {
         if ($kunci === 'nik') {

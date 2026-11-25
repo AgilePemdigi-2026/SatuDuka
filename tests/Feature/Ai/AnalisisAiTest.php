@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
- * Laporan draf milik pemohon dengan data almarhum dari data dummy SIAK.
+ * Laporan draf milik pemohon dengan data almarhum lengkap.
  *
  * @param  array<string, mixed>  $timpa
  */

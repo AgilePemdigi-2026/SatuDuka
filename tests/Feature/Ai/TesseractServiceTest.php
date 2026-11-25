@@ -111,6 +111,6 @@ it('membuat ringkasan deterministik dari data perbandingan', function () {
     expect($hasil['berhasil'])->toBeTrue();
     expect($hasil['ringkasan'])->toContain('1 kolom berbeda');
     expect($hasil['ringkasan'])->toContain('tidak terbaca');
-    expect($hasil['saran'])->toContain('Cocokkan NIK pada dokumen asli dengan data SIAK sebelum melanjutkan.');
+    expect($hasil['saran'])->toContain('Cocokkan NIK pada dokumen asli dengan isian pemohon sebelum melanjutkan.');
     expect(PenyaringTeksDokumen::teks('uji.docx', 'isi'))->toBeNull();
 });

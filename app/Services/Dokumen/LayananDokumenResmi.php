@@ -6,9 +6,8 @@ use App\Models\DokumenResmi;
 use App\Models\LaporanKematian;
 use App\Models\LogAudit;
 use App\Services\LayananAudit;
-use App\Support\DataSIAK;
+use App\Support\NikTanggalLahir;
 use App\Support\PesanGalat;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -192,36 +191,24 @@ class LayananDokumenResmi
      */
     private function dataTampilan(DokumenResmi $dokumen, LaporanKematian $laporan, string $nomor): array
     {
-        $siak = DataSIAK::cariNik((string) $laporan->nik_almarhum) ?? [];
-
-        $tanggalLahir = null;
-        $umur = null;
-
-        if (filled($siak['tanggal_lahir'] ?? null)) {
-            try {
-                $lahir = Carbon::parse((string) $siak['tanggal_lahir']);
-                $tanggalLahir = $lahir->translatedFormat('j F Y');
-
-                if ($laporan->tanggal_kematian !== null) {
-                    $umur = (int) $lahir->diffInYears($laporan->tanggal_kematian);
-                }
-            } catch (Throwable) {
-                $tanggalLahir = null;
-                $umur = null;
-            }
-        }
+        // Tanggal lahir diturunkan dari NIK (tanpa data kependudukan); alamat
+        // diambil dari profil pemohon.
+        $lahir = NikTanggalLahir::dariNik((string) $laporan->nik_almarhum, $laporan->tanggal_kematian);
+        $tanggalLahir = $lahir?->translatedFormat('j F Y');
+        $umur = $lahir !== null && $laporan->tanggal_kematian !== null
+            ? (int) $lahir->diffInYears($laporan->tanggal_kematian)
+            : null;
 
         return [
             'nomorDokumen' => $nomor,
             'laporan' => $laporan,
             'dokumen' => $dokumen,
             'pejabat' => $dokumen->pejabat,
-            'siak' => $siak,
             'tanggalLahir' => $tanggalLahir,
             'umur' => $umur,
             'tanggalKematian' => $laporan->tanggal_kematian?->translatedFormat('j F Y'),
             'tanggalTerbit' => $dokumen->tanggal_terbit?->translatedFormat('j F Y'),
-            'alamat' => $siak['alamat'] ?? ($laporan->pemohon?->alamat ?: null),
+            'alamat' => $laporan->pemohon?->alamat ?: null,
             'tandaTangan' => filled($dokumen->tanda_tangan_visual) ? (string) $dokumen->tanda_tangan_visual : null,
             'mock' => (string) config('satuduka.tte_driver', 'mock') === 'mock',
         ];

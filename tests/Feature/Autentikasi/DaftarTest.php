@@ -9,7 +9,6 @@
 
 use App\Models\LogAudit;
 use App\Models\Pengguna;
-use App\Support\DataSIAK;
 use Illuminate\Support\Facades\Hash;
 
 // Skenario: Berpindah ke halaman Masuk dari halaman Registrasi.
@@ -17,16 +16,18 @@ it('menampilkan halaman registrasi dengan tautan ke halaman masuk', function () 
     $this->get(route('registrasi'))
         ->assertOk()
         ->assertSee('Registrasi Akun Pemohon')
+        ->assertSee('Nama Lengkap')
         ->assertSee('Nomor Induk Kependudukan (NIK)')
         ->assertSee('Alamat Email')
         ->assertSee(route('masuk'));
 });
 
-// Skenario: Berhasil registrasi dengan NIK yang terdapat pada data kependudukan.
+// Skenario: Berhasil registrasi dengan NIK 16 digit yang belum terdaftar.
 it('menyimpan akun pemohon baru dan mengarahkan ke halaman masuk', function () {
     $nik = '3471031907459015';
 
     $this->post(route('registrasi.simpan'), [
+        'nama_lengkap' => 'Pemohon Uji',
         'nik' => $nik,
         'email' => 'pemohon.baru@demo.satuduka.id',
         'kata_sandi' => 'Baru12345',
@@ -38,7 +39,7 @@ it('menyimpan akun pemohon baru dan mengarahkan ke halaman masuk', function () {
     $pengguna = Pengguna::cariDenganNik($nik);
 
     expect($pengguna)->not->toBeNull()
-        ->and($pengguna->nama_lengkap)->toBe(DataSIAK::cariNik($nik)['nama_lengkap'])
+        ->and($pengguna->nama_lengkap)->toBe('Pemohon Uji')
         ->and($pengguna->email)->toBe('pemohon.baru@demo.satuduka.id')
         ->and($pengguna->peran)->toBe('pemohon')
         ->and(Hash::check('Baru12345', $pengguna->kata_sandi))->toBeTrue();
@@ -50,6 +51,7 @@ it('menyimpan akun pemohon baru dan mengarahkan ke halaman masuk', function () {
 // Skenario: Registrasi gagal karena kata sandi lemah.
 it('menolak kata sandi yang tidak memenuhi nfr-01', function () {
     $this->post(route('registrasi.simpan'), [
+        'nama_lengkap' => 'Pemohon Uji',
         'nik' => '3404016511599014',
         'email' => 'pemohon.baru@demo.satuduka.id',
         'kata_sandi' => 'abc123',
@@ -66,6 +68,7 @@ it('menolak kata sandi yang tidak memenuhi nfr-01', function () {
 // Skenario: Registrasi gagal karena konfirmasi kata sandi tidak cocok.
 it('menolak konfirmasi kata sandi yang tidak cocok', function () {
     $this->post(route('registrasi.simpan'), [
+        'nama_lengkap' => 'Pemohon Uji',
         'nik' => '3404016511599014',
         'email' => 'pemohon.baru@demo.satuduka.id',
         'kata_sandi' => 'Baru12345',
@@ -80,6 +83,7 @@ it('menolak konfirmasi kata sandi yang tidak cocok', function () {
 // Skenario: Registrasi gagal karena format NIK tidak valid.
 it('menolak nik dengan format tidak valid', function () {
     $this->post(route('registrasi.simpan'), [
+        'nama_lengkap' => 'Pemohon Uji',
         'nik' => '123456789012',
         'email' => 'pemohon.baru@demo.satuduka.id',
         'kata_sandi' => 'Baru12345',
@@ -94,11 +98,13 @@ it('menolak nik dengan format tidak valid', function () {
 // Skenario: Registrasi gagal karena NIK sudah terdaftar.
 it('menolak nik yang sudah terdaftar', function () {
     Pengguna::factory()->pemohon()->create([
+        'nama_lengkap' => 'Pemohon Uji',
         'nik' => '9999990101900001',
         'email' => 'pemohon@demo.satuduka.id',
     ]);
 
     $this->post(route('registrasi.simpan'), [
+        'nama_lengkap' => 'Pemohon Uji',
         'nik' => '9999990101900001',
         'email' => 'pemohon.baru@demo.satuduka.id',
         'kata_sandi' => 'Baru12345',
@@ -108,11 +114,12 @@ it('menolak nik yang sudah terdaftar', function () {
         ->assertSessionHasErrors(['nik' => 'NIK sudah terdaftar']);
 });
 
-// NIK harus unik dan 16 digit, tetapi tidak harus ada pada data kependudukan.
-it('mengizinkan registrasi dengan nik 16 digit yang tidak ada pada data kependudukan', function () {
+// NIK harus unik dan 16 digit; nama lengkap diisi sendiri oleh pemohon.
+it('mengizinkan registrasi dengan nik 16 digit yang belum terdaftar', function () {
     $nik = '9999990101900099';
 
     $this->post(route('registrasi.simpan'), [
+        'nama_lengkap' => 'Pemohon Uji',
         'nik' => $nik,
         'email' => 'pemohon.baru@demo.satuduka.id',
         'kata_sandi' => 'Baru12345',
@@ -124,18 +131,20 @@ it('mengizinkan registrasi dengan nik 16 digit yang tidak ada pada data kependud
     $pengguna = Pengguna::cariDenganNik($nik);
 
     expect($pengguna)->not->toBeNull()
-        ->and($pengguna->nama_lengkap)->toBe('Pemohon')
+        ->and($pengguna->nama_lengkap)->toBe('Pemohon Uji')
         ->and(LogAudit::where('aksi', 'registrasi')->where('id_pengguna', $pengguna->id_pengguna)->exists())->toBeTrue();
 });
 
 // Skenario: Registrasi gagal karena surel sudah terdaftar.
 it('menolak surel yang sudah terdaftar', function () {
     Pengguna::factory()->pemohon()->create([
+        'nama_lengkap' => 'Pemohon Uji',
         'nik' => '9999990101900001',
         'email' => 'pemohon@demo.satuduka.id',
     ]);
 
     $this->post(route('registrasi.simpan'), [
+        'nama_lengkap' => 'Pemohon Uji',
         'nik' => '3404016511599014',
         'email' => 'pemohon@demo.satuduka.id',
         'kata_sandi' => 'Baru12345',
@@ -151,6 +160,7 @@ it('menampilkan pesan kolom kosong dan menandai kolom tersebut', function () {
     $this->get(route('registrasi'));
 
     $this->followRedirects($this->post(route('registrasi.simpan'), [
+        'nama_lengkap' => 'Pemohon Uji',
         'nik' => '3404016511599014',
         'email' => 'pemohon.baru@demo.satuduka.id',
         'kata_sandi' => '',

@@ -35,7 +35,7 @@ function aktifkanDriverOpenAiVerifikasiBerkas(): void
 }
 
 /**
- * Membuat laporan yang berada dalam antrean verifikasi dengan data SIAK valid.
+ * Membuat laporan yang berada dalam antrean verifikasi dengan data almarhum lengkap.
  *
  * @param  array<string, mixed>  $timpa
  */
@@ -104,7 +104,6 @@ function catatPerbandinganAiVerifikasiBerkas(LaporanKematian $laporan): Analisis
                     'label' => 'Nama Almarhum',
                     'nilai_pemohon' => 'Suharto Wiryo',
                     'nilai_ekstraksi' => 'Suharto Wiryo',
-                    'nilai_siak' => 'Suharto Wiryo',
                     'status' => 'cocok',
                     'keyakinan' => 0.95,
                     'catatan' => [],
@@ -360,7 +359,7 @@ it('menandai anomali dan menyimpan hasil verifikasi', function () {
     $this->actingAs($verifikator)
         ->post(route('verifikasi.anomali', $laporan), [
             'jenis_anomali' => AnomaliDokumen::JENIS_PERBEDAAN_IDENTITAS,
-            'deskripsi' => 'NIK pada dokumen berbeda dengan data SIAK.',
+            'deskripsi' => 'NIK pada dokumen berbeda dengan isian pemohon.',
             'alasan_override' => 'Verifikator menilai perlu rekonsiliasi.',
         ])
         ->assertRedirect(route('verifikasi.index'))
@@ -374,12 +373,12 @@ it('menandai anomali dan menyimpan hasil verifikasi', function () {
 
     expect($hasil->id_pengguna)->toBe($verifikator->id_pengguna)
         ->and($hasil->status_verifikasi)->toBe(HasilVerifikasi::STATUS_ANOMALI)
-        ->and($hasil->catatan)->toBe('NIK pada dokumen berbeda dengan data SIAK.');
+        ->and($hasil->catatan)->toBe('NIK pada dokumen berbeda dengan isian pemohon.');
 
     $anomali = AnomaliDokumen::where('id_verifikasi', $hasil->id_verifikasi)->firstOrFail();
 
     expect($anomali->jenis_anomali)->toBe(AnomaliDokumen::JENIS_PERBEDAAN_IDENTITAS)
-        ->and($anomali->deskripsi)->toBe('NIK pada dokumen berbeda dengan data SIAK.')
+        ->and($anomali->deskripsi)->toBe('NIK pada dokumen berbeda dengan isian pemohon.')
         ->and($anomali->status_rekonsiliasi)->toBe(AnomaliDokumen::STATUS_TERBUKA);
 
     expect(LogAudit::where('aksi', 'menandai_anomali_berkas')->count())->toBe(1);

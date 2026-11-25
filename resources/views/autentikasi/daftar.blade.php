@@ -11,6 +11,9 @@
     <form method="POST" action="{{ route('registrasi.simpan') }}" class="mt-8 space-y-5">
         @csrf
 
+        <x-ui.input id="nama_lengkap" name="nama_lengkap" label="Nama Lengkap" type="text" maxlength="100"
+            :value="old('nama_lengkap')" placeholder="Masukkan nama lengkap sesuai KTP" autocomplete="name" required />
+
         <x-ui.input id="nik" name="nik" label="Nomor Induk Kependudukan (NIK)" type="text" inputmode="numeric"
             maxlength="16" :value="old('nik')" placeholder="Masukkan NIK" autocomplete="username" required autofocus />
 

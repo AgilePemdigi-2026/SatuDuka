@@ -73,7 +73,6 @@ function dataTampilanAkta(LaporanKematian $laporan, DokumenResmi $dokumen): arra
         'laporan' => $laporan,
         'dokumen' => $dokumen,
         'pejabat' => null,
-        'siak' => [],
         'tanggalLahir' => '12 Maret 1955',
         'umur' => 71,
         'tanggalKematian' => '1 Oktober 2026',
